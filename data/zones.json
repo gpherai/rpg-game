@@ -9,7 +9,20 @@
       "recommended_level": 1,
       "map_id": "z_r1_chandrapur_town",
       "tags": ["safe_zone", "shops", "inn"],
-      "connected_zones": ["z_r1_forest_route", "z_r1_training_ground"]
+      "connected_zones": ["z_r1_forest_route", "z_r1_training_ground"],
+      "tri_sharira_bias": {
+        "body": 3,
+        "mind": 5,
+        "spirit": 6
+      },
+      "sanctity": 4,
+      "danger_tier": 1,
+      "ambient_tags": [
+        "settlement",
+        "market",
+        "safe_hub",
+        "temple_nearby"
+      ]
     },
     {
       "id": "z_r1_forest_route",
@@ -20,7 +33,19 @@
       "recommended_level": 2,
       "map_id": "z_r1_forest_route",
       "tags": ["encounters", "exploration"],
-      "connected_zones": ["z_r1_chandrapur_town", "z_r1_shrine_clearing"]
+      "connected_zones": ["z_r1_chandrapur_town", "z_r1_shrine_clearing"],
+      "tri_sharira_bias": {
+        "body": 5,
+        "mind": 4,
+        "spirit": 5
+      },
+      "sanctity": 3,
+      "danger_tier": 2,
+      "ambient_tags": [
+        "forest",
+        "transition",
+        "ambush_risk"
+      ]
     },
     {
       "id": "z_r1_shrine_clearing",
@@ -31,7 +56,20 @@
       "recommended_level": 5,
       "map_id": "z_r1_shrine_clearing",
       "tags": ["boss_fight", "story"],
-      "connected_zones": ["z_r1_forest_route", "z_r1_shrine_inner"]
+      "connected_zones": ["z_r1_forest_route", "z_r1_shrine_inner"],
+      "tri_sharira_bias": {
+        "body": 4,
+        "mind": 6,
+        "spirit": 9
+      },
+      "sanctity": 9,
+      "danger_tier": 3,
+      "ambient_tags": [
+        "shrine",
+        "trial",
+        "threshold",
+        "spirit_activity"
+      ]
     }
   ]
 }
