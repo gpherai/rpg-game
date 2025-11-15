@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.0" orientation="orthogonal" renderorder="right-down" width="18" height="15" tilewidth="32" tileheight="32" infinite="0" nextlayerid="6" nextobjectid="14">
+ <properties>
+  <property name="zone_id" value="z_r1_shrine_clearing"/>
+  <property name="region_id" value="r1_chandrapur_valley"/>
+  <property name="zone_type" value="DUNGEON"/>
+  <property name="recommended_level" type="int" value="5"/>
+  <property name="allow_random_encounters" type="bool" value="false"/>
+ </properties>
+ <layer id="1" name="Ground" width="18" height="15">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+  </data>
+ </layer>
+ <layer id="2" name="Collision" width="18" height="15">
+  <data encoding="csv">
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,
+1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,
+1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,
+1,1,1,1,0,0,0,0,1,1,0,0,0,0,1,1,1,1,
+1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,
+1,1,0,0,0,0,0,1,1,1,1,0,0,0,0,0,1,1,
+1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,
+1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,
+1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,
+1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,
+1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,
+1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+  </data>
+ </layer>
+ <objectgroup id="3" name="Spawns">
+  <object id="1" name="spawn_from_route" type="PlayerSpawn" x="288" y="64" width="32" height="32">
+   <properties>
+    <property name="spawn_id" value="spawn_from_route"/>
+    <property name="is_default" type="bool" value="true"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="4" name="Portals">
+  <object id="2" name="portal_to_route" type="Portal" x="288" y="32" width="32" height="32">
+   <properties>
+    <property name="target_zone_id" value="z_r1_forest_route"/>
+    <property name="target_spawn_id" value="spawn_from_shrine"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="5" name="Events">
+  <object id="3" name="ev_shrine_guardian" type="EventTrigger" x="288" y="352" width="32" height="32">
+   <properties>
+    <property name="event_id" value="ev_shrine_guardian_encounter"/>
+    <property name="trigger_type" value="ON_ENTER"/>
+    <property name="once_per_save" type="bool" value="true"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>
