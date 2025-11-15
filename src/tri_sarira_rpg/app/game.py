@@ -17,7 +17,7 @@ class Game:
         pygame.init()
         self._config = Config.load()
         self._screen = pygame.display.set_mode(self._config.resolution)
-        pygame.display.set_caption("Tri-Śarīra RPG")
+        pygame.display.set_caption(self._config.title)
         self._clock = pygame.time.Clock()
         self._running = True
         self._scene_manager = SceneManager()
