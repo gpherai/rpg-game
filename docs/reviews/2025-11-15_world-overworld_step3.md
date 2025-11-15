@@ -198,12 +198,28 @@ Three test maps were created in the `maps/` directory:
 
 **Map Structure**:
 ```
-Chandrapur Town
-    ↓ portal_to_route
+Chandrapur Town (spawn_default @ 12,9)
+    ↓ portal_to_route @ tile (12,19)
+    ↓ spawn_from_town @ tile (10,2)
 Forest Route
-    ↓ portal_to_shrine
+    ↓ portal_to_shrine @ tile (10,29)
+    ↓ spawn_from_route @ tile (9,2)
 Shrine Clearing
+    ↓ portal_to_route @ tile (9,1)
+    ↓ spawn_from_shrine @ tile (10,28)
+Forest Route
+    ↓ portal_to_town @ tile (10,1)
+    ↓ spawn_from_route @ tile (12,19)
+Chandrapur Town
 ```
+
+**Complete Portal Path Verified**:
+1. **Town → Forest Route**: Portal at (12,19) → Spawn at (10,2)
+2. **Forest Route → Shrine**: Portal at (10,29) → Spawn at (9,2)
+3. **Shrine → Forest Route**: Portal at (9,1) → Spawn at (10,28)
+4. **Forest Route → Town**: Portal at (10,1) → Spawn at (12,19)
+
+**Portal Fix Applied**: The collision layer in `z_r1_forest_route.tmx` was updated to make tile (10,29) walkable, enabling access to the portal to Shrine Clearing. Previously, row 29 was entirely blocked, preventing portal access.
 
 ---
 
@@ -520,7 +536,45 @@ python -m tri_sarira_rpg.app.main
 
 ### 8.4 Portal Navigation Test
 
+**Automated Test**:
+```bash
+python test_portals.py
 ```
+
+This test script verifies all portal transitions programmatically by loading zones and checking portal accessibility.
+
+**Expected Output**:
+```
+Testing Portal Navigation: Town → Route → Shrine → Route → Town
+[Step 1] Loading Chandrapur Town...
+✓ Current zone: z_r1_chandrapur_town
+✓ Player position: (12, 9)
+
+[Step 2] Navigating to portal to Forest Route...
+Portal to route at tile: (12, 19)
+✓ Current zone: z_r1_forest_route
+✓ Player position: (10, 2)
+
+[Step 3] Navigating to portal to Shrine Clearing...
+Portal to shrine at tile: (10, 29)
+Portal tile walkable: True
+✓ Current zone: z_r1_shrine_clearing
+✓ Player position: (9, 2)
+
+[Step 4] Returning to Forest Route...
+Portal to route at tile: (9, 1)
+✓ Current zone: z_r1_forest_route
+✓ Player position: (10, 28)
+
+[Step 5] Returning to Chandrapur Town...
+Portal to town at tile: (10, 1)
+✓ Current zone: z_r1_chandrapur_town
+✓ Player position: (12, 19)
+
+✅ All portal transitions successful!
+```
+
+**Manual Test Flow**:
 1. Start in Chandrapur Town
 2. Move south to portal (12, 19)
 3. → Should transition to Forest Route, spawn at (10, 2)
@@ -532,7 +586,6 @@ python -m tri_sarira_rpg.app.main
 9. → Should log "ev_shrine_guardian_encounter"
 10. Move north to portal (9, 1)
 11. → Should transition back to Forest Route
-```
 
 ---
 
