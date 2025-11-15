@@ -1,0 +1,42 @@
+{
+  "actors": [
+    {
+      "id": "mc_adhira",
+      "name": "Adhira",
+      "type": "playable",
+      "level": 1,
+      "base_stats": {
+        "STR": 8,
+        "END": 7,
+        "DEF": 6,
+        "FOC": 6,
+        "INS": 5,
+        "WILL": 7,
+        "MAG": 7,
+        "PRA": 8,
+        "RES": 6
+      },
+      "tags": ["protagonist", "body_focus", "spirit_novice"],
+      "starting_skills": ["sk_body_strike", "sk_spirit_spark"]
+    },
+    {
+      "id": "comp_rajani",
+      "name": "Rajani",
+      "type": "playable",
+      "level": 2,
+      "base_stats": {
+        "STR": 6,
+        "END": 6,
+        "DEF": 5,
+        "FOC": 9,
+        "INS": 8,
+        "WILL": 7,
+        "MAG": 6,
+        "PRA": 7,
+        "RES": 6
+      },
+      "tags": ["companion", "mind_focus", "controller"],
+      "starting_skills": ["sk_mind_mark_weakness", "sk_body_quick_step"]
+    }
+  ]
+}
