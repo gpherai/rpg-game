@@ -223,9 +223,21 @@ class TiledLoader:
 
             # Type conversie
             if prop_type == "int":
-                props[name] = int(value)
+                try:
+                    props[name] = int(value)
+                except ValueError:
+                    logger.warning(
+                        f"Invalid int property '{name}' with value '{value}', using 0"
+                    )
+                    props[name] = 0
             elif prop_type == "float":
-                props[name] = float(value)
+                try:
+                    props[name] = float(value)
+                except ValueError:
+                    logger.warning(
+                        f"Invalid float property '{name}' with value '{value}', using 0.0"
+                    )
+                    props[name] = 0.0
             elif prop_type == "bool":
                 props[name] = value.lower() == "true"
             else:

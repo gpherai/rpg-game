@@ -23,6 +23,14 @@ class OverworldScene(Scene):
         self._world = world_system
         self._time = time_system
 
+        # Get screen resolution dynamically
+        screen = pygame.display.get_surface()
+        if screen:
+            self._screen_width, self._screen_height = screen.get_size()
+        else:
+            # Fallback to default resolution if no surface exists yet
+            self._screen_width, self._screen_height = 1280, 720
+
         # Movement timing (tile-based)
         self._move_cooldown: float = 0.0
         self._move_delay: float = 0.15  # Seconds between moves
@@ -102,8 +110,8 @@ class OverworldScene(Scene):
         tiled_map = self._world.current_map
 
         # Center camera on player
-        screen_center_x = 640  # Half of 1280
-        screen_center_y = 360  # Half of 720
+        screen_center_x = self._screen_width // 2
+        screen_center_y = self._screen_height // 2
 
         tile_size = tiled_map.tile_width
 
@@ -112,8 +120,8 @@ class OverworldScene(Scene):
         self._camera_y = (player.position.y * tile_size) - screen_center_y
 
         # Clamp camera to map bounds
-        max_camera_x = (tiled_map.width * tile_size) - 1280
-        max_camera_y = (tiled_map.height * tile_size) - 720
+        max_camera_x = (tiled_map.width * tile_size) - self._screen_width
+        max_camera_y = (tiled_map.height * tile_size) - self._screen_height
 
         self._camera_x = max(0, min(self._camera_x, max(0, max_camera_x)))
         self._camera_y = max(0, min(self._camera_y, max(0, max_camera_y)))
@@ -132,8 +140,8 @@ class OverworldScene(Scene):
         # Calculate visible tile range
         start_tile_x = max(0, self._camera_x // tile_size)
         start_tile_y = max(0, self._camera_y // tile_size)
-        end_tile_x = min(tiled_map.width, (self._camera_x + 1280) // tile_size + 1)
-        end_tile_y = min(tiled_map.height, (self._camera_y + 720) // tile_size + 1)
+        end_tile_x = min(tiled_map.width, (self._camera_x + self._screen_width) // tile_size + 1)
+        end_tile_y = min(tiled_map.height, (self._camera_y + self._screen_height) // tile_size + 1)
 
         # Render tile layers (simplified placeholder rendering)
         # In a real implementation, we'd load tilesets and render actual tiles
@@ -226,7 +234,7 @@ class OverworldScene(Scene):
     def _render_hud(self, surface: pygame.Surface) -> None:
         """Render HUD met zone info en tijd."""
         # Draw semi-transparent background for HUD
-        hud_bg = pygame.Surface((1280, 60), pygame.SRCALPHA)
+        hud_bg = pygame.Surface((self._screen_width, 60), pygame.SRCALPHA)
         hud_bg.fill((0, 0, 0, 180))
         surface.blit(hud_bg, (0, 0))
 
@@ -247,12 +255,12 @@ class OverworldScene(Scene):
                 True,
                 (150, 150, 150),
             )
-            surface.blit(pos_text, (1000, 40))
+            surface.blit(pos_text, (self._screen_width - 280, 40))
 
         # Controls hint
         controls_bg = pygame.Surface((300, 80), pygame.SRCALPHA)
         controls_bg.fill((0, 0, 0, 180))
-        surface.blit(controls_bg, (980, 640))
+        surface.blit(controls_bg, (self._screen_width - 300, self._screen_height - 80))
 
         controls_lines = [
             "Controls:",
@@ -261,7 +269,7 @@ class OverworldScene(Scene):
         ]
         for i, line in enumerate(controls_lines):
             text = self._font.render(line, True, (200, 200, 200))
-            surface.blit(text, (990, 645 + i * 20))
+            surface.blit(text, (self._screen_width - 290, self._screen_height - 75 + i * 20))
 
 
 __all__ = ["OverworldScene"]
