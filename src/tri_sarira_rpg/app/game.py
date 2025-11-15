@@ -2,11 +2,20 @@
 
 from __future__ import annotations
 
+import logging
+from pathlib import Path
+
 import pygame
 
 from tri_sarira_rpg.core.config import Config
+from tri_sarira_rpg.core.logging_setup import configure_logging
 from tri_sarira_rpg.core.scene import SceneManager
-from tri_sarira_rpg.presentation.main_menu import TitleScene
+from tri_sarira_rpg.data_access.repository import DataRepository
+from tri_sarira_rpg.presentation.overworld import OverworldScene
+from tri_sarira_rpg.systems.time import TimeSystem
+from tri_sarira_rpg.systems.world import WorldSystem
+
+logger = logging.getLogger(__name__)
 
 
 class Game:
@@ -14,14 +23,56 @@ class Game:
 
     def __init__(self) -> None:
         """Initialiseer Pygame, config en scenemanager."""
-        pygame.init()
+        # Load config
         self._config = Config.load()
+
+        # Setup logging
+        configure_logging(level=self._config.log_level)
+        logger.info("Tri-Sarira RPG - Step 3: World & Overworld starting...")
+
+        # Init Pygame
+        pygame.init()
         self._screen = pygame.display.set_mode(self._config.resolution)
         pygame.display.set_caption(self._config.title)
         self._clock = pygame.time.Clock()
+
+        # Initialize systems
+        project_root = Path.cwd()
+        if (project_root / "src").exists():
+            maps_dir = project_root / "maps"
+            data_dir = project_root / "data"
+        else:
+            # Running from different directory
+            maps_dir = Path("maps")
+            data_dir = Path("data")
+
+        self._data_repository = DataRepository(data_dir=data_dir)
+        self._world_system = WorldSystem(
+            data_repository=self._data_repository, maps_dir=maps_dir
+        )
+        self._time_system = TimeSystem()
+
+        # Scene manager
         self._running = True
         self._scene_manager = SceneManager()
-        self._scene_manager.push_scene(TitleScene(self._scene_manager))
+
+        # Start directly in overworld (Step 3 requirement)
+        # Load initial zone
+        start_zone_id = "z_r1_chandrapur_town"
+        try:
+            self._world_system.load_zone(start_zone_id)
+            logger.info(f"✓ Starting in zone: {start_zone_id}")
+        except Exception as e:
+            logger.error(f"Failed to load start zone {start_zone_id}: {e}")
+            logger.info("Will use placeholder zone instead")
+
+        # Create and push overworld scene
+        overworld_scene = OverworldScene(
+            self._scene_manager, self._world_system, self._time_system
+        )
+        self._scene_manager.push_scene(overworld_scene)
+
+        logger.info("✓ Game initialized, entering overworld")
 
     def run(self) -> None:
         """Voer de hoofdloop uit totdat de applicatie afsluit."""
