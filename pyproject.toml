@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tri-sarira-rpg"
+version = "0.1.0"
+description = "Architectuur-skelet voor de Tri-Śarīra RPG (Python + Pygame)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Gerald"}]
+dependencies = [
+  "pygame>=2.5",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "ruff>=0.4",
+  "mypy>=1.8",
+  "black>=24.0",
+]
+
+[project.urls]
+Homepage = "https://example.com/tri-sarira-rpg"
+
+[tool.hatch.build]
+packages = ["src/tri_sarira_rpg"]
