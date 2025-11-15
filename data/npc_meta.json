@@ -1,0 +1,36 @@
+{
+  "npcs": [
+    {
+      "npc_id": "npc_mc_adhira",
+      "actor_id": "mc_adhira",
+      "tier": "S",
+      "is_companion_candidate": false,
+      "is_main_character": true,
+      "companion_flags": {
+        "recruited": true,
+        "in_party": true,
+        "in_reserve_pool": false,
+        "phase": "COMPANION",
+        "guest_only": false
+      },
+      "home_region_id": "r1_chandrapur_valley",
+      "role_hint": "Body-frontliner / Spirit-novice"
+    },
+    {
+      "npc_id": "npc_comp_rajani",
+      "actor_id": "comp_rajani",
+      "tier": "A",
+      "is_companion_candidate": true,
+      "is_main_character": false,
+      "companion_flags": {
+        "recruited": false,
+        "in_party": false,
+        "in_reserve_pool": false,
+        "phase": "SEED",
+        "guest_only": false
+      },
+      "home_region_id": "r1_chandrapur_valley",
+      "role_hint": "Mind-controller / Tactician"
+    }
+  ]
+}

@@ -113,6 +113,21 @@ def validate_data() -> bool:
             zone_type = zone.get('type')
             logger.info(f"    * {zone_id}: {zone_name} ({zone_type})")
 
+        # NPC metadata (Step 4+, optional)
+        npcs = repo.get_all_npcs()
+        if npcs:
+            logger.info(f"  - NPCs: {len(npcs)}")
+            for npc in npcs:
+                npc_id = npc.get('npc_id')
+                actor_id = npc.get('actor_id')
+                tier = npc.get('tier')
+                is_mc = npc.get('is_main_character', False)
+                flags = npc.get('companion_flags', {})
+                recruited = flags.get('recruited', False)
+                in_party = flags.get('in_party', False)
+                status = "MC" if is_mc else ("Party" if in_party else ("Recruited" if recruited else "Not recruited"))
+                logger.info(f"    * {npc_id} ({actor_id}): Tier {tier}, {status}")
+
     except Exception as e:
         logger.error(f"✗ Error reading data summary: {e}")
         return False

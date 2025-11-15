@@ -12,6 +12,7 @@ from tri_sarira_rpg.core.logging_setup import configure_logging
 from tri_sarira_rpg.core.scene import SceneManager
 from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.presentation.overworld import OverworldScene
+from tri_sarira_rpg.systems.party import PartySystem
 from tri_sarira_rpg.systems.time import TimeSystem
 from tri_sarira_rpg.systems.world import WorldSystem
 
@@ -52,6 +53,12 @@ class Game:
         )
         self._time_system = TimeSystem()
 
+        # Party system (Step 4: NPC & Party)
+        npc_meta = self._data_repository.get_npc_meta()
+        self._party_system = PartySystem(
+            data_repository=self._data_repository, npc_meta=npc_meta
+        )
+
         # Scene manager
         self._running = True
         self._scene_manager = SceneManager()
@@ -68,7 +75,7 @@ class Game:
 
         # Create and push overworld scene
         overworld_scene = OverworldScene(
-            self._scene_manager, self._world_system, self._time_system
+            self._scene_manager, self._world_system, self._time_system, self._party_system
         )
         self._scene_manager.push_scene(overworld_scene)
 
