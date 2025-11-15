@@ -55,7 +55,9 @@ class WorldSystem:
         self._triggers: dict[str, Trigger] = {}
         self._triggered_ids: set[str] = set()  # For once_per_save tracking
 
-    def load_zone(self, zone_id: str, spawn_id: str | None = None) -> None:
+    def load_zone(
+        self, zone_id: str, spawn_id: str | None = None, from_portal: bool = False
+    ) -> None:
         """Laad een nieuwe zone en plaats de speler op een spawn point.
 
         Parameters
@@ -64,6 +66,9 @@ class WorldSystem:
             Zone ID, bijv. "z_r1_chandrapur_town"
         spawn_id : str | None
             Spawn point ID, of None voor default spawn
+        from_portal : bool
+            True als zone load getriggerd is door portal transition.
+            Voorkomt infinite loops bij portals op spawn points.
         """
         logger.info(f"Loading zone: {zone_id} (spawn: {spawn_id or 'default'})")
 
@@ -320,7 +325,7 @@ class WorldSystem:
                         f"Portal transition: {self._current_zone_id} → {target_zone_id} "
                         f"(spawn: {target_spawn_id or 'default'})"
                     )
-                    self.load_zone(target_zone_id, target_spawn_id)
+                    self.load_zone(target_zone_id, target_spawn_id, from_portal=True)
                     return
 
     @property
