@@ -44,7 +44,6 @@ def test_initial_party_has_main_character_only():
 
     print(f"✓ Active party has {len(active_party)} member: {active_party[0].actor_id}")
     print("✓ Main character is correctly initialized")
-    return True
 
 
 def test_add_companion_respects_party_limit():
@@ -111,7 +110,6 @@ def test_add_companion_respects_party_limit():
 
     print(f"✓ After trying to add third: {len(party.get_active_party())} active, {len(party.get_reserve_pool())} reserve")
     print("✓ Party limit correctly enforced")
-    return True
 
 
 def test_move_companion_to_reserve_pool():
@@ -176,7 +174,6 @@ def test_move_companion_to_reserve_pool():
 
     print("✓ Main character cannot be removed from party")
     print("✓ Companion successfully moved to reserve pool")
-    return True
 
 
 def run_all_tests():
@@ -196,9 +193,8 @@ def run_all_tests():
 
     for test_func in tests:
         try:
-            result = test_func()
-            if result:
-                passed += 1
+            test_func()
+            passed += 1
         except AssertionError as e:
             print(f"❌ Test failed: {e}")
             failed += 1
