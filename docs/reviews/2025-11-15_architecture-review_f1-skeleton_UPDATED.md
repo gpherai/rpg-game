@@ -598,7 +598,7 @@ After Step 1 is complete:
 
 1. **Implement actual TOML loading in Config.load()**
    - Use `tomllib` (Python 3.11+) or `tomli`
-   - Load config/default.toml + config/dev.toml
+  - Load config/default_config.toml + config/dev.toml
    - Merge and override
 
 2. **Add error handling to DataLoader**
