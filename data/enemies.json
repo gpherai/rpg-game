@@ -1,0 +1,48 @@
+{
+  "enemies": [
+    {
+      "id": "en_forest_sprout",
+      "name": "Forest Sprout",
+      "type": "minion",
+      "level": 2,
+      "base_stats": {
+        "STR": 5,
+        "END": 5,
+        "DEF": 4,
+        "FOC": 3,
+        "INS": 2,
+        "WILL": 3,
+        "MAG": 1,
+        "PRA": 1,
+        "RES": 2
+      },
+      "tags": ["plant", "physical", "common"],
+      "skills": ["sk_enemy_tackle"],
+      "xp_reward": 8,
+      "money_min": 2,
+      "money_max": 5
+    },
+    {
+      "id": "en_shrine_guardian",
+      "name": "Shrine Guardian",
+      "type": "boss",
+      "level": 6,
+      "base_stats": {
+        "STR": 9,
+        "END": 10,
+        "DEF": 9,
+        "FOC": 8,
+        "INS": 6,
+        "WILL": 9,
+        "MAG": 10,
+        "PRA": 10,
+        "RES": 9
+      },
+      "tags": ["spirit", "boss", "unique"],
+      "skills": ["sk_spirit_blast", "sk_spirit_guardian_ward"],
+      "xp_reward": 50,
+      "money_min": 20,
+      "money_max": 30
+    }
+  ]
+}

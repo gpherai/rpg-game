@@ -1,0 +1,33 @@
+# Default configuration voor Tri-Śarīra RPG
+# Dit bestand bevat de standaard runtime-instellingen
+
+[display]
+# Window resolutie (breedte, hoogte)
+width = 1280
+height = 720
+
+# Target framerate
+target_fps = 60
+
+# Window titel
+title = "Tri-Śarīra RPG"
+
+# Fullscreen mode
+fullscreen = false
+
+[paths]
+# Relatieve paden vanaf projectroot
+data_dir = "data"
+assets_dir = "assets"
+maps_dir = "maps"
+schema_dir = "schema"
+
+[development]
+# Development-only settings
+debug_mode = false
+show_fps = false
+skip_intro = false
+
+[logging]
+# Logging level: DEBUG, INFO, WARNING, ERROR
+level = "INFO"
