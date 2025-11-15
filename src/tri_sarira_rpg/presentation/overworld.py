@@ -7,6 +7,7 @@ import logging
 import pygame
 
 from tri_sarira_rpg.core.scene import Scene, SceneManager
+from tri_sarira_rpg.systems.party import PartySystem
 from tri_sarira_rpg.systems.time import TimeSystem
 from tri_sarira_rpg.systems.world import WorldSystem
 
@@ -17,11 +18,16 @@ class OverworldScene(Scene):
     """Overworld scene met map rendering en player movement."""
 
     def __init__(
-        self, manager: SceneManager, world_system: WorldSystem, time_system: TimeSystem
+        self,
+        manager: SceneManager,
+        world_system: WorldSystem,
+        time_system: TimeSystem,
+        party_system: PartySystem,
     ) -> None:
         super().__init__(manager)
         self._world = world_system
         self._time = time_system
+        self._party = party_system
 
         # Get screen resolution dynamically
         screen = pygame.display.get_surface()
@@ -50,6 +56,10 @@ class OverworldScene(Scene):
             # Interact key
             if event.key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_e):
                 self._world.interact()
+
+            # Debug key: Toggle Rajani in/out of party (Step 4 v0)
+            elif event.key == pygame.K_j:
+                self._debug_toggle_rajani()
 
     def update(self, dt: float) -> None:
         """Update overworld logic."""
@@ -94,6 +104,9 @@ class OverworldScene(Scene):
 
         # Render map
         self._render_map(surface)
+
+        # Render followers (before player so player is on top)
+        self._render_followers(surface)
 
         # Render player
         self._render_player(surface)
@@ -201,6 +214,65 @@ class OverworldScene(Scene):
                 (screen_x + 4, screen_y + 4, tile_size - 8, tile_size - 8),
             )
 
+    def _render_followers(self, surface: pygame.Surface) -> None:
+        """Render party followers (Step 4 v0)."""
+        player = self._world.player
+        if not player or not self._world.current_map:
+            return
+
+        tile_size = self._world.current_map.tile_width
+        active_party = self._party.get_active_party()
+
+        # Skip first member (MC/player)
+        followers = active_party[1:]
+        if not followers:
+            return
+
+        # Calculate follower positions (1 tile behind player, then chain)
+        # Start with player position
+        current_x, current_y = player.position.x, player.position.y
+        current_facing = player.facing
+
+        # Facing offset (opposite direction for followers)
+        facing_offset = {
+            "N": (0, 1),   # If player faces North, follower is South
+            "S": (0, -1),  # If player faces South, follower is North
+            "E": (-1, 0),  # If player faces East, follower is West
+            "W": (1, 0),   # If player faces West, follower is East
+        }
+
+        for i, follower in enumerate(followers):
+            # Calculate follower tile position (1 tile behind previous)
+            dx, dy = facing_offset.get(current_facing, (0, 1))
+            follower_tile_x = current_x + dx
+            follower_tile_y = current_y + dy
+
+            # Convert to screen coords
+            screen_x = (follower_tile_x * tile_size) - self._camera_x
+            screen_y = (follower_tile_y * tile_size) - self._camera_y
+
+            # Draw follower as green circle (different color from player)
+            center_x = screen_x + tile_size // 2
+            center_y = screen_y + tile_size // 2
+            radius = tile_size // 3
+
+            # Color variation for different followers
+            if i == 0:
+                color = (150, 255, 150)  # Light green for first follower
+            else:
+                color = (100, 200, 100)  # Darker green for additional followers
+
+            pygame.draw.circle(surface, color, (center_x, center_y), radius)
+
+            # Draw small indicator showing this is a follower
+            pygame.draw.circle(
+                surface, (255, 255, 200), (center_x, center_y - radius // 2), radius // 4
+            )
+
+            # Update position for next follower
+            current_x, current_y = follower_tile_x, follower_tile_y
+            # Keep same facing for chain
+
     def _render_player(self, surface: pygame.Surface) -> None:
         """Render de speler."""
         player = self._world.player
@@ -257,19 +329,65 @@ class OverworldScene(Scene):
             )
             surface.blit(pos_text, (self._screen_width - 280, 40))
 
+        # Party info (Step 4 v0)
+        active_party = self._party.get_active_party()
+        party_text = f"Party ({len(active_party)}/{self._party.party_max_size}):"
+        party_label = self._font.render(party_text, True, (200, 200, 200))
+        surface.blit(party_label, (self._screen_width - 280, 15))
+
+        for i, member in enumerate(active_party):
+            # Show actor_id (abbreviated)
+            actor_name = member.actor_id.replace("mc_", "").replace("comp_", "").capitalize()
+            member_text = f"  {actor_name}"
+            if member.is_main_character:
+                member_text += " (MC)"
+            text = self._font.render(member_text, True, (150, 200, 150))
+            surface.blit(text, (self._screen_width - 280, 35 + i * 18))
+
         # Controls hint
-        controls_bg = pygame.Surface((300, 80), pygame.SRCALPHA)
+        controls_bg = pygame.Surface((300, 100), pygame.SRCALPHA)
         controls_bg.fill((0, 0, 0, 180))
-        surface.blit(controls_bg, (self._screen_width - 300, self._screen_height - 80))
+        surface.blit(controls_bg, (self._screen_width - 300, self._screen_height - 100))
 
         controls_lines = [
             "Controls:",
             "WASD/Arrows: Move",
             "Space/E: Interact",
+            "J: Toggle Rajani (debug)",
         ]
         for i, line in enumerate(controls_lines):
             text = self._font.render(line, True, (200, 200, 200))
-            surface.blit(text, (self._screen_width - 290, self._screen_height - 75 + i * 20))
+            surface.blit(text, (self._screen_width - 290, self._screen_height - 95 + i * 20))
+
+    def _debug_toggle_rajani(self) -> None:
+        """Debug functie: toggle Rajani in/uit active party (Step 4 v0)."""
+        rajani_npc_id = "npc_comp_rajani"
+        rajani_actor_id = "comp_rajani"
+
+        # Check if Rajani is in active party
+        if self._party.is_in_party(rajani_npc_id):
+            # Move to reserve
+            success = self._party.move_to_reserve(rajani_npc_id)
+            if success:
+                logger.info("[DEBUG] Rajani moved to reserve pool")
+            else:
+                logger.warning("[DEBUG] Failed to move Rajani to reserve (is she MC?)")
+        elif self._party.is_in_reserve(rajani_npc_id):
+            # Move to active party
+            success = self._party.add_to_active_party(rajani_npc_id)
+            if success:
+                logger.info("[DEBUG] Rajani added to active party")
+            else:
+                logger.warning("[DEBUG] Party full, cannot add Rajani")
+        else:
+            # Not recruited yet, recruit her and add to party
+            logger.info("[DEBUG] Rajani not recruited, recruiting now...")
+            self._party.add_to_reserve_pool(rajani_npc_id, rajani_actor_id, tier="A")
+            success = self._party.add_to_active_party(rajani_npc_id)
+            if success:
+                logger.info("[DEBUG] Rajani recruited and added to active party")
+            else:
+                logger.warning("[DEBUG] Party full, Rajani recruited but in reserve")
 
 
 __all__ = ["OverworldScene"]

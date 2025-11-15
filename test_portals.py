@@ -89,12 +89,11 @@ def test_portal_navigation():
     print("✅ All portal transitions successful!")
     print("=" * 60)
 
-    return True
 
 if __name__ == "__main__":
     try:
-        success = test_portal_navigation()
-        exit(0 if success else 1)
+        test_portal_navigation()
+        exit(0)
     except Exception as e:
         print(f"\n❌ Error during portal test: {e}")
         import traceback

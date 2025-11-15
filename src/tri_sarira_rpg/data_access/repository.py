@@ -19,6 +19,7 @@ class DataRepository:
         "actors": ["id", "name", "type", "level"],
         "enemies": ["id", "name", "type", "level"],
         "zones": ["id", "name", "type", "description"],
+        "npcs": ["npc_id", "actor_id", "tier", "is_companion_candidate", "is_main_character"],
     }
 
     def __init__(self, data_dir: Path | None = None) -> None:
@@ -36,6 +37,7 @@ class DataRepository:
         self._validation_errors.clear()
         all_ok = True
 
+        # Required data files
         for data_type in ["actors", "enemies", "zones"]:
             try:
                 data = self._loader.load_json(f"{data_type}.json")
@@ -58,6 +60,27 @@ class DataRepository:
                 self._validation_errors.append(str(e))
                 logger.error(f"Invalid data: {e}")
                 all_ok = False
+
+        # Optional data files (Step 4+)
+        try:
+            data = self._loader.load_json("npc_meta.json")
+            required = self.REQUIRED_KEYS.get("npcs", ["npc_id", "actor_id"])
+            errors = self._loader.validate_data(data, "npcs", required)
+
+            if errors:
+                self._validation_errors.extend(errors)
+                for error in errors:
+                    logger.error(f"Validation error: {error}")
+                # Don't fail validation entirely for optional file
+            else:
+                logger.info("✓ npc_meta.json validated successfully")
+
+        except FileNotFoundError:
+            logger.info("npc_meta.json not found (optional for Step 4+)")
+        except ValueError as e:
+            self._validation_errors.append(str(e))
+            logger.error(f"Invalid npc_meta data: {e}")
+            # Don't fail validation entirely for optional file
 
         return all_ok
 
@@ -109,6 +132,36 @@ class DataRepository:
         """Haal alle zonedefinities op."""
         data = self._loader.load_json("zones.json")
         return data.get("zones", [])
+
+    # NPC metadata methods
+    def get_npc(self, npc_id: str) -> dict[str, Any] | None:
+        """Haal een NPC-definitie op uit npc_meta.json."""
+        try:
+            data = self._loader.load_json("npc_meta.json")
+            npcs = data.get("npcs", [])
+            for npc in npcs:
+                if npc.get("npc_id") == npc_id:
+                    return npc
+        except FileNotFoundError:
+            logger.warning("npc_meta.json not found, NPC metadata not available")
+        return None
+
+    def get_all_npcs(self) -> list[dict[str, Any]]:
+        """Haal alle NPC-definities op uit npc_meta.json."""
+        try:
+            data = self._loader.load_json("npc_meta.json")
+            return data.get("npcs", [])
+        except FileNotFoundError:
+            logger.warning("npc_meta.json not found, returning empty list")
+            return []
+
+    def get_npc_meta(self) -> dict[str, Any]:
+        """Haal de volledige npc_meta.json op voor PartySystem initialisatie."""
+        try:
+            return self._loader.load_json("npc_meta.json")
+        except FileNotFoundError:
+            logger.warning("npc_meta.json not found, returning empty structure")
+            return {"npcs": []}
 
     # Legacy methods (for compatibility)
     def get_enemies_for_group(self, group_id: str) -> list[dict[str, Any]]:
