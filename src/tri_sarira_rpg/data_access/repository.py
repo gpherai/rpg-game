@@ -20,6 +20,8 @@ class DataRepository:
         "enemies": ["id", "name", "type", "level"],
         "zones": ["id", "name", "type", "description"],
         "npcs": ["npc_id", "actor_id", "tier", "is_companion_candidate", "is_main_character"],
+        "skills": ["id", "name", "domain", "type", "target", "power"],
+        "items": ["id", "name", "type", "category"],
     }
 
     def __init__(self, data_dir: Path | None = None) -> None:
@@ -62,25 +64,30 @@ class DataRepository:
                 all_ok = False
 
         # Optional data files (Step 4+)
-        try:
-            data = self._loader.load_json("npc_meta.json")
-            required = self.REQUIRED_KEYS.get("npcs", ["npc_id", "actor_id"])
-            errors = self._loader.validate_data(data, "npcs", required)
+        for optional_file, data_type in [
+            ("npc_meta.json", "npcs"),
+            ("skills.json", "skills"),
+            ("items.json", "items"),
+        ]:
+            try:
+                data = self._loader.load_json(optional_file)
+                required = self.REQUIRED_KEYS.get(data_type, ["id"])
+                errors = self._loader.validate_data(data, data_type, required)
 
-            if errors:
-                self._validation_errors.extend(errors)
-                for error in errors:
-                    logger.error(f"Validation error: {error}")
+                if errors:
+                    self._validation_errors.extend(errors)
+                    for error in errors:
+                        logger.error(f"Validation error: {error}")
+                    # Don't fail validation entirely for optional file
+                else:
+                    logger.info(f"✓ {optional_file} validated successfully")
+
+            except FileNotFoundError:
+                logger.info(f"{optional_file} not found (optional for Step 4+/5+)")
+            except ValueError as e:
+                self._validation_errors.append(str(e))
+                logger.error(f"Invalid {optional_file} data: {e}")
                 # Don't fail validation entirely for optional file
-            else:
-                logger.info("✓ npc_meta.json validated successfully")
-
-        except FileNotFoundError:
-            logger.info("npc_meta.json not found (optional for Step 4+)")
-        except ValueError as e:
-            self._validation_errors.append(str(e))
-            logger.error(f"Invalid npc_meta data: {e}")
-            # Don't fail validation entirely for optional file
 
         return all_ok
 

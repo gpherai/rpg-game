@@ -7,6 +7,7 @@ import logging
 import pygame
 
 from tri_sarira_rpg.core.scene import Scene, SceneManager
+from tri_sarira_rpg.systems.combat import CombatSystem
 from tri_sarira_rpg.systems.party import PartySystem
 from tri_sarira_rpg.systems.time import TimeSystem
 from tri_sarira_rpg.systems.world import WorldSystem
@@ -23,11 +24,13 @@ class OverworldScene(Scene):
         world_system: WorldSystem,
         time_system: TimeSystem,
         party_system: PartySystem,
+        combat_system: CombatSystem,
     ) -> None:
         super().__init__(manager)
         self._world = world_system
         self._time = time_system
         self._party = party_system
+        self._combat = combat_system
 
         # Get screen resolution dynamically
         screen = pygame.display.get_surface()
@@ -60,6 +63,10 @@ class OverworldScene(Scene):
             # Debug key: Toggle Rajani in/out of party (Step 4 v0)
             elif event.key == pygame.K_j:
                 self._debug_toggle_rajani()
+
+            # Debug key: Start battle (Step 5 Combat v0)
+            elif event.key == pygame.K_b:
+                self._debug_start_battle()
 
     def update(self, dt: float) -> None:
         """Update overworld logic."""
@@ -354,10 +361,11 @@ class OverworldScene(Scene):
             "WASD/Arrows: Move",
             "Space/E: Interact",
             "J: Toggle Rajani (debug)",
+            "B: Start Battle (debug)",
         ]
         for i, line in enumerate(controls_lines):
             text = self._font.render(line, True, (200, 200, 200))
-            surface.blit(text, (self._screen_width - 290, self._screen_height - 95 + i * 20))
+            surface.blit(text, (self._screen_width - 290, self._screen_height - 115 + i * 20))
 
     def _debug_toggle_rajani(self) -> None:
         """Debug functie: toggle Rajani in/uit active party (Step 4 v0)."""
@@ -388,6 +396,20 @@ class OverworldScene(Scene):
                 logger.info("[DEBUG] Rajani recruited and added to active party")
             else:
                 logger.warning("[DEBUG] Party full, Rajani recruited but in reserve")
+
+    def _debug_start_battle(self) -> None:
+        """Debug functie: start een test battle (Step 5 Combat v0)."""
+        from tri_sarira_rpg.presentation.battle import BattleScene
+
+        logger.info("[DEBUG] Starting test battle...")
+
+        # Start battle with Forest Sprout enemy
+        enemy_ids = ["en_forest_sprout"]
+        self._combat.start_battle(enemy_ids)
+
+        # Push BattleScene onto scene stack
+        battle_scene = BattleScene(self.manager, self._combat)
+        self.manager.push_scene(battle_scene)
 
 
 __all__ = ["OverworldScene"]
