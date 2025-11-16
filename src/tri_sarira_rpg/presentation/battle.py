@@ -589,7 +589,7 @@ class BattleScene(Scene):
             # XP distribution per party member
             if result.earned_xp:
                 for actor_id, xp in result.earned_xp.items():
-                    # Find party member to get name and level
+                    # Find party member to get name
                     party_member = None
                     for member in self._combat.battle_state.party:
                         if member.actor_id == actor_id:
@@ -597,8 +597,12 @@ class BattleScene(Scene):
                             break
 
                     if party_member:
+                        # Get current level from runtime PartySystem (after level-ups)
+                        pm_state = self._combat._party.get_member_by_actor_id(actor_id)
+                        current_level = pm_state.level if pm_state else party_member.level
+
                         xp_line = self._font_small.render(
-                            f"{party_member.name}: LV {party_member.level} (XP +{xp})",
+                            f"{party_member.name}: LV {current_level} (XP +{xp})",
                             True,
                             self._color_party,
                         )
