@@ -349,9 +349,9 @@ class OverworldScene(Scene):
         surface.blit(party_label, (self._screen_width - 280, 15))
 
         for i, member in enumerate(active_party):
-            # Show actor_id (abbreviated)
+            # Show actor_id (abbreviated) with level
             actor_name = member.actor_id.replace("mc_", "").replace("comp_", "").capitalize()
-            member_text = f"  {actor_name}"
+            member_text = f"  {actor_name} Lv {member.level}"
             if member.is_main_character:
                 member_text += " (MC)"
             text = self._font.render(member_text, True, (150, 200, 150))
