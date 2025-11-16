@@ -1,0 +1,123 @@
+{
+  "skills": [
+    {
+      "id": "sk_body_strike",
+      "name": "Body Strike",
+      "description": "Een krachtige fysieke aanval",
+      "domain": "Physical",
+      "type": "attack",
+      "target": "single_enemy",
+      "power": 12,
+      "accuracy_bonus": 0,
+      "resource_cost": {
+        "type": "stamina",
+        "amount": 3
+      },
+      "effects": []
+    },
+    {
+      "id": "sk_spirit_spark",
+      "name": "Spirit Spark",
+      "description": "Een spirituele aanval met licht element",
+      "domain": "Spiritual",
+      "type": "attack",
+      "target": "single_enemy",
+      "power": 10,
+      "accuracy_bonus": 5,
+      "resource_cost": {
+        "type": "prana",
+        "amount": 4
+      },
+      "effects": []
+    },
+    {
+      "id": "sk_mind_mark_weakness",
+      "name": "Mark Weakness",
+      "description": "Markeer zwakte op vijand, verhoogt schade van allies",
+      "domain": "Mental",
+      "type": "debuff",
+      "target": "single_enemy",
+      "power": 0,
+      "accuracy_bonus": 10,
+      "resource_cost": {
+        "type": "focus",
+        "amount": 5
+      },
+      "effects": [
+        {
+          "type": "defense_down",
+          "stat": "DEF",
+          "amount": 2,
+          "duration": 3
+        }
+      ]
+    },
+    {
+      "id": "sk_body_quick_step",
+      "name": "Quick Step",
+      "description": "Snelle fysieke aanval",
+      "domain": "Physical",
+      "type": "attack",
+      "target": "single_enemy",
+      "power": 8,
+      "accuracy_bonus": 15,
+      "resource_cost": {
+        "type": "stamina",
+        "amount": 2
+      },
+      "effects": []
+    },
+    {
+      "id": "sk_enemy_tackle",
+      "name": "Tackle",
+      "description": "Simpele charge aanval",
+      "domain": "Physical",
+      "type": "attack",
+      "target": "single_enemy",
+      "power": 10,
+      "accuracy_bonus": 0,
+      "resource_cost": {
+        "type": "none",
+        "amount": 0
+      },
+      "effects": []
+    },
+    {
+      "id": "sk_spirit_blast",
+      "name": "Spirit Blast",
+      "description": "Krachtige spirituele explosie",
+      "domain": "Spiritual",
+      "type": "attack",
+      "target": "single_enemy",
+      "power": 18,
+      "accuracy_bonus": 0,
+      "resource_cost": {
+        "type": "prana",
+        "amount": 8
+      },
+      "effects": []
+    },
+    {
+      "id": "sk_spirit_guardian_ward",
+      "name": "Guardian Ward",
+      "description": "Verhoog verdediging van zichzelf",
+      "domain": "Spiritual",
+      "type": "buff",
+      "target": "self",
+      "power": 0,
+      "accuracy_bonus": 20,
+      "resource_cost": {
+        "type": "prana",
+        "amount": 6
+      },
+      "effects": [
+        {
+          "type": "defense_up",
+          "stat": "DEF",
+          "amount": 3,
+          "duration": 3
+        }
+      ]
+    }
+  ]
+}

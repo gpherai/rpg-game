@@ -15,6 +15,11 @@ class Scene(ABC):
     def __init__(self, manager: "SceneManager") -> None:
         self._manager = manager
 
+    @property
+    def manager(self) -> "SceneManager":
+        """Publieke toegang tot de SceneManager."""
+        return self._manager
+
     @abstractmethod
     def handle_event(self, event: pygame.event.Event) -> None:
         """Ontvang Pygame-events vanuit de hoofdloop."""

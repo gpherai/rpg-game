@@ -1,0 +1,49 @@
+{
+  "items": [
+    {
+      "id": "item_small_herb",
+      "name": "Small Herb",
+      "description": "Herstel 20 HP",
+      "type": "consumable",
+      "category": "healing",
+      "effect": {
+        "type": "heal_hp",
+        "amount": 20
+      },
+      "usable_in_battle": true,
+      "usable_in_overworld": true,
+      "price": 10,
+      "sellable": true
+    },
+    {
+      "id": "item_medium_herb",
+      "name": "Medium Herb",
+      "description": "Herstel 50 HP",
+      "type": "consumable",
+      "category": "healing",
+      "effect": {
+        "type": "heal_hp",
+        "amount": 50
+      },
+      "usable_in_battle": true,
+      "usable_in_overworld": true,
+      "price": 30,
+      "sellable": true
+    },
+    {
+      "id": "item_stamina_tonic",
+      "name": "Stamina Tonic",
+      "description": "Herstel 10 Stamina",
+      "type": "consumable",
+      "category": "resource",
+      "effect": {
+        "type": "restore_stamina",
+        "amount": 10
+      },
+      "usable_in_battle": true,
+      "usable_in_overworld": true,
+      "price": 15,
+      "sellable": true
+    }
+  ]
+}
