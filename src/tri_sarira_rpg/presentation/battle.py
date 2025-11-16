@@ -142,8 +142,8 @@ class BattleScene(Scene):
                 self._menu_state = MenuState.MAIN_MENU
 
         elif self._menu_state == MenuState.ITEM_SELECT:
-            available_items = [item_id for item_id, qty in self._inventory.items() if qty > 0]
-            max_index = len(available_items) - 1
+            available_items = self._inventory.get_available_items()
+            max_index = max(0, len(available_items) - 1) if available_items else 0
 
             if key == pygame.K_UP or key == pygame.K_w:
                 self._selected_item_index = max(0, self._selected_item_index - 1)
