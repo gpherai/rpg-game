@@ -20,6 +20,11 @@ class PartyMember:
     is_guest: bool = False
     tier: str | None = None
 
+    # Progression (Step 5: Progression & Leveling v0)
+    level: int = 1
+    xp: int = 0  # XP towards next level
+    base_stats: dict[str, int] = field(default_factory=dict)  # Current base stats
+
 
 @dataclass
 class PartyState:
@@ -91,20 +96,32 @@ class PartySystem:
                 logger.debug(f"NPC {npc_id} not recruited yet, skipping")
                 continue
 
+            # Load actor data for level and base_stats
+            level = 1
+            base_stats = {}
+            if self._data_repository:
+                actor_data = self._data_repository.get_actor(actor_id)
+                if actor_data:
+                    level = actor_data.get("level", 1)
+                    base_stats = actor_data.get("base_stats", {}).copy()
+
             member = PartyMember(
                 npc_id=npc_id,
                 actor_id=actor_id,
                 is_main_character=is_main,
                 is_guest=is_guest,
-                tier=tier
+                tier=tier,
+                level=level,
+                xp=0,
+                base_stats=base_stats,
             )
 
             if in_party:
                 self._state.active_party.append(member)
-                logger.info(f"Added {npc_id} ({actor_id}) to active party")
+                logger.info(f"Added {npc_id} ({actor_id}) to active party (Lv {level})")
             elif in_reserve:
                 self._state.reserve_pool.append(member)
-                logger.info(f"Added {npc_id} ({actor_id}) to reserve pool")
+                logger.info(f"Added {npc_id} ({actor_id}) to reserve pool (Lv {level})")
 
         # Sanity check: er moet altijd precies 1 main character zijn
         mc_count = sum(1 for m in self._state.active_party if m.is_main_character)
@@ -274,6 +291,56 @@ class PartySystem:
     def reserve_count(self) -> int:
         """Aantal reserve members."""
         return len(self._state.reserve_pool)
+
+    # Progression methods (Step 5: Progression & Leveling v0)
+    def get_party_member(self, actor_id: str) -> PartyMember | None:
+        """Get party member by actor_id (alias for get_member_by_actor_id)."""
+        return self.get_member_by_actor_id(actor_id)
+
+    def update_member_level(self, actor_id: str, new_level: int, new_xp: int) -> None:
+        """Update member's level and XP.
+
+        Parameters
+        ----------
+        actor_id : str
+            Actor ID
+        new_level : int
+            New level
+        new_xp : int
+            New XP towards next level
+        """
+        member = self.get_member_by_actor_id(actor_id)
+        if member:
+            member.level = new_level
+            member.xp = new_xp
+            logger.debug(f"Updated {actor_id}: Lv {new_level}, XP {new_xp}")
+        else:
+            logger.warning(f"Cannot update level for {actor_id}: not in party/reserve")
+
+    def apply_stat_gains(self, actor_id: str, stat_gains: Any) -> None:
+        """Apply stat gains from level-up to member's base_stats.
+
+        Parameters
+        ----------
+        actor_id : str
+            Actor ID
+        stat_gains : StatGains
+            Stat gains from ProgressionSystem
+        """
+        member = self.get_member_by_actor_id(actor_id)
+        if not member:
+            logger.warning(f"Cannot apply stat gains for {actor_id}: not in party/reserve")
+            return
+
+        # Apply gains to base_stats
+        for stat in ["STR", "END", "DEF", "SPD", "ACC", "FOC", "INS", "WILL", "MAG", "PRA", "RES"]:
+            gain = getattr(stat_gains, stat, 0)
+            if gain > 0:
+                if stat not in member.base_stats:
+                    member.base_stats[stat] = 0
+                member.base_stats[stat] += gain
+
+        logger.debug(f"Applied stat gains to {actor_id}: {stat_gains}")
 
 
 __all__ = ["PartySystem", "PartyMember", "PartyState"]

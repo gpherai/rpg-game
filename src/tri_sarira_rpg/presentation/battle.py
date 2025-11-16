@@ -561,7 +561,7 @@ class BattleScene(Scene):
                     surface.blit(text, (menu_x + 20, menu_y + 80 + i * 25))
 
     def _render_battle_end(self, surface: pygame.Surface) -> None:
-        """Render battle end screen."""
+        """Render battle end screen with clear visual blocks."""
         if not self._combat.battle_state or not self._combat.battle_state.result:
             return
 
@@ -569,22 +569,22 @@ class BattleScene(Scene):
         outcome_text = "VICTORY!" if result.outcome == BattleOutcome.WIN else "DEFEAT..."
         outcome_color = (100, 255, 100) if result.outcome == BattleOutcome.WIN else (255, 100, 100)
 
-        # Draw outcome
+        # === BLOCK 1: Outcome Header ===
         text = self._font_large.render(outcome_text, True, outcome_color)
-        text_rect = text.get_rect(center=(self._screen_width // 2, self._screen_height // 2 - 150))
+        text_rect = text.get_rect(center=(self._screen_width // 2, 120))
         surface.blit(text, text_rect)
 
-        # Draw rewards (if WIN)
-        if result.outcome == BattleOutcome.WIN:
-            y_offset = self._screen_height // 2 - 80
+        y_offset = 180  # Start position for rewards/level-ups
 
+        # === BLOCK 2: Rewards (if WIN) ===
+        if result.outcome == BattleOutcome.WIN:
             # Total XP
             total_xp_text = self._font.render(
                 f"Total XP: {result.total_xp}", True, self._color_text
             )
             total_xp_rect = total_xp_text.get_rect(center=(self._screen_width // 2, y_offset))
             surface.blit(total_xp_text, total_xp_rect)
-            y_offset += 30
+            y_offset += 28
 
             # XP distribution per party member
             if result.earned_xp:
@@ -597,7 +597,6 @@ class BattleScene(Scene):
                             break
 
                     if party_member:
-                        # For v0: no level-up system, just show "Name: LV x (XP +N)"
                         xp_line = self._font_small.render(
                             f"{party_member.name}: LV {party_member.level} (XP +{xp})",
                             True,
@@ -605,9 +604,88 @@ class BattleScene(Scene):
                         )
                         xp_line_rect = xp_line.get_rect(center=(self._screen_width // 2, y_offset))
                         surface.blit(xp_line, xp_line_rect)
-                        y_offset += 25
+                        y_offset += 22
 
-            # Money (if any)
+            # === BLOCK 3: Level-ups ===
+            if result.level_ups:
+                y_offset += 20  # Extra spacing before level-up block
+
+                # Level-up header
+                level_up_header = self._font.render("LEVEL UP!", True, (255, 215, 0))
+                level_up_header_rect = level_up_header.get_rect(
+                    center=(self._screen_width // 2, y_offset)
+                )
+                surface.blit(level_up_header, level_up_header_rect)
+                y_offset += 32
+
+                # Each character's level-up
+                for level_up in result.level_ups:
+                    # Character name and level change
+                    level_up_text = self._font_small.render(
+                        f"{level_up.actor_name}: Lv {level_up.old_level} → Lv {level_up.new_level}",
+                        True,
+                        (255, 215, 0),  # Gold
+                    )
+                    level_up_rect = level_up_text.get_rect(
+                        center=(self._screen_width // 2, y_offset)
+                    )
+                    surface.blit(level_up_text, level_up_rect)
+                    y_offset += 22
+
+                    # Stat gains - split into two lines for readability
+                    gains = level_up.stat_gains
+                    line1_parts = []
+                    line2_parts = []
+
+                    # Line 1: HP and primary stats (6 stats max)
+                    for stat, value in [
+                        ("HP", gains.max_hp),
+                        ("STR", gains.STR),
+                        ("END", gains.END),
+                        ("DEF", gains.DEF),
+                        ("SPD", gains.SPD),
+                        ("ACC", gains.ACC),
+                    ]:
+                        if value > 0:
+                            line1_parts.append(f"{stat} +{value}")
+
+                    # Line 2: Mental/spiritual stats
+                    for stat, value in [
+                        ("FOC", gains.FOC),
+                        ("INS", gains.INS),
+                        ("WILL", gains.WILL),
+                        ("MAG", gains.MAG),
+                        ("PRA", gains.PRA),
+                        ("RES", gains.RES),
+                    ]:
+                        if value > 0:
+                            line2_parts.append(f"{stat} +{value}")
+
+                    # Render line 1
+                    if line1_parts:
+                        line1_text = self._font_small.render(
+                            ", ".join(line1_parts), True, (180, 180, 180)
+                        )
+                        line1_rect = line1_text.get_rect(
+                            center=(self._screen_width // 2, y_offset)
+                        )
+                        surface.blit(line1_text, line1_rect)
+                        y_offset += 20
+
+                    # Render line 2
+                    if line2_parts:
+                        line2_text = self._font_small.render(
+                            ", ".join(line2_parts), True, (180, 180, 180)
+                        )
+                        line2_rect = line2_text.get_rect(
+                            center=(self._screen_width // 2, y_offset)
+                        )
+                        surface.blit(line2_text, line2_rect)
+                        y_offset += 20
+
+                    y_offset += 10  # Extra spacing between characters
+
+            # === BLOCK 4: Money ===
             if result.earned_money > 0:
                 y_offset += 10
                 money_text = self._font.render(
@@ -615,10 +693,13 @@ class BattleScene(Scene):
                 )
                 money_rect = money_text.get_rect(center=(self._screen_width // 2, y_offset))
                 surface.blit(money_text, money_rect)
+                y_offset += 30
 
-        # Draw continue prompt
+        # === BLOCK 5: Continue Prompt (always at bottom) ===
+        # Use dynamic y_offset to avoid overlap, with minimum bottom position
+        prompt_y = max(y_offset + 30, self._screen_height - 60)
         prompt = self._font.render("Press SPACE to continue", True, self._color_text)
-        prompt_rect = prompt.get_rect(center=(self._screen_width // 2, self._screen_height // 2 + 100))
+        prompt_rect = prompt.get_rect(center=(self._screen_width // 2, prompt_y))
         surface.blit(prompt, prompt_rect)
 
 
