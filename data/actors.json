@@ -21,20 +21,24 @@
         "ment_weight": 0.2,
         "spir_weight": 0.3
       },
-      "tags": ["protagonist", "body_focus", "spirit_novice"],
-      "starting_skills": ["sk_body_strike", "sk_spirit_spark"],
+      "tags": [
+        "protagonist",
+        "body_focus",
+        "spirit_novice",
+        "chandrapur",
+        "youth",
+        "unawakened_potential"
+      ],
+      "starting_skills": [
+        "sk_body_strike",
+        "sk_spirit_spark"
+      ],
       "archetype": "seeker",
       "tri_sharira_profile": {
         "body": 4,
         "mind": 6,
         "spirit": 7
       },
-      "tags": [
-        "chandrapur",
-        "protagonist",
-        "youth",
-        "unawakened_potential"
-      ],
       "traits": {
         "temperament": "restless",
         "alignment_hint": "dharma-leaning"
@@ -61,19 +65,23 @@
         "ment_weight": 0.5,
         "spir_weight": 0.3
       },
-      "tags": ["companion", "mind_focus", "controller"],
-      "starting_skills": ["sk_mind_mark_weakness", "sk_body_quick_step"],
+      "tags": [
+        "companion",
+        "mind_focus",
+        "controller",
+        "chandrapur",
+        "mentor_tone"
+      ],
+      "starting_skills": [
+        "sk_mind_mark_weakness",
+        "sk_body_quick_step"
+      ],
       "archetype": "guide",
       "tri_sharira_profile": {
         "body": 3,
         "mind": 8,
         "spirit": 8
       },
-      "tags": [
-        "chandrapur",
-        "companion",
-        "mentor_tone"
-      ],
       "traits": {
         "temperament": "calm",
         "alignment_hint": "dharma-focused"

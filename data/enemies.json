@@ -13,11 +13,20 @@
         "INS": 2,
         "WILL": 3,
         "MAG": 1,
-      "PRA": 1,
-      "RES": 2
+        "PRA": 1,
+        "RES": 2
       },
-      "tags": ["plant", "physical", "common"],
-      "skills": ["sk_enemy_tackle"],
+      "tags": [
+        "plant",
+        "physical",
+        "common",
+        "forest",
+        "spirit",
+        "low_threat"
+      ],
+      "skills": [
+        "sk_enemy_tackle"
+      ],
       "xp_reward": 8,
       "money_min": 2,
       "money_max": 5,
@@ -27,12 +36,6 @@
         "mind": 2,
         "spirit": 5
       },
-      "tags": [
-        "forest",
-        "plant",
-        "spirit",
-        "low_threat"
-      ],
       "traits": {
         "temperament": "skittish",
         "alignment_hint": "neutral"
@@ -54,8 +57,19 @@
         "PRA": 10,
         "RES": 9
       },
-      "tags": ["spirit", "boss", "unique"],
-      "skills": ["sk_spirit_blast", "sk_spirit_guardian_ward"],
+      "tags": [
+        "spirit",
+        "boss",
+        "unique",
+        "shrine",
+        "guardian",
+        "trial",
+        "boss_like"
+      ],
+      "skills": [
+        "sk_spirit_blast",
+        "sk_spirit_guardian_ward"
+      ],
       "xp_reward": 50,
       "money_min": 20,
       "money_max": 30,
@@ -65,12 +79,6 @@
         "mind": 5,
         "spirit": 9
       },
-      "tags": [
-        "shrine",
-        "guardian",
-        "trial",
-        "boss_like"
-      ],
       "traits": {
         "temperament": "stern",
         "alignment_hint": "tests_dharma"
