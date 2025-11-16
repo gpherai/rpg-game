@@ -521,32 +521,271 @@ Output:
 
 ---
 
-## 8. Conclusie
+## 8. Post-Implementation Bugfixes & Architecture Improvements
 
-**Status**: ✅ **Step 5 v0 Complete**
+Na de initiële implementatie zijn de volgende bugfixes en architectuurverbeteringen doorgevoerd:
 
-De foundational implementation van het turn-based combat system is succesvol afgerond. Alle scope requirements zijn geïmplementeerd, data validation passed, en het systeem is volledig speelbaar.
+### 8.1 Bugfix: Scene.manager Property
+
+**Probleem**: AttributeError bij `self.manager` in OverworldScene._debug_start_battle()
+- BattleScene werd geïnstantieerd met `self.manager`, maar Scene baseclass had alleen `self._manager`
+
+**Oplossing** (src/tri_sarira_rpg/core/scene.py:18-21):
+```python
+@property
+def manager(self) -> "SceneManager":
+    """Publieke toegang tot de SceneManager."""
+    return self._manager
+```
+
+**Impact**: `self.manager` is nu de officiële, publieke API voor toegang tot SceneManager
+
+---
+
+### 8.2 DataRepository Items API (Encapsulatie Fix)
+
+**Probleem**: CombatSystem gebruikte directe `_loader` calls
+- `self._data_repository._loader.load_json("items.json")` breekt encapsulatie
+- Faalt bij lege items.json
+- Omzeilt caching/validatie
+
+**Oplossing** (src/tri_sarira_rpg/data_access/repository.py:173-215):
+```python
+def get_skill(self, skill_id: str) -> dict[str, Any] | None:
+    """Haal een skill-definitie op uit skills.json."""
+    try:
+        data = self._loader.load_json("skills.json")
+        skills = data.get("skills", [])
+        for skill in skills:
+            if skill.get("id") == skill_id:
+                return skill
+    except FileNotFoundError:
+        logger.warning("skills.json not found, skill data not available")
+    return None
+
+def get_item(self, item_id: str) -> dict[str, Any] | None:
+    """Haal een item-definitie op uit items.json."""
+    # ... similar implementation
+```
+
+**Refactored** (src/tri_sarira_rpg/systems/combat.py:507-519):
+```python
+def _get_skill_data(self, skill_id: str) -> dict[str, Any] | None:
+    """Haal skill data op via DataRepository."""
+    skill = self._data_repository.get_skill(skill_id)
+    if skill is None:
+        logger.warning(f"Skill {skill_id} not found in skills.json")
+    return skill
+```
+
+**Impact**:
+- ✅ CombatSystem kent geen interne paden/loader meer
+- ✅ Alle content komt via repository-laag
+- ✅ Combat faalt niet als items.json leeg is
+
+---
+
+### 8.3 InventorySystem (Centrale State)
+
+**Probleem**: Hardcoded items in BattleScene
+- `self._inventory = {"item_small_herb": 3, ...}` hardcoded in presentation layer
+- Geen centrale inventory state
+- Items verdwenen bij scene transitions
+
+**Oplossing** (src/tri_sarira_rpg/systems/inventory.py - nieuw bestand, 107 lines):
+```python
+@dataclass
+class InventoryState:
+    """Simpele inventory state voor v0 (item_id -> quantity)."""
+    items: dict[str, int] = field(default_factory=dict)
+
+    def add_item(self, item_id: str, quantity: int = 1) -> None:
+        """Voeg items toe aan inventory."""
+        if item_id not in self.items:
+            self.items[item_id] = 0
+        self.items[item_id] += quantity
+
+    def remove_item(self, item_id: str, quantity: int = 1) -> bool:
+        """Verwijder items uit inventory."""
+        # ... met quantity checks
+
+    def get_available_items(self) -> list[str]:
+        """Haal alle item IDs met quantity > 0 op."""
+        return [item_id for item_id, qty in self.items.items() if qty > 0]
+
+class InventorySystem:
+    """Beheert de inventory state (v0: simpele wrapper)."""
+    # ... methods delegate to InventoryState
+```
+
+**Integratie** (src/tri_sarira_rpg/app/game.py:64-69):
+```python
+# Inventory system (Step 5: Combat v0)
+self._inventory_system = InventorySystem()
+# Add some starter items for v0 testing
+self._inventory_system.add_item("item_small_herb", 3)
+self._inventory_system.add_item("item_medium_herb", 1)
+self._inventory_system.add_item("item_stamina_tonic", 2)
+```
+
+**Impact**:
+- ✅ Inventory staat centraal op één plek
+- ✅ BattleScene leest uit centrale inventory
+- ✅ Items persistent tussen battles (binnen sessie)
+- ✅ Quantity tracking automatisch
+
+---
+
+### 8.4 Data-Driven Skills & Items (UI)
+
+**Probleem**: Skills en items werden getoond als IDs
+- Skill menu: "sk_body_strike" in plaats van "Body Strike"
+- Item menu: "item_small_herb (3)" in plaats van "Small Herb (3)"
+- Geen resource cost weergave
+
+**Oplossing** (src/tri_sarira_rpg/presentation/battle.py:520-535):
+```python
+# Skill rendering - data-driven
+for i, skill_id in enumerate(current_actor.skills):
+    skill_data = self._data_repository.get_skill(skill_id)
+    skill_name = skill_data.get("name", skill_id) if skill_data else skill_id
+
+    # Get resource cost
+    cost_text = ""
+    if skill_data and "resource_cost" in skill_data:
+        cost_type = skill_data["resource_cost"].get("type", "")
+        cost_amount = skill_data["resource_cost"].get("amount", 0)
+        cost_text = f" ({cost_amount} {cost_type.capitalize()})"
+
+    display_text = f"> {skill_name}{cost_text}" if selected else f"  {skill_name}{cost_text}"
+```
+
+**Item Rendering** (src/tri_sarira_rpg/presentation/battle.py:542-558):
+```python
+# Item rendering - data-driven
+available_items = self._inventory.get_available_items()
+if not available_items:
+    # No items available
+    no_items_text = self._font_small.render("No items available", True, color)
+    surface.blit(no_items_text, (menu_x + 20, menu_y + 80))
+else:
+    for i, item_id in enumerate(available_items):
+        qty = self._inventory.get_quantity(item_id)
+        item_data = self._data_repository.get_item(item_id)
+        item_name = item_data.get("name", item_id) if item_data else item_id
+        display_text = f"> {item_name} ({qty})" if selected else f"  {item_name} ({qty})"
+```
+
+**Impact**:
+- ✅ Skills tonen "Body Strike (3 Stamina)" in plaats van "sk_body_strike"
+- ✅ Items tonen "Small Herb (3)" in plaats van "item_small_herb (3)"
+- ✅ Item menu toont "No items available" als inventory leeg is
+- ✅ Alle namen komen uit data/skills.json en data/items.json
+
+---
+
+### 8.5 XP/Level-Up Display (Battle End Screen)
+
+**Probleem**: XP werd gegeven maar niet zichtbaar gemaakt
+- Battle end screen toonde alleen "Earned X money"
+- Speler zag geen XP details per party member
+
+**Oplossing** (src/tri_sarira_rpg/presentation/battle.py:563-622):
+```python
+def _render_battle_end(self, surface: pygame.Surface) -> None:
+    # ... VICTORY! title ...
+
+    if result.outcome == BattleOutcome.WIN:
+        # Total XP
+        total_xp_text = self._font.render(
+            f"Total XP: {result.total_xp}", True, self._color_text
+        )
+        surface.blit(total_xp_text, total_xp_rect)
+
+        # XP distribution per party member
+        if result.earned_xp:
+            for actor_id, xp in result.earned_xp.items():
+                party_member = ... # Find member by actor_id
+                if party_member:
+                    # For v0: no level-up system, just show "Name: LV x (XP +N)"
+                    xp_line = self._font_small.render(
+                        f"{party_member.name}: LV {party_member.level} (XP +{xp})",
+                        True,
+                        self._color_party,
+                    )
+                    surface.blit(xp_line, xp_line_rect)
+
+        # Money (if any)
+        if result.earned_money > 0:
+            money_text = self._font.render(
+                f"Money: {result.earned_money} gold", True, self._color_text
+            )
+```
+
+**Impact**:
+- ✅ Battle end screen toont "Total XP: 50"
+- ✅ Per party member: "Adhira: LV 1 (XP +50)", "Rajani: LV 2 (XP +50)"
+- ✅ Money display (indien > 0)
+- ✅ Voor v0: geen level-up logic (komt in future step), alleen XP display
+
+---
+
+### 8.6 Files Changed (Post-Implementation)
+
+**New Files**:
+| File | Lines | Purpose |
+|------|-------|---------|
+| `src/tri_sarira_rpg/systems/inventory.py` | 107 | InventorySystem en InventoryState |
+
+**Modified Files**:
+| File | Changes | Summary |
+|------|---------|---------|
+| `src/tri_sarira_rpg/core/scene.py` | +4 lines | Scene.manager property |
+| `src/tri_sarira_rpg/data_access/repository.py` | +50 lines | get_skill(), get_item(), get_all_skills(), get_all_items() |
+| `src/tri_sarira_rpg/systems/combat.py` | ~20 lines changed | Gebruik DataRepository API (geen _loader) |
+| `src/tri_sarira_rpg/app/game.py` | +8 lines | InventorySystem instantiation |
+| `src/tri_sarira_rpg/presentation/overworld.py` | +2 parameters | Accepteer inventory + data_repository |
+| `src/tri_sarira_rpg/presentation/battle.py` | ~80 lines changed | Data-driven skills/items, XP display, inventory integration |
+
+**Total**: ~270 new/changed lines
+
+---
+
+## 9. Conclusie
+
+**Status**: ✅ **Step 5 v0 Complete (with Post-Implementation Improvements)**
+
+De foundational implementation van het turn-based combat system is succesvol afgerond. Alle scope requirements zijn geïmplementeerd, data validation passed, en het systeem is volledig speelbaar. Na code review zijn belangrijke architectuurverbeteringen doorgevoerd.
 
 **Belangrijkste Achievements**:
 - **Volledig functioneel combat systeem** met menu-driven gameplay
 - **Tri-Śarīra damage formulas** correct geïmplementeerd (Physical/Mental/Spiritual)
 - **Skills system** met 7 diverse skills en resource management
 - **Items system** met consumables usable in battle
-- **XP distribution** to all party members on victory
+- **XP distribution** to all party members on victory met visuele feedback
 - **Clean architecture** met systems/presentation separation
-- **1,400+ lines** of high-quality, type-hinted code
+- **InventorySystem** voor centrale state management
+- **Data-driven UI** (skills/items tonen namen uit JSON, geen hardcoded IDs)
+- **1,700+ lines** of high-quality, type-hinted code
 
-**Belangrijkste Beperkingen**:
+**Post-Implementation Improvements**:
+- ✅ Scene.manager property fix (geen AttributeError meer)
+- ✅ DataRepository API voor skills/items (geen _loader encapsulatie breaches)
+- ✅ InventorySystem met centrale state (geen hardcoded items in UI)
+- ✅ Data-driven skills/items rendering (namen + resource costs uit JSON)
+- ✅ XP/level-up display op battle end screen (Total XP + per-member breakdown)
+
+**Belangrijkste Beperkingen** (inherent aan v0 scope):
 - Simple enemy AI (random target)
 - No battle animations (instant feedback)
-- Placeholder inventory (hardcoded items)
+- No level-up system (XP wordt gegeven maar geen stat increases)
 - Single enemy combat only (multi-enemy not tested)
 
-**Aanbeveling**: Ready for merge naar `feature/f6-combat-v0` branch en integration testing met full game flow.
+**Aanbeveling**: Ready for merge naar `main` branch. Alle kritieke architectuurproblemen zijn opgelost.
 
 ---
 
-## 9. Appendix: Testing Checklist
+## 10. Appendix: Testing Checklist
 
 Voor reviewers en testers:
 

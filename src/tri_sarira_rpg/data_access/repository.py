@@ -170,6 +170,50 @@ class DataRepository:
             logger.warning("npc_meta.json not found, returning empty structure")
             return {"npcs": []}
 
+    # Skill methods (Step 5: Combat v0)
+    def get_skill(self, skill_id: str) -> dict[str, Any] | None:
+        """Haal een skill-definitie op uit skills.json."""
+        try:
+            data = self._loader.load_json("skills.json")
+            skills = data.get("skills", [])
+            for skill in skills:
+                if skill.get("id") == skill_id:
+                    return skill
+        except FileNotFoundError:
+            logger.warning("skills.json not found, skill data not available")
+        return None
+
+    def get_all_skills(self) -> list[dict[str, Any]]:
+        """Haal alle skill-definities op uit skills.json."""
+        try:
+            data = self._loader.load_json("skills.json")
+            return data.get("skills", [])
+        except FileNotFoundError:
+            logger.warning("skills.json not found, returning empty list")
+            return []
+
+    # Item methods (Step 5: Combat v0)
+    def get_item(self, item_id: str) -> dict[str, Any] | None:
+        """Haal een item-definitie op uit items.json."""
+        try:
+            data = self._loader.load_json("items.json")
+            items = data.get("items", [])
+            for item in items:
+                if item.get("id") == item_id:
+                    return item
+        except FileNotFoundError:
+            logger.warning("items.json not found, item data not available")
+        return None
+
+    def get_all_items(self) -> list[dict[str, Any]]:
+        """Haal alle item-definities op uit items.json."""
+        try:
+            data = self._loader.load_json("items.json")
+            return data.get("items", [])
+        except FileNotFoundError:
+            logger.warning("items.json not found, returning empty list")
+            return []
+
     # Legacy methods (for compatibility)
     def get_enemies_for_group(self, group_id: str) -> list[dict[str, Any]]:
         """Retourneer enemy-entries voor een encountergroep."""

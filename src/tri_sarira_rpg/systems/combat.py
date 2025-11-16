@@ -505,26 +505,18 @@ class CombatSystem:
         return messages
 
     def _get_skill_data(self, skill_id: str) -> dict[str, Any] | None:
-        """Haal skill data op."""
-        try:
-            skills_data = self._data_repository._loader.load_json("skills.json")
-            for skill in skills_data.get("skills", []):
-                if skill.get("id") == skill_id:
-                    return skill
-        except Exception as e:
-            logger.warning(f"Failed to load skill {skill_id}: {e}")
-        return None
+        """Haal skill data op via DataRepository."""
+        skill = self._data_repository.get_skill(skill_id)
+        if skill is None:
+            logger.warning(f"Skill {skill_id} not found in skills.json")
+        return skill
 
     def _get_item_data(self, item_id: str) -> dict[str, Any] | None:
-        """Haal item data op."""
-        try:
-            items_data = self._data_repository._loader.load_json("items.json")
-            for item in items_data.get("items", []):
-                if item.get("id") == item_id:
-                    return item
-        except Exception as e:
-            logger.warning(f"Failed to load item {item_id}: {e}")
-        return None
+        """Haal item data op via DataRepository."""
+        item = self._data_repository.get_item(item_id)
+        if item is None:
+            logger.warning(f"Item {item_id} not found in items.json")
+        return item
 
     def advance_turn(self) -> None:
         """Ga naar de volgende beurt."""

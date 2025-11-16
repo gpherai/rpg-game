@@ -7,7 +7,9 @@ import logging
 import pygame
 
 from tri_sarira_rpg.core.scene import Scene, SceneManager
+from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.systems.combat import CombatSystem
+from tri_sarira_rpg.systems.inventory import InventorySystem
 from tri_sarira_rpg.systems.party import PartySystem
 from tri_sarira_rpg.systems.time import TimeSystem
 from tri_sarira_rpg.systems.world import WorldSystem
@@ -25,12 +27,16 @@ class OverworldScene(Scene):
         time_system: TimeSystem,
         party_system: PartySystem,
         combat_system: CombatSystem,
+        inventory_system: InventorySystem,
+        data_repository: DataRepository,
     ) -> None:
         super().__init__(manager)
         self._world = world_system
         self._time = time_system
         self._party = party_system
         self._combat = combat_system
+        self._inventory = inventory_system
+        self._data_repository = data_repository
 
         # Get screen resolution dynamically
         screen = pygame.display.get_surface()
@@ -408,7 +414,9 @@ class OverworldScene(Scene):
         self._combat.start_battle(enemy_ids)
 
         # Push BattleScene onto scene stack
-        battle_scene = BattleScene(self.manager, self._combat)
+        battle_scene = BattleScene(
+            self.manager, self._combat, self._inventory, self._data_repository
+        )
         self.manager.push_scene(battle_scene)
 
 

@@ -9,6 +9,7 @@ from enum import Enum
 import pygame
 
 from tri_sarira_rpg.core.scene import Scene, SceneManager
+from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.systems.combat import (
     ActionType,
     BattleAction,
@@ -16,6 +17,7 @@ from tri_sarira_rpg.systems.combat import (
     Combatant,
     CombatSystem,
 )
+from tri_sarira_rpg.systems.inventory import InventorySystem
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +44,17 @@ class MenuState(Enum):
 class BattleScene(Scene):
     """Visualiseert turn-based gevechten."""
 
-    def __init__(self, manager: SceneManager, combat_system: CombatSystem) -> None:
+    def __init__(
+        self,
+        manager: SceneManager,
+        combat_system: CombatSystem,
+        inventory_system: InventorySystem,
+        data_repository: DataRepository,
+    ) -> None:
         super().__init__(manager)
         self._combat = combat_system
+        self._inventory = inventory_system
+        self._data_repository = data_repository
         self._phase = BattlePhase.START
         self._menu_state = MenuState.MAIN_MENU
 
@@ -57,13 +67,6 @@ class BattleScene(Scene):
         # Action log
         self._action_log: list[str] = []
         self._log_display_time = 0.0
-
-        # Temporary inventory (v0: hardcoded items)
-        self._inventory = {
-            "item_small_herb": 3,
-            "item_medium_herb": 1,
-            "item_stamina_tonic": 2,
-        }
 
         # Fonts
         pygame.font.init()
@@ -205,7 +208,7 @@ class BattleScene(Scene):
 
     def _confirm_item_selection(self) -> None:
         """Confirm item selection and use it."""
-        available_items = [item_id for item_id, qty in self._inventory.items() if qty > 0]
+        available_items = self._inventory.get_available_items()
         if not available_items or self._selected_item_index >= len(available_items):
             return
 
@@ -253,8 +256,11 @@ class BattleScene(Scene):
     ) -> None:
         """Execute item use."""
         # Consume item from inventory
-        if self._inventory.get(item_id, 0) > 0:
-            self._inventory[item_id] -= 1
+        if self._inventory.has_item(item_id):
+            self._inventory.remove_item(item_id, 1)
+        else:
+            logger.warning(f"Cannot use {item_id}: not in inventory")
+            return
 
         action = BattleAction(
             actor=actor, action_type=ActionType.ITEM, target=target, item_id=item_id
@@ -516,12 +522,19 @@ class BattleScene(Scene):
 
             for i, skill_id in enumerate(current_actor.skills):
                 color = self._color_highlight if i == self._selected_skill_index else self._color_text
-                # Show skill name (simplified: just show ID for now)
-                text = self._font_small.render(
-                    f"> {skill_id}" if i == self._selected_skill_index else f"  {skill_id}",
-                    True,
-                    color,
-                )
+                # Get skill name from data
+                skill_data = self._data_repository.get_skill(skill_id)
+                skill_name = skill_data.get("name", skill_id) if skill_data else skill_id
+
+                # Get resource cost
+                cost_text = ""
+                if skill_data and "resource_cost" in skill_data:
+                    cost_type = skill_data["resource_cost"].get("type", "")
+                    cost_amount = skill_data["resource_cost"].get("amount", 0)
+                    cost_text = f" ({cost_amount} {cost_type.capitalize()})"
+
+                display_text = f"> {skill_name}{cost_text}" if i == self._selected_skill_index else f"  {skill_name}{cost_text}"
+                text = self._font_small.render(display_text, True, color)
                 surface.blit(text, (menu_x + 20, menu_y + 80 + i * 25))
 
         elif self._menu_state == MenuState.ITEM_SELECT:
@@ -529,16 +542,23 @@ class BattleScene(Scene):
             title = self._font.render("Select Item:", True, self._color_text)
             surface.blit(title, (menu_x + 20, menu_y + 50))
 
-            available_items = [item_id for item_id, qty in self._inventory.items() if qty > 0]
-            for i, item_id in enumerate(available_items):
-                qty = self._inventory[item_id]
-                color = self._color_highlight if i == self._selected_item_index else self._color_text
-                text = self._font_small.render(
-                    f"> {item_id} ({qty})" if i == self._selected_item_index else f"  {item_id} ({qty})",
-                    True,
-                    color,
-                )
-                surface.blit(text, (menu_x + 20, menu_y + 80 + i * 25))
+            available_items = self._inventory.get_available_items()
+            if not available_items:
+                # No items available
+                no_items_text = self._font_small.render("No items available", True, self._color_text)
+                surface.blit(no_items_text, (menu_x + 20, menu_y + 80))
+            else:
+                for i, item_id in enumerate(available_items):
+                    qty = self._inventory.get_quantity(item_id)
+                    color = self._color_highlight if i == self._selected_item_index else self._color_text
+
+                    # Get item name from data
+                    item_data = self._data_repository.get_item(item_id)
+                    item_name = item_data.get("name", item_id) if item_data else item_id
+
+                    display_text = f"> {item_name} ({qty})" if i == self._selected_item_index else f"  {item_name} ({qty})"
+                    text = self._font_small.render(display_text, True, color)
+                    surface.blit(text, (menu_x + 20, menu_y + 80 + i * 25))
 
     def _render_battle_end(self, surface: pygame.Surface) -> None:
         """Render battle end screen."""
@@ -551,20 +571,54 @@ class BattleScene(Scene):
 
         # Draw outcome
         text = self._font_large.render(outcome_text, True, outcome_color)
-        text_rect = text.get_rect(center=(self._screen_width // 2, self._screen_height // 2 - 50))
+        text_rect = text.get_rect(center=(self._screen_width // 2, self._screen_height // 2 - 150))
         surface.blit(text, text_rect)
 
         # Draw rewards (if WIN)
         if result.outcome == BattleOutcome.WIN:
-            reward_text = self._font.render(
-                f"Earned {result.earned_money} money", True, self._color_text
+            y_offset = self._screen_height // 2 - 80
+
+            # Total XP
+            total_xp_text = self._font.render(
+                f"Total XP: {result.total_xp}", True, self._color_text
             )
-            reward_rect = reward_text.get_rect(center=(self._screen_width // 2, self._screen_height // 2))
-            surface.blit(reward_text, reward_rect)
+            total_xp_rect = total_xp_text.get_rect(center=(self._screen_width // 2, y_offset))
+            surface.blit(total_xp_text, total_xp_rect)
+            y_offset += 30
+
+            # XP distribution per party member
+            if result.earned_xp:
+                for actor_id, xp in result.earned_xp.items():
+                    # Find party member to get name and level
+                    party_member = None
+                    for member in self._combat.battle_state.party:
+                        if member.actor_id == actor_id:
+                            party_member = member
+                            break
+
+                    if party_member:
+                        # For v0: no level-up system, just show "Name: LV x (XP +N)"
+                        xp_line = self._font_small.render(
+                            f"{party_member.name}: LV {party_member.level} (XP +{xp})",
+                            True,
+                            self._color_party,
+                        )
+                        xp_line_rect = xp_line.get_rect(center=(self._screen_width // 2, y_offset))
+                        surface.blit(xp_line, xp_line_rect)
+                        y_offset += 25
+
+            # Money (if any)
+            if result.earned_money > 0:
+                y_offset += 10
+                money_text = self._font.render(
+                    f"Money: {result.earned_money} gold", True, self._color_text
+                )
+                money_rect = money_text.get_rect(center=(self._screen_width // 2, y_offset))
+                surface.blit(money_text, money_rect)
 
         # Draw continue prompt
         prompt = self._font.render("Press SPACE to continue", True, self._color_text)
-        prompt_rect = prompt.get_rect(center=(self._screen_width // 2, self._screen_height // 2 + 50))
+        prompt_rect = prompt.get_rect(center=(self._screen_width // 2, self._screen_height // 2 + 100))
         surface.blit(prompt, prompt_rect)
 
 

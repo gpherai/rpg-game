@@ -13,6 +13,7 @@ from tri_sarira_rpg.core.scene import SceneManager
 from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.presentation.overworld import OverworldScene
 from tri_sarira_rpg.systems.combat import CombatSystem
+from tri_sarira_rpg.systems.inventory import InventorySystem
 from tri_sarira_rpg.systems.party import PartySystem
 from tri_sarira_rpg.systems.time import TimeSystem
 from tri_sarira_rpg.systems.world import WorldSystem
@@ -60,6 +61,13 @@ class Game:
             data_repository=self._data_repository, npc_meta=npc_meta
         )
 
+        # Inventory system (Step 5: Combat v0)
+        self._inventory_system = InventorySystem()
+        # Add some starter items for v0 testing
+        self._inventory_system.add_item("item_small_herb", 3)
+        self._inventory_system.add_item("item_medium_herb", 1)
+        self._inventory_system.add_item("item_stamina_tonic", 2)
+
         # Combat system (Step 5: Combat v0)
         self._combat_system = CombatSystem(
             party_system=self._party_system,
@@ -87,6 +95,8 @@ class Game:
             self._time_system,
             self._party_system,
             self._combat_system,
+            self._inventory_system,
+            self._data_repository,
         )
         self._scene_manager.push_scene(overworld_scene)
 
