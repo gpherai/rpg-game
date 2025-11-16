@@ -1,0 +1,28 @@
+{
+  "shops": [
+    {
+      "shop_id": "shop_r1_town_general",
+      "zone_id": "z_r1_chandrapur_town",
+      "name": "Chandrapur General",
+      "shop_type": "GENERAL",
+      "inventory_entries": [
+        {
+          "item_id": "item_small_herb",
+          "base_price": 10,
+          "stock_type": "INFINITE",
+          "min_chapter": 1,
+          "max_chapter": 99,
+          "conditions": []
+        },
+        {
+          "item_id": "item_stamina_tonic",
+          "base_price": 20,
+          "stock_type": "LIMITED",
+          "min_chapter": 1,
+          "max_chapter": 2,
+          "conditions": []
+        }
+      ]
+    }
+  ]
+}

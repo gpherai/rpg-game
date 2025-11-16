@@ -1,0 +1,38 @@
+{
+  "dialogues": [
+    {
+      "dialogue_id": "dlg_r1_elder_shrine_intro",
+      "scope": "NPC",
+      "owner_id": "npc_r1_elder",
+      "nodes": [
+        {
+          "node_id": "n_intro",
+          "speaker_id": "npc_r1_elder",
+          "lines": [
+            {"text": "Welkom, reiziger. De shrine maakt onrustige geluiden."}
+          ],
+          "choices": [
+            {
+              "choice_id": "c_help",
+              "text": "Ik kijk het na.",
+              "effects": [
+                {"effect_type": "QUEST_START", "quest_id": "q_r1_shrine_intro"}
+              ],
+              "next_node_id": "n_ack",
+              "end_conversation": false
+            }
+          ]
+        },
+        {
+          "node_id": "n_ack",
+          "speaker_id": "npc_r1_elder",
+          "lines": [
+            {"text": "Dank je. Ga voorzichtig."}
+          ],
+          "choices": [],
+          "end_conversation": true
+        }
+      ]
+    }
+  ]
+}

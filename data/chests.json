@@ -1,0 +1,29 @@
+{
+  "chests": [
+    {
+      "chest_id": "ch_r1_route_sidepath_01",
+      "zone_id": "z_r1_forest_route",
+      "contents": [
+        {"item_id": "item_small_herb", "quantity": 2}
+      ],
+      "one_time_only": true,
+      "conditions": []
+    },
+    {
+      "chest_id": "ch_r1_shrine_reward_01",
+      "zone_id": "z_r1_shrine_clearing",
+      "contents": [
+        {"item_id": "item_medium_herb", "quantity": 1}
+      ],
+      "one_time_only": true,
+      "conditions": [
+        {
+          "type": "FLAG",
+          "flag_id": "flag_shrine_cleansed_r1",
+          "operator": "EQ",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

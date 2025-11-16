@@ -10,6 +10,7 @@ Usage:
 
 from __future__ import annotations
 
+import json
 import logging
 import sys
 from pathlib import Path
@@ -132,7 +133,41 @@ def validate_data() -> bool:
         logger.error(f"✗ Error reading data summary: {e}")
         return False
 
-    return True
+    # Additional structural checks for stub files
+    stub_specs = {
+        "dialogue.json": (dict, "dialogues"),
+        "quests.json": (dict, "quests"),
+        "shops.json": (dict, "shops"),
+        "loot_tables.json": (dict, "loot_tables"),
+        "chests.json": (dict, "chests"),
+        "npc_schedules.json": (dict, "npc_schedules"),
+        "events.json": (dict, "events"),
+    }
+
+    for filename, (expected_type, top_key) in stub_specs.items():
+        path = data_dir / filename
+        try:
+            payload = path.read_text(encoding="utf-8")
+            data = json.loads(payload)
+        except FileNotFoundError:
+            logger.error(f"✗ Missing data file: {filename}")
+            success = False
+            continue
+        except json.JSONDecodeError as e:
+            logger.error(f"✗ Invalid JSON in {filename}: {e}")
+            success = False
+            continue
+
+        if not isinstance(data, expected_type):
+            logger.error(f"✗ {filename} top-level is not a {expected_type.__name__}")
+            success = False
+            continue
+
+        if top_key not in data:
+            logger.error(f"✗ {filename} missing top-level key '{top_key}'")
+            success = False
+
+    return success
 
 
 def main() -> int:

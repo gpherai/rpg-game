@@ -1,0 +1,23 @@
+{
+  "loot_tables": [
+    {
+      "loot_table_id": "lt_r1_forest_route",
+      "entries": [
+        {
+          "item_id": "item_small_herb",
+          "drop_chance": 0.25,
+          "quantity_min": 1,
+          "quantity_max": 1,
+          "rarity_tag": "COMMON"
+        },
+        {
+          "item_id": "item_stamina_tonic",
+          "drop_chance": 0.1,
+          "quantity_min": 1,
+          "quantity_max": 1,
+          "rarity_tag": "UNCOMMON"
+        }
+      ]
+    }
+  ]
+}
