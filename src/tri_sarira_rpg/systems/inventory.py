@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -55,6 +56,10 @@ class InventoryState:
         """Haal alle item IDs met quantity > 0 op."""
         return [item_id for item_id, qty in self.items.items() if qty > 0]
 
+    def iter_items(self) -> Iterable[tuple[str, int]]:
+        """Itereer over alle items (item_id, quantity) pairs."""
+        return iter(self.items.items())
+
 
 class InventorySystem:
     """Beheert de inventory state (v0: simpele wrapper)."""
@@ -90,6 +95,10 @@ class InventorySystem:
     def get_available_items(self) -> list[str]:
         """Haal beschikbare item IDs op."""
         return self._state.get_available_items()
+
+    def iter_items(self) -> Iterable[tuple[str, int]]:
+        """Itereer over alle items (item_id, quantity) pairs."""
+        return self._state.iter_items()
 
 
 __all__ = ["InventorySystem", "InventoryState"]
