@@ -338,6 +338,7 @@ class OverworldScene(Scene):
         HUD_RIGHT_X = self._screen_width - 280
         HUD_PARTY_START_Y = 15
         PARTY_LINE_HEIGHT = 22  # Increased from 20 for better readability
+        HEADER_LINE_HEIGHT = PARTY_LINE_HEIGHT  # Houd spacing consistent met partyregels
 
         active_party = self._party.get_active_party()
 
@@ -346,8 +347,19 @@ class OverworldScene(Scene):
         party_label = self._font.render(party_text, True, (200, 200, 200))
         surface.blit(party_label, (HUD_RIGHT_X, HUD_PARTY_START_Y))
 
-        # Party members - each on their own line with runtime levels
-        y_offset = HUD_PARTY_START_Y + 25  # Start below header
+        # Position header direct onder Party
+        position_y = HUD_PARTY_START_Y + HEADER_LINE_HEIGHT
+        player = self._world.player
+        pos_display = (
+            f"Position: ({player.position.x}, {player.position.y})"
+            if player
+            else "Position: -"
+        )
+        pos_text = self._font.render(pos_display, True, (150, 150, 150))
+        surface.blit(pos_text, (HUD_RIGHT_X, position_y))
+
+        # Party members - each on their own line with runtime levels, onder de headers
+        y_offset = position_y + HEADER_LINE_HEIGHT
         for member in active_party:
             # Use runtime level from PartyMember (already updated after battles)
             actor_name = member.actor_id.replace("mc_", "").replace("comp_", "").capitalize()
@@ -358,16 +370,6 @@ class OverworldScene(Scene):
             text = self._font.render(member_text, True, (150, 200, 150))
             surface.blit(text, (HUD_RIGHT_X, y_offset))
             y_offset += PARTY_LINE_HEIGHT
-
-        # Debug info - positioned below party with clear spacing
-        if self._world.player:
-            y_offset += 8  # Extra margin before debug info
-            pos_text = self._font.render(
-                f"Pos: ({self._world.player.position.x}, {self._world.player.position.y})",
-                True,
-                (150, 150, 150),
-            )
-            surface.blit(pos_text, (HUD_RIGHT_X, y_offset))
 
         # Controls hint
         controls_bg = pygame.Surface((300, 100), pygame.SRCALPHA)
