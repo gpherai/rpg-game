@@ -170,6 +170,19 @@ class BattleResult:
     earned_money: int = 0
     earned_items: list[tuple[str, int]] = field(default_factory=list)  # (item_id, qty)
 
+    @property
+    def total_xp(self) -> int:
+        """Total XP distributed across all party members."""
+        return sum(self.earned_xp.values()) if self.earned_xp else 0
+
+    @property
+    def xp_per_member(self) -> int:
+        """XP per party member (assumes equal distribution in v0)."""
+        if not self.earned_xp:
+            return 0
+        # In v0, all members get the same XP, so return the first value
+        return next(iter(self.earned_xp.values()), 0)
+
 
 @dataclass
 class BattleState:
