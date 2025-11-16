@@ -355,7 +355,7 @@ class OverworldScene(Scene):
             if player
             else "Position: -"
         )
-        pos_text = self._font.render(pos_display, True, (150, 150, 150))
+        pos_text = self._font.render(pos_display, True, (200, 200, 200))
         surface.blit(pos_text, (HUD_RIGHT_X, position_y))
 
         # Party members - each on their own line with runtime levels, onder de headers
