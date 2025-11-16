@@ -1,0 +1,47 @@
+{
+  "npc_schedules": [
+    {
+      "npc_id": "npc_r1_elder",
+      "rules": [
+        {
+          "day_type": "ANY",
+          "season_index": -1,
+          "festival_id": null,
+          "time_band": "DAY",
+          "zone_id": "z_r1_chandrapur_town",
+          "tile_x": 10,
+          "tile_y": 8,
+          "facing": "S",
+          "behavior_id": "idle"
+        },
+        {
+          "day_type": "ANY",
+          "season_index": -1,
+          "festival_id": null,
+          "time_band": "NIGHT",
+          "zone_id": "z_r1_chandrapur_town",
+          "tile_x": 9,
+          "tile_y": 12,
+          "facing": "E",
+          "behavior_id": "rest"
+        }
+      ]
+    },
+    {
+      "npc_id": "npc_comp_rajani",
+      "rules": [
+        {
+          "day_type": "ANY",
+          "season_index": -1,
+          "festival_id": null,
+          "time_band": "DAY",
+          "zone_id": "z_r1_chandrapur_town",
+          "tile_x": 12,
+          "tile_y": 9,
+          "facing": "S",
+          "behavior_id": "idle"
+        }
+      ]
+    }
+  ]
+}

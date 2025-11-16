@@ -1,0 +1,24 @@
+{
+  "events": [
+    {
+      "event_id": "event_r1_shrine_intro",
+      "name": "Shrine Intro",
+      "trigger": {
+        "type": "ON_ENTER_ZONE",
+        "zone_id": "z_r1_shrine_clearing"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "action_type": "PLAY_CUTSCENE",
+          "cutscene_id": "cs_r1_shrine_intro"
+        },
+        {
+          "action_type": "SET_FLAG",
+          "flag_id": "flag_shrine_intro_seen",
+          "value": true
+        }
+      ]
+    }
+  ]
+}
