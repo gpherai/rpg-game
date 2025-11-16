@@ -333,29 +333,41 @@ class OverworldScene(Scene):
         time_text = self._font.render(time_display, True, (200, 200, 200))
         surface.blit(time_text, (20, 40))
 
-        # Player position (debug info)
+        # === TOP-RIGHT HUD: Party Info ===
+        # Clean layout with clear vertical spacing to prevent overlap
+        HUD_RIGHT_X = self._screen_width - 280
+        HUD_PARTY_START_Y = 15
+        PARTY_LINE_HEIGHT = 22  # Increased from 20 for better readability
+
+        active_party = self._party.get_active_party()
+
+        # Party header
+        party_text = f"Party ({len(active_party)}/{self._party.party_max_size}):"
+        party_label = self._font.render(party_text, True, (200, 200, 200))
+        surface.blit(party_label, (HUD_RIGHT_X, HUD_PARTY_START_Y))
+
+        # Party members - each on their own line with runtime levels
+        y_offset = HUD_PARTY_START_Y + 25  # Start below header
+        for member in active_party:
+            # Use runtime level from PartyMember (already updated after battles)
+            actor_name = member.actor_id.replace("mc_", "").replace("comp_", "").capitalize()
+            member_text = f"  {actor_name} Lv {member.level}"
+            if member.is_main_character:
+                member_text += " (MC)"
+
+            text = self._font.render(member_text, True, (150, 200, 150))
+            surface.blit(text, (HUD_RIGHT_X, y_offset))
+            y_offset += PARTY_LINE_HEIGHT
+
+        # Debug info - positioned below party with clear spacing
         if self._world.player:
+            y_offset += 8  # Extra margin before debug info
             pos_text = self._font.render(
                 f"Pos: ({self._world.player.position.x}, {self._world.player.position.y})",
                 True,
                 (150, 150, 150),
             )
-            surface.blit(pos_text, (self._screen_width - 280, 40))
-
-        # Party info (Step 4 v0)
-        active_party = self._party.get_active_party()
-        party_text = f"Party ({len(active_party)}/{self._party.party_max_size}):"
-        party_label = self._font.render(party_text, True, (200, 200, 200))
-        surface.blit(party_label, (self._screen_width - 280, 15))
-
-        for i, member in enumerate(active_party):
-            # Show actor_id (abbreviated)
-            actor_name = member.actor_id.replace("mc_", "").replace("comp_", "").capitalize()
-            member_text = f"  {actor_name}"
-            if member.is_main_character:
-                member_text += " (MC)"
-            text = self._font.render(member_text, True, (150, 200, 150))
-            surface.blit(text, (self._screen_width - 280, 35 + i * 18))
+            surface.blit(pos_text, (HUD_RIGHT_X, y_offset))
 
         # Controls hint
         controls_bg = pygame.Surface((300, 100), pygame.SRCALPHA)
