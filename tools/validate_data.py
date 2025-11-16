@@ -76,15 +76,16 @@ def validate_data() -> bool:
     data_dir = project_root / "data"
     repo = DataRepository(data_dir=data_dir)
 
-    # Load and validate all data
-    success = repo.load_and_validate_all()
+    errors = False
 
-    if not success:
+    # Load and validate all core data
+    core_ok = repo.load_and_validate_all()
+    if not core_ok:
+        errors = True
         logger.error("")
         logger.error("Validation errors found:")
         for error in repo.get_validation_errors():
             logger.error(f"  - {error}")
-        return False
 
     # Print summary
     logger.info("")
@@ -165,9 +166,9 @@ def validate_data() -> bool:
 
         if top_key not in data:
             logger.error(f"✗ {filename} missing top-level key '{top_key}'")
-            success = False
+            errors = True
 
-    return success
+    return not errors
 
 
 def main() -> int:
