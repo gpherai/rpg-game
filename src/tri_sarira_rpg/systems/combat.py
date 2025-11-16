@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from .progression import LevelUpResult, ProgressionSystem, TriProfile
+
 logger = logging.getLogger(__name__)
 
 
@@ -169,6 +171,7 @@ class BattleResult:
     earned_xp: dict[str, int] = field(default_factory=dict)  # actor_id -> xp
     earned_money: int = 0
     earned_items: list[tuple[str, int]] = field(default_factory=list)  # (item_id, qty)
+    level_ups: list[LevelUpResult] = field(default_factory=list)  # Level-up events
 
     @property
     def total_xp(self) -> int:
@@ -208,6 +211,7 @@ class CombatSystem:
         self._data_repository = data_repository
         self._items = items_system
         self._battle_state: BattleState | None = None
+        self._progression = ProgressionSystem(data_repository=data_repository)
 
     def start_battle(self, enemy_ids: list[str]) -> BattleState:
         """Initialiseer een battlecontext voor de gegeven enemies."""
@@ -554,13 +558,14 @@ class CombatSystem:
         return BattleOutcome.ONGOING
 
     def get_battle_result(self, outcome: BattleOutcome) -> BattleResult:
-        """Genereer battle result met XP rewards."""
+        """Genereer battle result met XP rewards en level-ups."""
         if not self._battle_state:
             return BattleResult(outcome=outcome)
 
         # Calculate XP rewards (if WIN)
         earned_xp = {}
         earned_money = 0
+        level_ups: list[LevelUpResult] = []
 
         if outcome == BattleOutcome.WIN:
             # Sum up XP from all defeated enemies
@@ -580,8 +585,119 @@ class CombatSystem:
 
             logger.info(f"Battle won! Earned {total_xp} XP per member, {earned_money} money")
 
+            # Process level-ups for each party member
+            for party_member in self._battle_state.party:
+                if not party_member.is_alive():
+                    continue
+
+                # Get actor data for tri_profile
+                actor_data = self._data_repository.get_actor(party_member.actor_id)
+                if not actor_data:
+                    logger.warning(f"No actor data for {party_member.actor_id}, skipping level-up")
+                    continue
+
+                tri_profile_data = actor_data.get("tri_profile")
+                if not tri_profile_data:
+                    logger.warning(
+                        f"No tri_profile for {party_member.actor_id}, skipping level-up"
+                    )
+                    continue
+
+                tri_profile = TriProfile(
+                    phys_weight=tri_profile_data.get("phys_weight", 0.33),
+                    ment_weight=tri_profile_data.get("ment_weight", 0.33),
+                    spir_weight=tri_profile_data.get("spir_weight", 0.34),
+                )
+
+                # Get current XP from PartySystem
+                pm_state = self._party.get_party_member(party_member.actor_id)
+                if not pm_state:
+                    continue
+
+                current_level = pm_state.level
+                current_xp = getattr(pm_state, "xp", 0)  # May not exist yet in v0
+
+                # Collect base stats for resource calculation
+                base_stats = {
+                    "STR": party_member.STR,
+                    "END": party_member.END,
+                    "DEF": party_member.DEF,
+                    "SPD": party_member.SPD,
+                    "ACC": party_member.ACC,
+                    "FOC": party_member.FOC,
+                    "INS": party_member.INS,
+                    "WILL": party_member.WILL,
+                    "MAG": party_member.MAG,
+                    "PRA": party_member.PRA,
+                    "RES": party_member.RES,
+                }
+
+                # Apply XP and process level-ups
+                new_level, new_xp, member_level_ups = self._progression.apply_xp_and_level_up(
+                    actor_id=party_member.actor_id,
+                    actor_name=party_member.name,
+                    current_level=current_level,
+                    current_xp=current_xp,
+                    earned_xp=total_xp,
+                    tri_profile=tri_profile,
+                    base_stats=base_stats,
+                )
+
+                # If level-up occurred, update combatant and party member
+                if member_level_ups:
+                    level_ups.extend(member_level_ups)
+
+                    # Apply all stat gains to combatant
+                    for lvl_up in member_level_ups:
+                        gains = lvl_up.stat_gains
+                        party_member.STR += gains.STR
+                        party_member.END += gains.END
+                        party_member.DEF += gains.DEF
+                        party_member.SPD += gains.SPD
+                        party_member.ACC += gains.ACC
+                        party_member.FOC += gains.FOC
+                        party_member.INS += gains.INS
+                        party_member.WILL += gains.WILL
+                        party_member.MAG += gains.MAG
+                        party_member.PRA += gains.PRA
+                        party_member.RES += gains.RES
+
+                        # Update max resources
+                        party_member.max_hp += gains.max_hp
+                        party_member.max_stamina += gains.max_stamina
+                        party_member.max_focus += gains.max_focus
+                        party_member.max_prana += gains.max_prana
+
+                    # Refill HP/resources to new max (level-up heal)
+                    party_member.current_hp = party_member.max_hp
+                    party_member.current_stamina = party_member.max_stamina
+                    party_member.current_focus = party_member.max_focus
+                    party_member.current_prana = party_member.max_prana
+
+                    # Update level in combatant
+                    party_member.level = new_level
+
+                    logger.info(
+                        f"{party_member.name} leveled up to Lv {new_level}! HP fully restored."
+                    )
+
+                # Update PartySystem (persistent state)
+                # Note: This assumes PartySystem has methods to update level/xp/stats
+                # For v0, we may need to add these methods if they don't exist
+                self._party.update_member_level(party_member.actor_id, new_level, new_xp)
+
+                # Update PartySystem stats if level-up occurred
+                if member_level_ups:
+                    for lvl_up in member_level_ups:
+                        self._party.apply_stat_gains(
+                            party_member.actor_id, lvl_up.stat_gains
+                        )
+
         result = BattleResult(
-            outcome=outcome, earned_xp=earned_xp, earned_money=earned_money
+            outcome=outcome,
+            earned_xp=earned_xp,
+            earned_money=earned_money,
+            level_ups=level_ups,
         )
 
         self._battle_state.result = result

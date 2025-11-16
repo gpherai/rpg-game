@@ -16,6 +16,11 @@
         "PRA": 8,
         "RES": 6
       },
+      "tri_profile": {
+        "phys_weight": 0.5,
+        "ment_weight": 0.2,
+        "spir_weight": 0.3
+      },
       "tags": ["protagonist", "body_focus", "spirit_novice"],
       "starting_skills": ["sk_body_strike", "sk_spirit_spark"]
     },
@@ -34,6 +39,11 @@
         "MAG": 6,
         "PRA": 7,
         "RES": 6
+      },
+      "tri_profile": {
+        "phys_weight": 0.2,
+        "ment_weight": 0.5,
+        "spir_weight": 0.3
       },
       "tags": ["companion", "mind_focus", "controller"],
       "starting_skills": ["sk_mind_mark_weakness", "sk_body_quick_step"]

@@ -597,7 +597,6 @@ class BattleScene(Scene):
                             break
 
                     if party_member:
-                        # For v0: no level-up system, just show "Name: LV x (XP +N)"
                         xp_line = self._font_small.render(
                             f"{party_member.name}: LV {party_member.level} (XP +{xp})",
                             True,
@@ -605,6 +604,37 @@ class BattleScene(Scene):
                         )
                         xp_line_rect = xp_line.get_rect(center=(self._screen_width // 2, y_offset))
                         surface.blit(xp_line, xp_line_rect)
+                        y_offset += 25
+
+            # Level-up notifications (Step 5: Progression & Leveling v0)
+            if result.level_ups:
+                y_offset += 15
+                level_up_header = self._font.render("LEVEL UP!", True, (255, 215, 0))  # Gold
+                level_up_header_rect = level_up_header.get_rect(center=(self._screen_width // 2, y_offset))
+                surface.blit(level_up_header, level_up_header_rect)
+                y_offset += 30
+
+                for level_up in result.level_ups:
+                    # Format: "Adhira: Lv 1 → Lv 2 (HP +8, STR +2, END +1)"
+                    level_up_text = self._font_small.render(
+                        f"{level_up.actor_name}: Lv {level_up.old_level} → Lv {level_up.new_level}",
+                        True,
+                        (255, 215, 0),  # Gold
+                    )
+                    level_up_rect = level_up_text.get_rect(center=(self._screen_width // 2, y_offset))
+                    surface.blit(level_up_text, level_up_rect)
+                    y_offset += 20
+
+                    # Show stat gains
+                    stat_gains_str = str(level_up.stat_gains)
+                    if stat_gains_str and stat_gains_str != "no gains":
+                        gains_text = self._font_small.render(
+                            f"  {stat_gains_str}",
+                            True,
+                            (200, 200, 200),  # Light gray
+                        )
+                        gains_rect = gains_text.get_rect(center=(self._screen_width // 2, y_offset))
+                        surface.blit(gains_text, gains_rect)
                         y_offset += 25
 
             # Money (if any)
