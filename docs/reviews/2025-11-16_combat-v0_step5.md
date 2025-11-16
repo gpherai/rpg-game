@@ -730,7 +730,50 @@ def _render_battle_end(self, surface: pygame.Surface) -> None:
 
 ---
 
-### 8.6 Files Changed (Post-Implementation)
+### 8.6 BattleResult API Synchronisatie (Combat ↔ UI)
+
+**Probleem**: AttributeError bij battle victory screen
+- BattleScene verwachtte `result.total_xp` attribuut
+- BattleResult had alleen `earned_xp: dict[str, int]`
+- Crash bij victory: `AttributeError: 'BattleResult' object has no attribute 'total_xp'`
+
+**Oplossing** (src/tri_sarira_rpg/systems/combat.py:173-184):
+```python
+@dataclass
+class BattleResult:
+    outcome: BattleOutcome
+    earned_xp: dict[str, int] = field(default_factory=dict)  # actor_id -> xp
+    earned_money: int = 0
+    earned_items: list[tuple[str, int]] = field(default_factory=list)
+
+    @property
+    def total_xp(self) -> int:
+        """Total XP distributed across all party members."""
+        return sum(self.earned_xp.values()) if self.earned_xp else 0
+
+    @property
+    def xp_per_member(self) -> int:
+        """XP per party member (assumes equal distribution in v0)."""
+        if not self.earned_xp:
+            return 0
+        return next(iter(self.earned_xp.values()), 0)
+```
+
+**Impact**:
+- ✅ Victory screen werkt: "Total XP: 16" voor 2 members die elk 8 XP krijgen
+- ✅ Per member breakdown: "Adhira: LV 1 (XP +8)", "Rajani: LV 2 (XP +8)"
+- ✅ LOSE/ESCAPE cases veilig: properties return 0
+- ✅ BattleResult API nu expliciet gedocumenteerd met properties
+
+**Voorbeeld**:
+- Enemy geeft 8 XP reward
+- 2 party members leven nog → elk krijgt 8 XP
+- `earned_xp = {"mc_adhira": 8, "comp_rajani": 8}`
+- `total_xp = 16` (sum), `xp_per_member = 8`
+
+---
+
+### 8.7 Files Changed (Post-Implementation)
 
 **New Files**:
 | File | Lines | Purpose |
@@ -742,12 +785,12 @@ def _render_battle_end(self, surface: pygame.Surface) -> None:
 |------|---------|---------|
 | `src/tri_sarira_rpg/core/scene.py` | +4 lines | Scene.manager property |
 | `src/tri_sarira_rpg/data_access/repository.py` | +50 lines | get_skill(), get_item(), get_all_skills(), get_all_items() |
-| `src/tri_sarira_rpg/systems/combat.py` | ~20 lines changed | Gebruik DataRepository API (geen _loader) |
+| `src/tri_sarira_rpg/systems/combat.py` | ~33 lines | DataRepository API (geen _loader) + BattleResult properties |
 | `src/tri_sarira_rpg/app/game.py` | +8 lines | InventorySystem instantiation |
 | `src/tri_sarira_rpg/presentation/overworld.py` | +2 parameters | Accepteer inventory + data_repository |
 | `src/tri_sarira_rpg/presentation/battle.py` | ~80 lines changed | Data-driven skills/items, XP display, inventory integration |
 
-**Total**: ~270 new/changed lines
+**Total**: ~285 new/changed lines
 
 ---
 
@@ -774,6 +817,7 @@ De foundational implementation van het turn-based combat system is succesvol afg
 - ✅ InventorySystem met centrale state (geen hardcoded items in UI)
 - ✅ Data-driven skills/items rendering (namen + resource costs uit JSON)
 - ✅ XP/level-up display op battle end screen (Total XP + per-member breakdown)
+- ✅ BattleResult API synchronisatie (total_xp + xp_per_member properties)
 
 **Belangrijkste Beperkingen** (inherent aan v0 scope):
 - Simple enemy AI (random target)
