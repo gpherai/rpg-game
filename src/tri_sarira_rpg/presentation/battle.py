@@ -589,22 +589,24 @@ class BattleScene(Scene):
             # XP distribution per party member
             if result.earned_xp:
                 for actor_id, xp in result.earned_xp.items():
-                    # Find party member to get name and level
-                    party_member = None
-                    for member in self._combat.battle_state.party:
-                        if member.actor_id == actor_id:
-                            party_member = member
-                            break
+                    # Get current runtime state from PartySystem (AFTER level-ups)
+                    pm_state = self._combat._party.get_member_by_actor_id(actor_id)
 
-                    if party_member:
+                    if pm_state:
+                        # Use runtime level and name from PartySystem
+                        current_level = pm_state.level
+                        actor_name = pm_state.actor_id.replace("mc_", "").replace("comp_", "").capitalize()
+
                         xp_line = self._font_small.render(
-                            f"{party_member.name}: LV {party_member.level} (XP +{xp})",
+                            f"{actor_name}: LV {current_level} (XP +{xp})",
                             True,
                             self._color_party,
                         )
                         xp_line_rect = xp_line.get_rect(center=(self._screen_width // 2, y_offset))
                         surface.blit(xp_line, xp_line_rect)
                         y_offset += 22
+                    else:
+                        logger.warning(f"Cannot find party member {actor_id} in PartySystem for XP display")
 
             # === BLOCK 3: Level-ups ===
             if result.level_ups:
