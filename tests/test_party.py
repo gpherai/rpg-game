@@ -1,11 +1,4 @@
-#!/usr/bin/env python3
 """Unit tests voor PartySystem (Step 4: NPC & Party)."""
-
-import sys
-from pathlib import Path
-
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from tri_sarira_rpg.systems.party import PartySystem
 
