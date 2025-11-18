@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import pygame
 
@@ -29,6 +30,7 @@ class OverworldScene(Scene):
         combat_system: CombatSystem,
         inventory_system: InventorySystem,
         data_repository: DataRepository,
+        game_instance: Any = None,
     ) -> None:
         super().__init__(manager)
         self._world = world_system
@@ -37,6 +39,11 @@ class OverworldScene(Scene):
         self._combat = combat_system
         self._inventory = inventory_system
         self._data_repository = data_repository
+        self._game = game_instance
+
+        # Feedback message for save/load
+        self._feedback_message: str = ""
+        self._feedback_timer: float = 0.0
 
         # Get screen resolution dynamically
         screen = pygame.display.get_surface()
@@ -66,6 +73,14 @@ class OverworldScene(Scene):
             if event.key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_e):
                 self._world.interact()
 
+            # Save game (S key)
+            elif event.key == pygame.K_s:
+                self._quick_save()
+
+            # Load game (L key)
+            elif event.key == pygame.K_l:
+                self._quick_load()
+
             # Debug key: Toggle Rajani in/out of party (Step 4 v0)
             elif event.key == pygame.K_j:
                 self._debug_toggle_rajani()
@@ -78,6 +93,10 @@ class OverworldScene(Scene):
         """Update overworld logic."""
         # Update time system
         self._time.update(dt)
+
+        # Update feedback timer
+        if self._feedback_timer > 0:
+            self._feedback_timer -= dt
 
         # Update move cooldown
         if self._move_cooldown > 0:
@@ -380,12 +399,67 @@ class OverworldScene(Scene):
             "Controls:",
             "WASD/Arrows: Move",
             "Space/E: Interact",
+            "S: Save  |  L: Load",
             "J: Toggle Rajani (debug)",
             "B: Start Battle (debug)",
         ]
         for i, line in enumerate(controls_lines):
             text = self._font.render(line, True, (200, 200, 200))
             surface.blit(text, (self._screen_width - 290, self._screen_height - 115 + i * 20))
+
+        # Feedback message (save/load notifications)
+        if self._feedback_timer > 0:
+            feedback_text = self._font_large.render(
+                self._feedback_message, True, (255, 255, 100)
+            )
+            text_rect = feedback_text.get_rect(
+                center=(self._screen_width // 2, self._screen_height // 2 - 100)
+            )
+
+            # Draw semi-transparent background
+            padding = 20
+            bg_rect = pygame.Rect(
+                text_rect.x - padding,
+                text_rect.y - padding,
+                text_rect.width + 2 * padding,
+                text_rect.height + 2 * padding,
+            )
+            bg = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
+            bg.fill((0, 0, 0, 200))
+            surface.blit(bg, bg_rect.topleft)
+
+            # Draw text
+            surface.blit(feedback_text, text_rect)
+
+    def _quick_save(self) -> None:
+        """Quick save to slot 1 (S key)."""
+        if not self._game:
+            logger.warning("Cannot save: no game instance available")
+            return
+
+        success = self._game.save_game(slot_id=1)
+
+        if success:
+            self._feedback_message = "Game saved!"
+            self._feedback_timer = 2.0
+        else:
+            self._feedback_message = "Save failed!"
+            self._feedback_timer = 2.0
+
+    def _quick_load(self) -> None:
+        """Quick load from slot 1 (L key)."""
+        if not self._game:
+            logger.warning("Cannot load: no game instance available")
+            return
+
+        success = self._game.load_game(slot_id=1)
+
+        if success:
+            self._feedback_message = "Game loaded!"
+            self._feedback_timer = 2.0
+        else:
+            self._feedback_message = "Load failed - no save found!"
+            self._feedback_timer = 2.0
 
     def _debug_toggle_rajani(self) -> None:
         """Debug functie: toggle Rajani in/uit active party (Step 4 v0)."""

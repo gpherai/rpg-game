@@ -15,6 +15,8 @@ from tri_sarira_rpg.presentation.overworld import OverworldScene
 from tri_sarira_rpg.systems.combat import CombatSystem
 from tri_sarira_rpg.systems.inventory import InventorySystem
 from tri_sarira_rpg.systems.party import PartySystem
+from tri_sarira_rpg.systems.save import SaveSystem
+from tri_sarira_rpg.systems.state import GameStateFlags
 from tri_sarira_rpg.systems.time import TimeSystem
 from tri_sarira_rpg.systems.world import WorldSystem
 
@@ -74,6 +76,21 @@ class Game:
             data_repository=self._data_repository,
         )
 
+        # Game state flags
+        self._flags_system = GameStateFlags()
+
+        # Save system
+        self._save_system = SaveSystem(
+            party_system=self._party_system,
+            world_system=self._world_system,
+            time_system=self._time_system,
+            inventory_system=self._inventory_system,
+            flags_system=self._flags_system,
+        )
+
+        # Play time tracking
+        self._play_time: float = 0.0  # Total play time in seconds
+
         # Scene manager
         self._running = True
         self._scene_manager = SceneManager()
@@ -97,6 +114,7 @@ class Game:
             self._combat_system,
             self._inventory_system,
             self._data_repository,
+            game_instance=self,
         )
         self._scene_manager.push_scene(overworld_scene)
 
@@ -126,10 +144,77 @@ class Game:
         """Werk de actieve scene bij."""
         self._scene_manager.update(dt)
 
+        # Track play time
+        self._play_time += dt
+
     def _render(self) -> None:
         """Laat de actieve scene tekenen en wissel de buffer."""
         self._scene_manager.render(self._screen)
         pygame.display.flip()
+
+    def save_game(self, slot_id: int = 1) -> bool:
+        """Save game to specified slot.
+
+        Parameters
+        ----------
+        slot_id : int
+            Save slot number (1-5), default 1 for quick save
+
+        Returns
+        -------
+        bool
+            True if save succeeded
+        """
+        logger.info(f"Saving game to slot {slot_id}...")
+
+        # Build save data
+        save_data = self._save_system.build_save(play_time=self._play_time)
+
+        # Write to file
+        success = self._save_system.save_to_file(slot_id, save_data)
+
+        if success:
+            logger.info(f"✓ Game saved successfully (slot {slot_id})")
+        else:
+            logger.error(f"✗ Failed to save game (slot {slot_id})")
+
+        return success
+
+    def load_game(self, slot_id: int = 1) -> bool:
+        """Load game from specified slot.
+
+        Parameters
+        ----------
+        slot_id : int
+            Save slot number (1-5), default 1 for quick load
+
+        Returns
+        -------
+        bool
+            True if load succeeded
+        """
+        logger.info(f"Loading game from slot {slot_id}...")
+
+        # Load save data from file
+        save_data = self._save_system.load_from_file(slot_id)
+
+        if not save_data:
+            logger.error(f"✗ No save found in slot {slot_id}")
+            return False
+
+        # Restore game state
+        success = self._save_system.load_save(save_data)
+
+        if success:
+            # Restore play time
+            meta = save_data.get("meta", {})
+            self._play_time = meta.get("play_time", 0.0)
+
+            logger.info(f"✓ Game loaded successfully (slot {slot_id})")
+        else:
+            logger.error(f"✗ Failed to load game (slot {slot_id})")
+
+        return success
 
 
 __all__ = ["Game"]

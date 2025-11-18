@@ -30,5 +30,42 @@ class GameStateFlags:
 
         return flag_id in self._flags
 
+    def get_save_state(self) -> dict[str, list[str] | dict[str, str]]:
+        """Get serializable flags state for saving.
+
+        Returns
+        -------
+        dict[str, list[str] | dict[str, str]]
+            Flags state as dict
+        """
+        return {
+            "story_flags": list(self._flags),
+            "choice_history": dict(self._choices),
+        }
+
+    def restore_from_save(
+        self, state_dict: dict[str, list[str] | dict[str, str]]
+    ) -> None:
+        """Restore flags state from save data.
+
+        Parameters
+        ----------
+        state_dict : dict[str, list[str] | dict[str, str]]
+            Flags state dict from save file
+        """
+        # Clear current state
+        self._flags.clear()
+        self._choices.clear()
+
+        # Restore flags
+        flags = state_dict.get("story_flags", [])
+        if isinstance(flags, list):
+            self._flags.update(flags)
+
+        # Restore choices
+        choices = state_dict.get("choice_history", {})
+        if isinstance(choices, dict):
+            self._choices.update(choices)
+
 
 __all__ = ["GameStateFlags"]
