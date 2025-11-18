@@ -342,5 +342,91 @@ class PartySystem:
 
         logger.debug(f"Applied stat gains to {actor_id}: {stat_gains}")
 
+    def get_save_state(self) -> dict[str, Any]:
+        """Get serializable party state for saving.
+
+        Returns
+        -------
+        dict[str, Any]
+            Party state as dict
+        """
+        return {
+            "active_party": [
+                {
+                    "npc_id": m.npc_id,
+                    "actor_id": m.actor_id,
+                    "is_main_character": m.is_main_character,
+                    "is_guest": m.is_guest,
+                    "tier": m.tier,
+                    "level": m.level,
+                    "xp": m.xp,
+                    "base_stats": dict(m.base_stats),
+                }
+                for m in self._state.active_party
+            ],
+            "reserve_pool": [
+                {
+                    "npc_id": m.npc_id,
+                    "actor_id": m.actor_id,
+                    "is_main_character": m.is_main_character,
+                    "is_guest": m.is_guest,
+                    "tier": m.tier,
+                    "level": m.level,
+                    "xp": m.xp,
+                    "base_stats": dict(m.base_stats),
+                }
+                for m in self._state.reserve_pool
+            ],
+            "party_max_size": self._state.party_max_size,
+        }
+
+    def restore_from_save(self, state_dict: dict[str, Any]) -> None:
+        """Restore party state from save data.
+
+        Parameters
+        ----------
+        state_dict : dict[str, Any]
+            Party state dict from save file
+        """
+        # Clear current state
+        self._state.active_party.clear()
+        self._state.reserve_pool.clear()
+
+        # Restore active party
+        for member_data in state_dict.get("active_party", []):
+            member = PartyMember(
+                npc_id=member_data["npc_id"],
+                actor_id=member_data["actor_id"],
+                is_main_character=member_data.get("is_main_character", False),
+                is_guest=member_data.get("is_guest", False),
+                tier=member_data.get("tier"),
+                level=member_data.get("level", 1),
+                xp=member_data.get("xp", 0),
+                base_stats=member_data.get("base_stats", {}),
+            )
+            self._state.active_party.append(member)
+
+        # Restore reserve pool
+        for member_data in state_dict.get("reserve_pool", []):
+            member = PartyMember(
+                npc_id=member_data["npc_id"],
+                actor_id=member_data["actor_id"],
+                is_main_character=member_data.get("is_main_character", False),
+                is_guest=member_data.get("is_guest", False),
+                tier=member_data.get("tier"),
+                level=member_data.get("level", 1),
+                xp=member_data.get("xp", 0),
+                base_stats=member_data.get("base_stats", {}),
+            )
+            self._state.reserve_pool.append(member)
+
+        # Restore party max size
+        self._state.party_max_size = state_dict.get("party_max_size", 2)
+
+        logger.info(
+            f"Party restored: {len(self._state.active_party)} active, "
+            f"{len(self._state.reserve_pool)} reserve"
+        )
+
 
 __all__ = ["PartySystem", "PartyMember", "PartyState"]

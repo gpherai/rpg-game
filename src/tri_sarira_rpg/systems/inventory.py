@@ -100,5 +100,33 @@ class InventorySystem:
         """Itereer over alle items (item_id, quantity) pairs."""
         return self._state.iter_items()
 
+    def get_save_state(self) -> dict[str, int]:
+        """Get serializable inventory state for saving.
+
+        Returns
+        -------
+        dict[str, int]
+            Inventory state as dict (item_id -> quantity)
+        """
+        return self._state.get_all_items()
+
+    def restore_from_save(self, state_dict: dict[str, int]) -> None:
+        """Restore inventory state from save data.
+
+        Parameters
+        ----------
+        state_dict : dict[str, int]
+            Inventory state dict from save file
+        """
+        # Clear current inventory
+        self._state.items.clear()
+
+        # Restore items
+        for item_id, quantity in state_dict.items():
+            if quantity > 0:
+                self._state.items[item_id] = quantity
+
+        logger.info(f"Inventory restored: {len(self._state.items)} item types")
+
 
 __all__ = ["InventorySystem", "InventoryState"]

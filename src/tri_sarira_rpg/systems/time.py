@@ -118,5 +118,41 @@ class TimeSystem:
             f"{self._state.format_time()} ({self.time_band.value})"
         )
 
+    def get_save_state(self) -> dict[str, int]:
+        """Get serializable time state for saving.
+
+        Returns
+        -------
+        dict[str, int]
+            Time state as dict
+        """
+        return {
+            "day_index": self._state.day_index,
+            "time_of_day": self._state.time_of_day,
+            "season_index": self._state.season_index,
+            "year_index": self._state.year_index,
+        }
+
+    def restore_from_save(self, state_dict: dict[str, int]) -> None:
+        """Restore time state from save data.
+
+        Parameters
+        ----------
+        state_dict : dict[str, int]
+            Time state dict from save file
+        """
+        self._state.day_index = state_dict.get("day_index", 0)
+        self._state.time_of_day = state_dict.get("time_of_day", 420)
+        self._state.season_index = state_dict.get("season_index", 0)
+        self._state.year_index = state_dict.get("year_index", 0)
+
+        # Update last time band
+        self._last_time_band = self._state.get_time_band()
+
+        logger.info(
+            f"Time restored: Day {self._state.day_index + 1}, "
+            f"{self._state.format_time()} ({self.time_band.value})"
+        )
+
 
 __all__ = ["TimeSystem", "TimeState", "TimeBand"]
