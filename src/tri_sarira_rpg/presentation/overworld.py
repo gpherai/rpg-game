@@ -73,12 +73,12 @@ class OverworldScene(Scene):
             if event.key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_e):
                 self._world.interact()
 
-            # Save game (S key)
-            elif event.key == pygame.K_s:
+            # Save game (F5 key - industry standard)
+            elif event.key == pygame.K_F5:
                 self._quick_save()
 
-            # Load game (L key)
-            elif event.key == pygame.K_l:
+            # Load game (F9 key - industry standard)
+            elif event.key == pygame.K_F9:
                 self._quick_load()
 
             # Debug key: Toggle Rajani in/out of party (Step 4 v0)
@@ -397,9 +397,9 @@ class OverworldScene(Scene):
 
         controls_lines = [
             "Controls:",
-            "WASD/Arrows: Move",
+            "Arrows: Move",
             "Space/E: Interact",
-            "S: Save  |  L: Load",
+            "F5: Save  |  F9: Load",
             "J: Toggle Rajani (debug)",
             "B: Start Battle (debug)",
         ]
