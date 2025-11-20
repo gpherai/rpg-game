@@ -1,0 +1,487 @@
+"""Pause Menu UI component."""
+
+from __future__ import annotations
+
+import logging
+from enum import Enum
+from typing import TYPE_CHECKING, Any
+
+import pygame
+
+from .widgets import Widget
+
+if TYPE_CHECKING:
+    pass
+
+logger = logging.getLogger(__name__)
+
+
+class PauseMenuOption(Enum):
+    """Pause menu opties."""
+
+    RESUME = 0
+    SAVE = 1
+    LOAD = 2
+    MAIN_MENU = 3
+    QUIT = 4
+
+
+class PauseMenuState(Enum):
+    """States voor het pause menu."""
+
+    MAIN = "main"
+    LOAD_SELECT = "load_select"
+    CONFIRM = "confirm"
+
+
+class PauseMenu(Widget):
+    """Pause menu overlay voor gameplay scenes."""
+
+    def __init__(self, rect: pygame.Rect, game_instance: Any = None, allow_load: bool = True) -> None:
+        """Initialize pause menu.
+
+        Parameters
+        ----------
+        rect : pygame.Rect
+            Menu rectangle (position and size)
+        game_instance : Any, optional
+            Reference to Game instance for save/load
+        allow_load : bool
+            Whether to allow loading during gameplay (default True)
+        """
+        super().__init__(rect)
+        self._game = game_instance
+        self._allow_load = allow_load
+        self._state = PauseMenuState.MAIN
+        self._selected_index = 0
+        self._selected_slot = 0
+
+        # Callback for returning to main menu
+        self._on_main_menu_callback: Any = None
+
+        # Feedback message
+        self._feedback_message: str = ""
+        self._feedback_timer: float = 0.0
+
+        # Cache for slot info to avoid loading save files every frame
+        self._slot_info_cache: dict[int, str] = {}
+        self._cache_valid: bool = False
+
+        # Fonts
+        pygame.font.init()
+        self._font_title = pygame.font.SysFont("monospace", 32, bold=True)
+        self._font_menu = pygame.font.SysFont("monospace", 20)
+        self._font_info = pygame.font.SysFont("monospace", 14)
+
+        # Colors
+        self._bg_color = (20, 20, 30, 230)  # Semi-transparent dark
+        self._border_color = (100, 150, 200)
+        self._text_color = (220, 220, 220)
+        self._highlight_color = (255, 220, 100)
+        self._title_color = (255, 200, 150)
+
+        # Main menu options
+        self._main_options = [
+            ("Doorgaan", PauseMenuOption.RESUME),
+            ("Save spel", PauseMenuOption.SAVE),
+            ("Load spel", PauseMenuOption.LOAD),
+            ("Terug naar hoofdmenu", PauseMenuOption.MAIN_MENU),
+            ("Afsluiten", PauseMenuOption.QUIT),
+        ]
+
+        logger.debug("PauseMenu initialized")
+
+    def set_main_menu_callback(self, callback: Any) -> None:
+        """Set callback for returning to main menu.
+
+        Parameters
+        ----------
+        callback : callable
+            Callback to execute when user selects main menu
+        """
+        self._on_main_menu_callback = callback
+
+    def handle_input(self, key: int) -> bool:
+        """Handle keyboard input.
+
+        Parameters
+        ----------
+        key : int
+            Pygame key constant
+
+        Returns
+        -------
+        bool
+            True if menu should close (resume), False otherwise
+        """
+        if self._state == PauseMenuState.MAIN:
+            return self._handle_main_menu_input(key)
+        elif self._state == PauseMenuState.LOAD_SELECT:
+            return self._handle_load_select_input(key)
+
+        return False
+
+    def _handle_main_menu_input(self, key: int) -> bool:
+        """Handle main menu navigation.
+
+        Parameters
+        ----------
+        key : int
+            Pygame key constant
+
+        Returns
+        -------
+        bool
+            True if menu should close
+        """
+        # Navigation
+        if key in (pygame.K_UP, pygame.K_w):
+            self._selected_index = (self._selected_index - 1) % len(self._main_options)
+            return False
+
+        elif key in (pygame.K_DOWN, pygame.K_s):
+            self._selected_index = (self._selected_index + 1) % len(self._main_options)
+            return False
+
+        # Selection
+        elif key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_z):
+            return self._execute_main_menu_option()
+
+        # Quick resume (Esc)
+        elif key == pygame.K_ESCAPE:
+            logger.debug("Resuming game (Esc)")
+            return True
+
+        return False
+
+    def _execute_main_menu_option(self) -> bool:
+        """Execute selected main menu option.
+
+        Returns
+        -------
+        bool
+            True if menu should close
+        """
+        _, option = self._main_options[self._selected_index]
+
+        if option == PauseMenuOption.RESUME:
+            logger.debug("Resuming game")
+            return True
+
+        elif option == PauseMenuOption.SAVE:
+            self._save_game()
+            return False
+
+        elif option == PauseMenuOption.LOAD:
+            if self._allow_load:
+                self._state = PauseMenuState.LOAD_SELECT
+                self._selected_slot = 0
+                # Invalidate cache when entering load menu
+                self._cache_valid = False
+            else:
+                self._show_feedback("Laden niet beschikbaar tijdens gevecht", 2.0)
+            return False
+
+        elif option == PauseMenuOption.MAIN_MENU:
+            self._return_to_main_menu()
+            return True  # Close pause menu
+
+        elif option == PauseMenuOption.QUIT:
+            self._quit_game()
+            return True
+
+        return False
+
+    def _save_game(self) -> None:
+        """Save game to slot 1."""
+        if not self._game:
+            logger.error("No game instance available for save")
+            self._show_feedback("Error: Kan niet opslaan", 2.0)
+            return
+
+        logger.info("Saving game from pause menu...")
+        slot_id = 1
+        success = self._game.save_game(slot_id)
+
+        if success:
+            self._show_feedback(f"Spel opgeslagen (slot {slot_id})", 2.0)
+        else:
+            self._show_feedback("Opslaan mislukt", 2.0)
+
+    def _handle_load_select_input(self, key: int) -> bool:
+        """Handle load slot selection.
+
+        Parameters
+        ----------
+        key : int
+            Pygame key constant
+
+        Returns
+        -------
+        bool
+            True if menu should close
+        """
+        # Navigation
+        if key in (pygame.K_UP, pygame.K_w):
+            self._selected_slot = (self._selected_slot - 1) % 5
+            return False
+
+        elif key in (pygame.K_DOWN, pygame.K_s):
+            self._selected_slot = (self._selected_slot + 1) % 5
+            return False
+
+        # Selection
+        elif key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_z):
+            success = self._load_from_slot(self._selected_slot + 1)
+            if success:
+                return True  # Close menu after successful load
+            return False
+
+        # Cancel
+        elif key in (pygame.K_ESCAPE, pygame.K_x):
+            self._state = PauseMenuState.MAIN
+            return False
+
+        return False
+
+    def _load_from_slot(self, slot_id: int) -> bool:
+        """Load game from specified slot.
+
+        Parameters
+        ----------
+        slot_id : int
+            Save slot number (1-5)
+
+        Returns
+        -------
+        bool
+            True if load succeeded
+        """
+        if not self._game:
+            logger.error("No game instance available for load")
+            self._show_feedback("Error: Kan niet laden", 2.0)
+            return False
+
+        logger.info(f"Loading from slot {slot_id}...")
+        success = self._game.load_game(slot_id)
+
+        if success:
+            self._show_feedback(f"Geladen van slot {slot_id}", 1.5)
+            # Return to main state and close menu
+            self._state = PauseMenuState.MAIN
+            return True
+        else:
+            self._show_feedback(f"Slot {slot_id}: Laden mislukt", 2.0)
+            return False
+
+    def _return_to_main_menu(self) -> None:
+        """Return to main menu."""
+        logger.info("Returning to main menu from pause menu...")
+
+        if self._on_main_menu_callback:
+            self._on_main_menu_callback()
+        else:
+            logger.warning("No main menu callback set")
+
+    def _quit_game(self) -> None:
+        """Quit the game."""
+        logger.info("Quitting game from pause menu...")
+        if self._game:
+            self._game.stop()
+
+    def _show_feedback(self, message: str, duration: float) -> None:
+        """Show feedback message.
+
+        Parameters
+        ----------
+        message : str
+            Message to display
+        duration : float
+            Duration in seconds
+        """
+        self._feedback_message = message
+        self._feedback_timer = duration
+        logger.debug(f"Feedback: {message}")
+
+    def update(self, dt: float) -> None:
+        """Update menu state.
+
+        Parameters
+        ----------
+        dt : float
+            Delta time in seconds
+        """
+        # Refresh slot cache when entering load menu (only once)
+        if self._state == PauseMenuState.LOAD_SELECT and not self._cache_valid:
+            self._refresh_slot_cache()
+
+        # Update feedback timer
+        if self._feedback_timer > 0:
+            self._feedback_timer -= dt
+
+    def render(self, surface: pygame.Surface) -> None:
+        """Render pause menu overlay.
+
+        Parameters
+        ----------
+        surface : pygame.Surface
+            Surface to render on
+        """
+        # Create semi-transparent background
+        overlay = pygame.Surface(self.rect.size, pygame.SRCALPHA)
+        overlay.fill(self._bg_color)
+
+        # Draw border
+        pygame.draw.rect(overlay, self._border_color, overlay.get_rect(), 3)
+
+        # Render current state
+        if self._state == PauseMenuState.MAIN:
+            self._render_main_menu(overlay)
+        elif self._state == PauseMenuState.LOAD_SELECT:
+            self._render_load_select(overlay)
+
+        # Render feedback message
+        if self._feedback_timer > 0:
+            self._render_feedback(overlay)
+
+        # Blit overlay to surface
+        surface.blit(overlay, self.rect.topleft)
+
+    def _render_main_menu(self, surface: pygame.Surface) -> None:
+        """Render main pause menu.
+
+        Parameters
+        ----------
+        surface : pygame.Surface
+            Surface to render on
+        """
+        # Title
+        title_text = self._font_title.render("GEPAUZEERD", True, self._title_color)
+        title_rect = title_text.get_rect(center=(self.rect.width // 2, 60))
+        surface.blit(title_text, title_rect)
+
+        # Menu options
+        start_y = 140
+        for i, (text, option) in enumerate(self._main_options):
+            # Skip load option if not allowed
+            if option == PauseMenuOption.LOAD and not self._allow_load:
+                # Gray out the option
+                color = (100, 100, 100)
+                prefix = "  "
+            else:
+                color = self._highlight_color if i == self._selected_index else self._text_color
+                prefix = "► " if i == self._selected_index else "  "
+
+            option_text = self._font_menu.render(f"{prefix}{text}", True, color)
+            option_rect = option_text.get_rect(center=(self.rect.width // 2, start_y + i * 40))
+            surface.blit(option_text, option_rect)
+
+        # Instructions
+        info_text = self._font_info.render("Gebruik Esc om direct door te gaan", True, self._text_color)
+        info_rect = info_text.get_rect(center=(self.rect.width // 2, self.rect.height - 30))
+        surface.blit(info_text, info_rect)
+
+    def _render_load_select(self, surface: pygame.Surface) -> None:
+        """Render load slot selection.
+
+        Parameters
+        ----------
+        surface : pygame.Surface
+            Surface to render on
+        """
+        # Title
+        title_text = self._font_title.render("Load Spel", True, self._title_color)
+        title_rect = title_text.get_rect(center=(self.rect.width // 2, 40))
+        surface.blit(title_text, title_rect)
+
+        # Instructions
+        info_text = self._font_info.render("Selecteer een save slot (Esc om terug)", True, self._text_color)
+        info_rect = info_text.get_rect(center=(self.rect.width // 2, 80))
+        surface.blit(info_text, info_rect)
+
+        # Save slots
+        start_y = 130
+        for i in range(5):
+            slot_id = i + 1
+            color = self._highlight_color if i == self._selected_slot else self._text_color
+            prefix = "► " if i == self._selected_slot else "  "
+
+            # Check if slot exists and get info
+            slot_info = self._get_slot_info(slot_id)
+            slot_text = f"{prefix}Slot {slot_id}: {slot_info}"
+
+            text_surface = self._font_menu.render(slot_text, True, color)
+            text_rect = text_surface.get_rect(center=(self.rect.width // 2, start_y + i * 40))
+            surface.blit(text_surface, text_rect)
+
+    def _get_slot_info(self, slot_id: int) -> str:
+        """Get info about a save slot.
+
+        Parameters
+        ----------
+        slot_id : int
+            Save slot number
+
+        Returns
+        -------
+        str
+            Slot info string
+        """
+        # Use cached info if available
+        if self._cache_valid and slot_id in self._slot_info_cache:
+            return self._slot_info_cache[slot_id]
+
+        # Load slot info
+        if not self._game:
+            info = "[Leeg]"
+        else:
+            # Check if slot exists via SaveSystem
+            save_system = getattr(self._game, "_save_system", None)
+            if not save_system:
+                info = "[Leeg]"
+            elif save_system.slot_exists(slot_id):
+                # Try to load slot data for preview
+                save_data = save_system.load_from_file(slot_id)
+                if save_data:
+                    # Extract some info
+                    world_state = save_data.get("world_state", {})
+                    time_state = save_data.get("time_state", {})
+                    zone_id = world_state.get("current_zone_id", "Unknown")
+                    dag = time_state.get("dag", 0)
+
+                    # Simplify zone name
+                    zone_name = zone_id.split("_")[-1] if zone_id else "Unknown"
+                    info = f"Dag {dag} - {zone_name}"
+                else:
+                    info = "[Leeg]"
+            else:
+                info = "[Leeg]"
+
+        # Cache the result
+        self._slot_info_cache[slot_id] = info
+        return info
+
+    def _refresh_slot_cache(self) -> None:
+        """Refresh slot info cache for all 5 slots."""
+        self._slot_info_cache.clear()
+        for slot_id in range(1, 6):
+            self._get_slot_info(slot_id)
+        self._cache_valid = True
+
+    def _render_feedback(self, surface: pygame.Surface) -> None:
+        """Render feedback message.
+
+        Parameters
+        ----------
+        surface : pygame.Surface
+            Surface to render on
+        """
+        if not self._feedback_message:
+            return
+
+        feedback_text = self._font_info.render(self._feedback_message, True, (100, 255, 100))
+        feedback_rect = feedback_text.get_rect(center=(self.rect.width // 2, self.rect.height - 60))
+        surface.blit(feedback_text, feedback_rect)
+
+
+__all__ = ["PauseMenu"]
