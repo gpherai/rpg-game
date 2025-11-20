@@ -15,6 +15,7 @@ from tri_sarira_rpg.presentation.overworld import OverworldScene
 from tri_sarira_rpg.systems.combat import CombatSystem
 from tri_sarira_rpg.systems.inventory import InventorySystem
 from tri_sarira_rpg.systems.party import PartySystem
+from tri_sarira_rpg.systems.quest import QuestSystem
 from tri_sarira_rpg.systems.save import SaveSystem
 from tri_sarira_rpg.systems.state import GameStateFlags
 from tri_sarira_rpg.systems.time import TimeSystem
@@ -79,6 +80,14 @@ class Game:
         # Game state flags
         self._flags_system = GameStateFlags()
 
+        # Quest system (Step 7: Quest System v0)
+        self._quest_system = QuestSystem(
+            party_system=self._party_system,
+            inventory_system=self._inventory_system,
+        )
+        # Load quest definitions from JSON
+        self._quest_system.load_definitions(self._data_repository)
+
         # Save system
         self._save_system = SaveSystem(
             party_system=self._party_system,
@@ -86,6 +95,7 @@ class Game:
             time_system=self._time_system,
             inventory_system=self._inventory_system,
             flags_system=self._flags_system,
+            quest_system=self._quest_system,
         )
 
         # Play time tracking
@@ -114,6 +124,8 @@ class Game:
             self._combat_system,
             self._inventory_system,
             self._data_repository,
+            flags_system=self._flags_system,
+            quest_system=self._quest_system,
             game_instance=self,
         )
         self._scene_manager.push_scene(overworld_scene)

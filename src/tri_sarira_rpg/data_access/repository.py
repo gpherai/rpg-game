@@ -223,8 +223,25 @@ class DataRepository:
 
     def get_quest(self, quest_id: str) -> dict[str, Any] | None:
         """Haal questdata op voor questsystemen."""
-        # Not implemented yet (no quests.json in this step)
-        return None
+        try:
+            data = self._loader.load_json("quests.json")
+            quests = data.get("quests", [])
+            for quest in quests:
+                if quest.get("quest_id") == quest_id:
+                    return quest
+            return None
+        except FileNotFoundError:
+            logger.warning("quests.json not found")
+            return None
+
+    def get_all_quests(self) -> list[dict[str, Any]]:
+        """Haal alle quests op."""
+        try:
+            data = self._loader.load_json("quests.json")
+            return data.get("quests", [])
+        except FileNotFoundError:
+            logger.warning("quests.json not found")
+            return []
 
     def get_dialogue(self, dialogue_id: str) -> dict[str, Any] | None:
         """Geef dialooggraph-definitie terug."""

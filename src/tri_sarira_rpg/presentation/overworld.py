@@ -17,10 +17,12 @@ from tri_sarira_rpg.systems.dialogue import (
 )
 from tri_sarira_rpg.systems.inventory import InventorySystem
 from tri_sarira_rpg.systems.party import PartySystem
+from tri_sarira_rpg.systems.quest import QuestSystem
 from tri_sarira_rpg.systems.state import GameStateFlags
 from tri_sarira_rpg.systems.time import TimeSystem
 from tri_sarira_rpg.systems.world import WorldSystem
 from tri_sarira_rpg.presentation.ui.dialogue_box import DialogueBox
+from tri_sarira_rpg.presentation.ui.quest_log import QuestLogUI
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,7 @@ class OverworldScene(Scene):
         inventory_system: InventorySystem,
         data_repository: DataRepository,
         flags_system: GameStateFlags | None = None,
+        quest_system: QuestSystem | None = None,
         game_instance: Any = None,
     ) -> None:
         super().__init__(manager)
@@ -48,12 +51,17 @@ class OverworldScene(Scene):
         self._inventory = inventory_system
         self._data_repository = data_repository
         self._flags = flags_system or GameStateFlags()
+        self._quest = quest_system
         self._game = game_instance
 
         # Dialogue system and UI
         self._dialogue_system = DialogueSystem(data_repository)
         self._dialogue_session: DialogueSession | None = None
         self._dialogue_box: DialogueBox | None = None
+
+        # Quest log UI
+        self._quest_log_visible: bool = False
+        self._quest_log_ui: QuestLogUI | None = None
 
         # Feedback message for save/load
         self._feedback_message: str = ""
@@ -86,16 +94,38 @@ class OverworldScene(Scene):
         dialogue_rect = pygame.Rect(20, dialogue_y, self._screen_width - 40, dialogue_height)
         self._dialogue_box = DialogueBox(dialogue_rect)
 
+        # Initialize QuestLogUI (centered on screen)
+        quest_log_width = 600
+        quest_log_height = 500
+        quest_log_x = (self._screen_width - quest_log_width) // 2
+        quest_log_y = (self._screen_height - quest_log_height) // 2
+        quest_log_rect = pygame.Rect(quest_log_x, quest_log_y, quest_log_width, quest_log_height)
+        self._quest_log_ui = QuestLogUI(quest_log_rect)
+
     def handle_event(self, event: pygame.event.Event) -> None:
         """Verwerk input events."""
         if event.type == pygame.KEYDOWN:
+            # If quest log is visible, route to quest log UI
+            if self._quest_log_visible:
+                if event.key == pygame.K_q:
+                    # Toggle quest log off
+                    self._quest_log_visible = False
+                elif self._quest_log_ui:
+                    # Route other events to quest log for navigation
+                    self._quest_log_ui.handle_event(event)
+                return
+
             # If in dialogue mode, route to dialogue box
             if self._dialogue_session:
                 self._handle_dialogue_input(event)
                 return
 
+            # Quest log toggle (Q key)
+            if event.key == pygame.K_q:
+                self._toggle_quest_log()
+
             # Interact key
-            if event.key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_e):
+            elif event.key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_e):
                 self._world.interact()
 
             # Save game (F5 key - industry standard)
@@ -182,6 +212,10 @@ class OverworldScene(Scene):
         # Render dialogue box if active
         if self._dialogue_session and self._dialogue_box:
             self._render_dialogue(surface)
+
+        # Render quest log if visible
+        if self._quest_log_visible and self._quest_log_ui:
+            self._quest_log_ui.draw(surface)
 
     def _update_camera(self) -> None:
         """Update camera om player te volgen."""
@@ -554,7 +588,7 @@ class OverworldScene(Scene):
             party_system=self._party,
             inventory_system=self._inventory,
             economy_system=None,  # Not implemented yet
-            quest_system=None,  # Not implemented yet
+            quest_system=self._quest,
         )
 
         # Start dialogue session
@@ -628,6 +662,33 @@ class OverworldScene(Scene):
 
         # Update dialogue box
         self._dialogue_box.set_content(view.speaker_id, view.lines, choices)
+
+    def _toggle_quest_log(self) -> None:
+        """Toggle quest log visibility."""
+        if not self._quest:
+            logger.warning("No quest system available")
+            return
+
+        self._quest_log_visible = not self._quest_log_visible
+
+        if self._quest_log_visible and self._quest_log_ui:
+            # Update quest log with current quest data
+            quest_log_entries = self._quest.build_quest_log_view()
+            # Convert QuestLogEntry objects to dicts for UI
+            entries_dict = [
+                {
+                    "quest_id": entry.quest_id,
+                    "title": entry.title,
+                    "status": entry.status.value,
+                    "current_stage_description": entry.current_stage_description,
+                    "is_tracked": entry.is_tracked,
+                }
+                for entry in quest_log_entries
+            ]
+            self._quest_log_ui.set_quests(entries_dict)
+            logger.info(f"Quest log opened with {len(entries_dict)} quests")
+        else:
+            logger.info("Quest log closed")
 
     def _render_dialogue(self, surface: pygame.Surface) -> None:
         """Render dialogue box."""
