@@ -148,6 +148,10 @@ class OverworldScene(Scene):
             elif event.key == pygame.K_b:
                 self._debug_start_battle()
 
+            # Debug key: Start test quest (Step 7 Quest v0)
+            elif event.key == pygame.K_t:
+                self._debug_start_quest()
+
     def update(self, dt: float) -> None:
         """Update overworld logic."""
         # Update time system
@@ -157,8 +161,8 @@ class OverworldScene(Scene):
         if self._feedback_timer > 0:
             self._feedback_timer -= dt
 
-        # Skip movement if in dialogue
-        if self._dialogue_session:
+        # Skip movement if in dialogue or quest log is open
+        if self._dialogue_session or self._quest_log_visible:
             return
 
         # Update move cooldown
@@ -689,6 +693,28 @@ class OverworldScene(Scene):
             logger.info(f"Quest log opened with {len(entries_dict)} quests")
         else:
             logger.info("Quest log closed")
+
+    def _debug_start_quest(self) -> None:
+        """Debug functie: start een test quest (Step 7 Quest v0)."""
+        if not self._quest:
+            logger.warning("[DEBUG] No quest system available")
+            return
+
+        # Probeer de r1_shrine_intro quest te starten
+        quest_id = "q_r1_shrine_intro"
+        logger.info(f"[DEBUG] Starting quest: {quest_id}")
+
+        try:
+            state = self._quest.start_quest(quest_id)
+            logger.info(f"[DEBUG] Quest started: {quest_id} (stage: {state.current_stage_id})")
+
+            # Toon feedback message
+            self._feedback_message = f"Quest gestart: {quest_id}"
+            self._feedback_timer = 3.0
+        except ValueError as e:
+            logger.warning(f"[DEBUG] Failed to start quest: {e}")
+            self._feedback_message = f"Quest error: {e}"
+            self._feedback_timer = 3.0
 
     def _render_dialogue(self, surface: pygame.Surface) -> None:
         """Render dialogue box."""
