@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import deque
-from typing import Deque, Iterable
+from collections.abc import Iterable
 
 import pygame
 
@@ -12,11 +12,11 @@ import pygame
 class Scene(ABC):
     """Abstracte basis voor concrete scenes."""
 
-    def __init__(self, manager: "SceneManager") -> None:
+    def __init__(self, manager: SceneManager) -> None:
         self._manager = manager
 
     @property
-    def manager(self) -> "SceneManager":
+    def manager(self) -> SceneManager:
         """Publieke toegang tot de SceneManager."""
         return self._manager
 
@@ -37,7 +37,7 @@ class SceneManager:
     """Beheert een stack van scenes en hun lifecycle."""
 
     def __init__(self) -> None:
-        self._scenes: Deque[Scene] = deque()
+        self._scenes: deque[Scene] = deque()
 
     def push_scene(self, scene: Scene) -> None:
         """Voeg een scene toe bovenop de stack."""

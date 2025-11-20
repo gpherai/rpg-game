@@ -54,16 +54,12 @@ class Game:
             data_dir = Path("data")
 
         self._data_repository = DataRepository(data_dir=data_dir)
-        self._world_system = WorldSystem(
-            data_repository=self._data_repository, maps_dir=maps_dir
-        )
+        self._world_system = WorldSystem(data_repository=self._data_repository, maps_dir=maps_dir)
         self._time_system = TimeSystem()
 
         # Party system (Step 4: NPC & Party)
         npc_meta = self._data_repository.get_npc_meta()
-        self._party_system = PartySystem(
-            data_repository=self._data_repository, npc_meta=npc_meta
-        )
+        self._party_system = PartySystem(data_repository=self._data_repository, npc_meta=npc_meta)
 
         # Inventory system (Step 5: Combat v0)
         self._inventory_system = InventorySystem()
@@ -227,9 +223,7 @@ class Game:
 
         # Re-initialize party with main character
         npc_meta = self._data_repository.get_npc_meta()
-        self._party_system = PartySystem(
-            data_repository=self._data_repository, npc_meta=npc_meta
-        )
+        self._party_system = PartySystem(data_repository=self._data_repository, npc_meta=npc_meta)
         main_char_id = "adhira"
         try:
             self._party_system.recruit_character(main_char_id)

@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from tri_sarira_rpg.core.entities import Position
 from tri_sarira_rpg.data_access.repository import DataRepository
-from tri_sarira_rpg.utils.tiled_loader import TiledLoader, TiledMap, TiledObject
+from tri_sarira_rpg.utils.tiled_loader import TiledLoader, TiledMap
 
 logger = logging.getLogger(__name__)
 
@@ -81,9 +81,7 @@ class WorldSystem:
         try:
             tiled_map = self._tiled_loader.load_map(zone_id)
         except FileNotFoundError:
-            logger.warning(
-                f"Tiled map not found for {zone_id}, using placeholder map"
-            )
+            logger.warning(f"Tiled map not found for {zone_id}, using placeholder map")
             tiled_map = self._create_placeholder_map(zone_id)
 
         self._current_zone_id = zone_id
@@ -97,20 +95,14 @@ class WorldSystem:
 
         if spawn:
             spawn_x, spawn_y = spawn.get_tile_coords(tiled_map.tile_width)
-            self._player = PlayerState(
-                zone_id=zone_id, position=Position(x=spawn_x, y=spawn_y)
-            )
+            self._player = PlayerState(zone_id=zone_id, position=Position(x=spawn_x, y=spawn_y))
             logger.info(f"Player spawned at ({spawn_x}, {spawn_y})")
         else:
             # Fallback: center of map
             center_x = tiled_map.width // 2
             center_y = tiled_map.height // 2
-            self._player = PlayerState(
-                zone_id=zone_id, position=Position(x=center_x, y=center_y)
-            )
-            logger.warning(
-                f"No spawn point found, using map center: ({center_x}, {center_y})"
-            )
+            self._player = PlayerState(zone_id=zone_id, position=Position(x=center_x, y=center_y))
+            logger.warning(f"No spawn point found, using map center: ({center_x}, {center_y})")
 
         # Load triggers
         self._load_triggers()
@@ -173,10 +165,7 @@ class WorldSystem:
             return False
 
         # Check bounds
-        if not (
-            0 <= tile_x < self._current_map.width
-            and 0 <= tile_y < self._current_map.height
-        ):
+        if not (0 <= tile_x < self._current_map.width and 0 <= tile_y < self._current_map.height):
             return False
 
         # Check collision
@@ -405,9 +394,7 @@ class WorldSystem:
                     f"Player restored at ({self._player.position.x}, {self._player.position.y})"
                 )
 
-        logger.info(
-            f"World restored: zone={zone_id}, triggered_events={len(self._triggered_ids)}"
-        )
+        logger.info(f"World restored: zone={zone_id}, triggered_events={len(self._triggered_ids)}")
 
 
 __all__ = ["WorldSystem", "PlayerState", "Trigger"]

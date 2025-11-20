@@ -337,9 +337,7 @@ class CombatSystem:
 
         return messages
 
-    def _execute_basic_attack(
-        self, attacker: Combatant, target: Combatant | None
-    ) -> list[str]:
+    def _execute_basic_attack(self, attacker: Combatant, target: Combatant | None) -> list[str]:
         """Execute a basic physical attack."""
         if not target or not target.is_alive():
             return [f"{attacker.name} attacks, but there's no target!"]
@@ -400,9 +398,7 @@ class CombatSystem:
         resource_amount = cost.get("amount", 0)
 
         if not user.consume_resource(resource_type, resource_amount):
-            messages.append(
-                f"{user.name} doesn't have enough {resource_type} to use {skill_name}!"
-            )
+            messages.append(f"{user.name} doesn't have enough {resource_type} to use {skill_name}!")
             return messages
 
         # Execute skill based on type
@@ -598,9 +594,7 @@ class CombatSystem:
 
                 tri_profile_data = actor_data.get("tri_profile")
                 if not tri_profile_data:
-                    logger.warning(
-                        f"No tri_profile for {party_member.actor_id}, skipping level-up"
-                    )
+                    logger.warning(f"No tri_profile for {party_member.actor_id}, skipping level-up")
                     continue
 
                 tri_profile = TriProfile(
@@ -689,9 +683,7 @@ class CombatSystem:
                 # Update PartySystem stats if level-up occurred
                 if member_level_ups:
                     for lvl_up in member_level_ups:
-                        self._party.apply_stat_gains(
-                            party_member.actor_id, lvl_up.stat_gains
-                        )
+                        self._party.apply_stat_gains(party_member.actor_id, lvl_up.stat_gains)
 
         result = BattleResult(
             outcome=outcome,
@@ -709,4 +701,11 @@ class CombatSystem:
         return self._battle_state
 
 
-__all__ = ["CombatSystem", "BattleAction", "BattleResult", "ActionType", "BattleOutcome", "Combatant"]
+__all__ = [
+    "CombatSystem",
+    "BattleAction",
+    "BattleResult",
+    "ActionType",
+    "BattleOutcome",
+    "Combatant",
+]

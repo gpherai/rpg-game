@@ -217,11 +217,15 @@ class QuestSystem:
             if current_stage:
                 target_stage_id = current_stage.next_stage_id
             else:
-                logger.warning(f"Cannot find current stage '{state.current_stage_id}' in quest '{quest_id}'")
+                logger.warning(
+                    f"Cannot find current stage '{state.current_stage_id}' in quest '{quest_id}'"
+                )
                 return state
 
         if target_stage_id is None:
-            logger.warning(f"No next stage defined for quest '{quest_id}' stage '{state.current_stage_id}'")
+            logger.warning(
+                f"No next stage defined for quest '{quest_id}' stage '{state.current_stage_id}'"
+            )
             return state
 
         # Advance to target stage
@@ -336,11 +340,13 @@ class QuestSystem:
             if state.status == QuestStatus.NOT_STARTED:
                 continue
 
-            save_data.append({
-                "quest_id": state.quest_id,
-                "status": state.status.value,
-                "current_stage_id": state.current_stage_id,
-            })
+            save_data.append(
+                {
+                    "quest_id": state.quest_id,
+                    "status": state.status.value,
+                    "current_stage_id": state.current_stage_id,
+                }
+            )
 
         return save_data
 
@@ -362,14 +368,18 @@ class QuestSystem:
 
             # Check if quest definition exists
             if quest_id not in self._definitions:
-                logger.warning(f"Quest '{quest_id}' in save data but definition not found, skipping")
+                logger.warning(
+                    f"Quest '{quest_id}' in save data but definition not found, skipping"
+                )
                 continue
 
             status_str = quest_data.get("status", "NOT_STARTED")
             try:
                 status = QuestStatus(status_str)
             except ValueError:
-                logger.warning(f"Invalid quest status '{status_str}' for quest '{quest_id}', using NOT_STARTED")
+                logger.warning(
+                    f"Invalid quest status '{status_str}' for quest '{quest_id}', using NOT_STARTED"
+                )
                 status = QuestStatus.NOT_STARTED
 
             self._states[quest_id] = QuestState(
@@ -412,7 +422,9 @@ class QuestSystem:
                 active_party = self._party_system.get_active_party()
                 for member in active_party:
                     member.xp += rewards.xp
-                    logger.info(f"Granted {rewards.xp} XP to {member.actor_id} (total: {member.xp})")
+                    logger.info(
+                        f"Granted {rewards.xp} XP to {member.actor_id} (total: {member.xp})"
+                    )
             else:
                 logger.warning(f"Cannot grant {rewards.xp} XP: no party system")
 
@@ -425,7 +437,9 @@ class QuestSystem:
                     logger.info(f"Granted {rewards.money} money")
                 elif hasattr(self._inventory_system, "money"):
                     self._inventory_system.money += rewards.money
-                    logger.info(f"Granted {rewards.money} money (total: {self._inventory_system.money})")
+                    logger.info(
+                        f"Granted {rewards.money} money (total: {self._inventory_system.money})"
+                    )
                 else:
                     # No money system yet, just log
                     logger.info(f"Would grant {rewards.money} money (not implemented)")
@@ -442,7 +456,7 @@ class QuestSystem:
                         self._inventory_system.add_item(item_id, quantity)
                         logger.info(f"Granted {quantity}x {item_id}")
             else:
-                logger.warning(f"Cannot grant items: no inventory system")
+                logger.warning("Cannot grant items: no inventory system")
 
 
 def parse_quest_from_json(quest_data: dict[str, Any]) -> QuestDefinition:

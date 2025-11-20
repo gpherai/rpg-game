@@ -84,8 +84,7 @@ class TimeSystem:
             self._state.time_of_day -= 1440
             self._state.day_index += 1
             logger.info(
-                f"New day: Day {self._state.day_index + 1} "
-                f"(Season {self._state.season_index})"
+                f"New day: Day {self._state.day_index + 1} " f"(Season {self._state.season_index})"
             )
 
         # Check for time band change

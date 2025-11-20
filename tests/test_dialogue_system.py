@@ -7,7 +7,6 @@ import pytest
 from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.systems.dialogue import (
     DialogueContext,
-    DialogueSession,
     DialogueSystem,
 )
 from tri_sarira_rpg.systems.inventory import InventorySystem
@@ -129,9 +128,7 @@ def test_choose_option_with_end_conversation(
     assert result2.conversation_ended, "Conversation should have ended"
 
 
-def test_effect_set_flag(
-    dialogue_system: DialogueSystem, test_context: DialogueContext
-) -> None:
+def test_effect_set_flag(dialogue_system: DialogueSystem, test_context: DialogueContext) -> None:
     """Test dat SET_FLAG effect correct wordt toegepast."""
     dialogue_id = "dbg_adhira_rajani_intro"
 
@@ -149,9 +146,7 @@ def test_effect_set_flag(
     assert "Set flag: dbg_meditated" in result.effects_applied
 
 
-def test_effect_give_item(
-    dialogue_system: DialogueSystem, test_context: DialogueContext
-) -> None:
+def test_effect_give_item(dialogue_system: DialogueSystem, test_context: DialogueContext) -> None:
     """Test dat GIVE_ITEM effect correct wordt toegepast."""
     dialogue_id = "dbg_adhira_rajani_intro"
 
@@ -172,9 +167,7 @@ def test_effect_give_item(
     assert any("item_meditation_token" in effect for effect in result.effects_applied)
 
 
-def test_condition_flag_set(
-    dialogue_system: DialogueSystem, test_context: DialogueContext
-) -> None:
+def test_condition_flag_set(dialogue_system: DialogueSystem, test_context: DialogueContext) -> None:
     """Test dat FLAG_SET condition correct werkt."""
     dialogue_id = "dbg_adhira_rajani_intro"
 
@@ -215,9 +208,7 @@ def test_condition_companion_in_party(
     assert "c_call_rajani" not in visible_choice_ids
 
     # Add Rajani to party
-    test_context.party_system.add_to_reserve_pool(
-        "npc_comp_rajani", "comp_rajani", tier="A"
-    )
+    test_context.party_system.add_to_reserve_pool("npc_comp_rajani", "comp_rajani", tier="A")
     test_context.party_system.add_to_active_party("npc_comp_rajani")
 
     # Start dialogue again
@@ -231,9 +222,7 @@ def test_condition_companion_in_party(
     assert "c_call_rajani" in visible_choice_ids2
 
 
-def test_auto_advance(
-    dialogue_system: DialogueSystem, test_context: DialogueContext
-) -> None:
+def test_auto_advance(dialogue_system: DialogueSystem, test_context: DialogueContext) -> None:
     """Test dat auto_advance correct werkt."""
     dialogue_id = "dbg_adhira_rajani_intro"
 
@@ -242,9 +231,7 @@ def test_auto_advance(
 
     # Navigate to a path that uses auto_advance
     # Choose Rajani (requires adding her first)
-    test_context.party_system.add_to_reserve_pool(
-        "npc_comp_rajani", "comp_rajani", tier="A"
-    )
+    test_context.party_system.add_to_reserve_pool("npc_comp_rajani", "comp_rajani", tier="A")
     test_context.party_system.add_to_active_party("npc_comp_rajani")
 
     # Navigate: intro -> rajani appears -> gift rajani -> rajani thanks (auto-advances)

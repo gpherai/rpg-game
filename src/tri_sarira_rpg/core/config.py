@@ -46,7 +46,7 @@ class Config:
     log_level: str
 
     @classmethod
-    def load(cls, root: Path | None = None) -> "Config":
+    def load(cls, root: Path | None = None) -> Config:
         """Lees config-bestanden en bouw het Config-object.
 
         Parameters
