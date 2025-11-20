@@ -588,16 +588,29 @@ class OverworldScene(Scene):
                 # Update dialogue view for next node
                 self._update_dialogue_view()
         else:
-            # Check for auto-advance (Space/Enter when no choices)
+            # Check for continue/advance (Space/Enter when no choices)
             if event.key in (pygame.K_SPACE, pygame.K_RETURN):
                 view = self._dialogue_system.get_current_view(self._dialogue_session)
-                if view and view.can_auto_advance:
-                    result = self._dialogue_system.auto_advance(self._dialogue_session)
-                    if result.conversation_ended:
-                        logger.info("Dialogue ended (auto-advance)")
-                        self._dialogue_session = None
+                if not view:
+                    # No view means conversation ended
+                    self._dialogue_session = None
+                    return
+
+                # If no choices, allow advancing/ending
+                if len(view.choices) == 0:
+                    if view.can_auto_advance:
+                        # Auto-advance to next node
+                        result = self._dialogue_system.auto_advance(self._dialogue_session)
+                        if result.conversation_ended:
+                            logger.info("Dialogue ended (auto-advance)")
+                            self._dialogue_session = None
+                        else:
+                            self._update_dialogue_view()
                     else:
-                        self._update_dialogue_view()
+                        # No auto_advance and no choices = end conversation
+                        # (this handles end_conversation=true nodes)
+                        logger.info("Dialogue ended (no choices, player continued)")
+                        self._dialogue_session = None
 
     def _update_dialogue_view(self) -> None:
         """Update dialogue box met huidige node view."""
