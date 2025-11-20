@@ -152,6 +152,14 @@ class OverworldScene(Scene):
             elif event.key == pygame.K_t:
                 self._debug_start_quest()
 
+            # Debug key: Advance test quest (Step 7 Quest v0)
+            elif event.key == pygame.K_y:
+                self._debug_advance_quest()
+
+            # Debug key: Complete test quest (Step 7 Quest v0)
+            elif event.key == pygame.K_u:
+                self._debug_complete_quest()
+
     def update(self, dt: float) -> None:
         """Update overworld logic."""
         # Update time system
@@ -713,7 +721,49 @@ class OverworldScene(Scene):
             self._feedback_timer = 3.0
         except ValueError as e:
             logger.warning(f"[DEBUG] Failed to start quest: {e}")
-            self._feedback_message = f"Quest error: {e}"
+            self._feedback_message = "Quest al actief! Druk Y om te advancen"
+            self._feedback_timer = 3.0
+
+    def _debug_advance_quest(self) -> None:
+        """Debug functie: advance een actieve quest (Step 7 Quest v0)."""
+        if not self._quest:
+            logger.warning("[DEBUG] No quest system available")
+            return
+
+        quest_id = "q_r1_shrine_intro"
+        logger.info(f"[DEBUG] Advancing quest: {quest_id}")
+
+        try:
+            state = self._quest.advance_quest(quest_id)
+            logger.info(f"[DEBUG] Quest advanced: {quest_id} (stage: {state.current_stage_id})")
+
+            # Toon feedback message
+            self._feedback_message = f"Quest advanced naar: {state.current_stage_id}"
+            self._feedback_timer = 3.0
+        except ValueError as e:
+            logger.warning(f"[DEBUG] Failed to advance quest: {e}")
+            self._feedback_message = f"Kan niet advancen: quest niet actief"
+            self._feedback_timer = 3.0
+
+    def _debug_complete_quest(self) -> None:
+        """Debug functie: complete een actieve quest (Step 7 Quest v0)."""
+        if not self._quest:
+            logger.warning("[DEBUG] No quest system available")
+            return
+
+        quest_id = "q_r1_shrine_intro"
+        logger.info(f"[DEBUG] Completing quest: {quest_id}")
+
+        try:
+            state = self._quest.complete_quest(quest_id)
+            logger.info(f"[DEBUG] Quest completed: {quest_id}")
+
+            # Toon feedback message
+            self._feedback_message = f"Quest voltooid! Beloningen ontvangen"
+            self._feedback_timer = 3.0
+        except ValueError as e:
+            logger.warning(f"[DEBUG] Failed to complete quest: {e}")
+            self._feedback_message = f"Kan niet voltooien: quest niet actief"
             self._feedback_timer = 3.0
 
     def _render_dialogue(self, surface: pygame.Surface) -> None:
