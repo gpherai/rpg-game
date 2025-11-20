@@ -729,11 +729,17 @@ class OverworldScene(Scene):
                 self._refresh_quest_log()
 
             # Toon feedback message
-            self._feedback_message = f"Quest gestart: {quest_id}"
+            self._feedback_message = f"Quest gestart: {state.current_stage_id}"
             self._feedback_timer = 3.0
         except ValueError as e:
             logger.warning(f"[DEBUG] Failed to start quest: {e}")
-            self._feedback_message = "Quest al actief! Druk Y om te advancen"
+            # Check welke error het is
+            if "already completed" in str(e):
+                self._feedback_message = "Quest al voltooid! (zie quest log)"
+            elif "already active" in str(e):
+                self._feedback_message = "Quest al actief! Druk Y om te advancen"
+            else:
+                self._feedback_message = f"Error: {e}"
             self._feedback_timer = 3.0
 
     def _debug_advance_quest(self) -> None:

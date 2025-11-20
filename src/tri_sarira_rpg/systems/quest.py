@@ -165,8 +165,8 @@ class QuestSystem:
             raise ValueError(f"Quest definition not found: {quest_id}")
 
         if state.status == QuestStatus.COMPLETED:
-            logger.info(f"Quest '{quest_id}' already completed, not starting")
-            return state
+            logger.warning(f"Quest '{quest_id}' already completed")
+            raise ValueError(f"Quest '{quest_id}' is already completed")
 
         if state.status == QuestStatus.ACTIVE:
             logger.info(f"Quest '{quest_id}' already active")
