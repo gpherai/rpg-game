@@ -148,6 +148,18 @@ class OverworldScene(Scene):
             elif event.key == pygame.K_b:
                 self._debug_start_battle()
 
+            # Debug key: Start test quest (Step 7 Quest v0)
+            elif event.key == pygame.K_t:
+                self._debug_start_quest()
+
+            # Debug key: Advance test quest (Step 7 Quest v0)
+            elif event.key == pygame.K_y:
+                self._debug_advance_quest()
+
+            # Debug key: Complete test quest (Step 7 Quest v0)
+            elif event.key == pygame.K_u:
+                self._debug_complete_quest()
+
     def update(self, dt: float) -> None:
         """Update overworld logic."""
         # Update time system
@@ -157,8 +169,8 @@ class OverworldScene(Scene):
         if self._feedback_timer > 0:
             self._feedback_timer -= dt
 
-        # Skip movement if in dialogue
-        if self._dialogue_session:
+        # Skip movement if in dialogue or quest log is open
+        if self._dialogue_session or self._quest_log_visible:
             return
 
         # Update move cooldown
@@ -663,6 +675,26 @@ class OverworldScene(Scene):
         # Update dialogue box
         self._dialogue_box.set_content(view.speaker_id, view.lines, choices)
 
+    def _refresh_quest_log(self) -> None:
+        """Refresh quest log UI with current quest data."""
+        if not self._quest or not self._quest_log_ui:
+            return
+
+        quest_log_entries = self._quest.build_quest_log_view()
+        # Convert QuestLogEntry objects to dicts for UI
+        entries_dict = [
+            {
+                "quest_id": entry.quest_id,
+                "title": entry.title,
+                "status": entry.status.value,
+                "current_stage_description": entry.current_stage_description,
+                "is_tracked": entry.is_tracked,
+            }
+            for entry in quest_log_entries
+        ]
+        self._quest_log_ui.set_quests(entries_dict)
+        logger.debug(f"Quest log refreshed with {len(entries_dict)} quests")
+
     def _toggle_quest_log(self) -> None:
         """Toggle quest log visibility."""
         if not self._quest:
@@ -671,24 +703,112 @@ class OverworldScene(Scene):
 
         self._quest_log_visible = not self._quest_log_visible
 
-        if self._quest_log_visible and self._quest_log_ui:
-            # Update quest log with current quest data
-            quest_log_entries = self._quest.build_quest_log_view()
-            # Convert QuestLogEntry objects to dicts for UI
-            entries_dict = [
-                {
-                    "quest_id": entry.quest_id,
-                    "title": entry.title,
-                    "status": entry.status.value,
-                    "current_stage_description": entry.current_stage_description,
-                    "is_tracked": entry.is_tracked,
-                }
-                for entry in quest_log_entries
-            ]
-            self._quest_log_ui.set_quests(entries_dict)
-            logger.info(f"Quest log opened with {len(entries_dict)} quests")
+        if self._quest_log_visible:
+            # Refresh quest log when opening
+            self._refresh_quest_log()
+            logger.info(f"Quest log opened")
         else:
             logger.info("Quest log closed")
+
+    def _debug_start_quest(self) -> None:
+        """Debug functie: start een test quest (Step 7 Quest v0)."""
+        if not self._quest:
+            logger.warning("[DEBUG] No quest system available")
+            return
+
+        # Probeer de r1_shrine_intro quest te starten
+        quest_id = "q_r1_shrine_intro"
+        logger.info(f"[DEBUG] Starting quest: {quest_id}")
+
+        try:
+            state = self._quest.start_quest(quest_id)
+            logger.info(f"[DEBUG] Quest started: {quest_id} (stage: {state.current_stage_id})")
+
+            # Get stage description for feedback
+            definition = self._quest.get_definition(quest_id)
+            stage_desc = "Quest gestart"
+            if definition and state.current_stage_id:
+                for stage in definition.stages:
+                    if stage.stage_id == state.current_stage_id:
+                        stage_desc = stage.description
+                        break
+
+            # Refresh quest log if open
+            if self._quest_log_visible:
+                self._refresh_quest_log()
+
+            # Toon feedback message
+            self._feedback_message = f"Quest gestart: {stage_desc}"
+            self._feedback_timer = 3.0
+        except ValueError as e:
+            logger.warning(f"[DEBUG] Failed to start quest: {e}")
+            # Check welke error het is
+            if "already completed" in str(e):
+                self._feedback_message = "Quest al voltooid! (zie quest log)"
+            elif "already active" in str(e):
+                self._feedback_message = "Quest al actief! Druk Y om te advancen"
+            else:
+                self._feedback_message = f"Error: {e}"
+            self._feedback_timer = 3.0
+
+    def _debug_advance_quest(self) -> None:
+        """Debug functie: advance een actieve quest (Step 7 Quest v0)."""
+        if not self._quest:
+            logger.warning("[DEBUG] No quest system available")
+            return
+
+        quest_id = "q_r1_shrine_intro"
+        logger.info(f"[DEBUG] Advancing quest: {quest_id}")
+
+        try:
+            state = self._quest.advance_quest(quest_id)
+            logger.info(f"[DEBUG] Quest advanced: {quest_id} (stage: {state.current_stage_id})")
+
+            # Get stage description for feedback
+            definition = self._quest.get_definition(quest_id)
+            stage_desc = state.current_stage_id
+            if definition and state.current_stage_id:
+                for stage in definition.stages:
+                    if stage.stage_id == state.current_stage_id:
+                        stage_desc = stage.description
+                        break
+
+            # Refresh quest log if open
+            if self._quest_log_visible:
+                self._refresh_quest_log()
+
+            # Toon feedback message
+            self._feedback_message = f"Quest: {stage_desc}"
+            self._feedback_timer = 3.0
+        except ValueError as e:
+            logger.warning(f"[DEBUG] Failed to advance quest: {e}")
+            self._feedback_message = f"Kan niet advancen: quest niet actief"
+            self._feedback_timer = 3.0
+
+    def _debug_complete_quest(self) -> None:
+        """Debug functie: complete een actieve quest (Step 7 Quest v0)."""
+        if not self._quest:
+            logger.warning("[DEBUG] No quest system available")
+            return
+
+        quest_id = "q_r1_shrine_intro"
+        logger.info(f"[DEBUG] Completing quest: {quest_id}")
+
+        try:
+            state = self._quest.complete_quest(quest_id)
+            logger.info(f"[DEBUG] Quest completed: {quest_id}")
+
+            # Refresh quest log if open
+            if self._quest_log_visible:
+                self._refresh_quest_log()
+
+            # Toon feedback message
+            self._feedback_message = f"Quest voltooid! Beloningen ontvangen"
+            self._feedback_timer = 3.0
+        except ValueError as e:
+            logger.warning(f"[DEBUG] Failed to complete quest: {e}")
+            self._feedback_message = f"Kan niet voltooien: quest niet actief"
+            self._feedback_timer = 3.0
 
     def _render_dialogue(self, surface: pygame.Surface) -> None:
         """Render dialogue box."""

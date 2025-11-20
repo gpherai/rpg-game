@@ -93,9 +93,9 @@ class QuestLogUI(Widget):
 
         # Draw quests
         if not self._quest_entries:
-            # No active quests
+            # No quests at all
             no_quests_surf = self._font_description.render(
-                "Geen actieve quests", True, self._text_color
+                "Geen quests", True, self._text_color
             )
             surface.blit(no_quests_surf, (self.rect.left + 20, y_offset))
         else:
@@ -119,7 +119,23 @@ class QuestLogUI(Widget):
                 prefix = "> " if is_selected else "  "
                 title_text = f"{prefix}{title}"
                 title_surf = self._font_quest.render(title_text, True, quest_color)
-                surface.blit(title_surf, (self.rect.left + 20, y_offset))
+                title_x = self.rect.left + 20
+                title_y = y_offset
+                surface.blit(title_surf, (title_x, title_y))
+
+                # Draw strikethrough for completed quests
+                if status == "COMPLETED":
+                    line_y = title_y + title_surf.get_height() // 2
+                    line_start_x = title_x
+                    line_end_x = title_x + title_surf.get_width()
+                    pygame.draw.line(
+                        surface,
+                        quest_color,
+                        (line_start_x, line_y),
+                        (line_end_x, line_y),
+                        2  # Line thickness
+                    )
+
                 y_offset += 25
 
                 # Draw current stage description (only for selected quest)

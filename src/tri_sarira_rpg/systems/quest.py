@@ -165,8 +165,8 @@ class QuestSystem:
             raise ValueError(f"Quest definition not found: {quest_id}")
 
         if state.status == QuestStatus.COMPLETED:
-            logger.info(f"Quest '{quest_id}' already completed, not starting")
-            return state
+            logger.warning(f"Quest '{quest_id}' already completed")
+            raise ValueError(f"Quest '{quest_id}' is already completed")
 
         if state.status == QuestStatus.ACTIVE:
             logger.info(f"Quest '{quest_id}' already active")
@@ -288,12 +288,13 @@ class QuestSystem:
         Returns
         -------
         list[QuestLogEntry]
-            List of quest log entries (active + completed quests)
+            List of quest log entries (ACTIVE and COMPLETED quests)
         """
         entries = []
 
         for state in self._states.values():
-            if state.status == QuestStatus.NOT_STARTED:
+            # Show ACTIVE and COMPLETED quests (not NOT_STARTED or FAILED)
+            if state.status not in (QuestStatus.ACTIVE, QuestStatus.COMPLETED):
                 continue
 
             definition = self.get_definition(state.quest_id)
@@ -302,12 +303,12 @@ class QuestSystem:
 
             # Get current stage description
             stage_desc = ""
-            if state.current_stage_id:
+            if state.status == QuestStatus.COMPLETED:
+                stage_desc = "Quest voltooid!"
+            elif state.current_stage_id:
                 stage = self._get_stage_definition(definition, state.current_stage_id)
                 if stage:
                     stage_desc = stage.description
-            elif state.status == QuestStatus.COMPLETED:
-                stage_desc = "Quest completed!"
 
             entries.append(
                 QuestLogEntry(
