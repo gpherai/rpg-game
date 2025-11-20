@@ -354,5 +354,60 @@ class WorldSystem:
 
         return self._current_zone_id
 
+    def get_save_state(self) -> dict[str, Any]:
+        """Get serializable world state for saving.
+
+        Returns
+        -------
+        dict[str, Any]
+            World state as dict
+        """
+        player_state = {}
+        if self._player:
+            player_state = {
+                "zone_id": self._player.zone_id,
+                "position": {"x": self._player.position.x, "y": self._player.position.y},
+                "facing": self._player.facing,
+            }
+
+        return {
+            "current_zone_id": self._current_zone_id,
+            "player_state": player_state,
+            "triggered_ids": list(self._triggered_ids),
+        }
+
+    def restore_from_save(self, state_dict: dict[str, Any]) -> None:
+        """Restore world state from save data.
+
+        Parameters
+        ----------
+        state_dict : dict[str, Any]
+            World state dict from save file
+        """
+        # Restore triggered IDs
+        self._triggered_ids = set(state_dict.get("triggered_ids", []))
+
+        # Restore player and zone
+        zone_id = state_dict.get("current_zone_id")
+        player_state = state_dict.get("player_state", {})
+
+        if zone_id:
+            # Load the zone (this will load the map and triggers)
+            self.load_zone(zone_id)
+
+            # Override player position with saved position
+            if player_state and self._player:
+                pos = player_state.get("position", {})
+                self._player.position.x = pos.get("x", 0)
+                self._player.position.y = pos.get("y", 0)
+                self._player.facing = player_state.get("facing", "S")
+                logger.info(
+                    f"Player restored at ({self._player.position.x}, {self._player.position.y})"
+                )
+
+        logger.info(
+            f"World restored: zone={zone_id}, triggered_events={len(self._triggered_ids)}"
+        )
+
 
 __all__ = ["WorldSystem", "PlayerState", "Trigger"]
