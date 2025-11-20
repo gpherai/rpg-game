@@ -162,7 +162,7 @@ class QuestSystem:
 
         if not definition:
             logger.error(f"Cannot start quest '{quest_id}': definition not found")
-            return state
+            raise ValueError(f"Quest definition not found: {quest_id}")
 
         if state.status == QuestStatus.COMPLETED:
             logger.info(f"Quest '{quest_id}' already completed, not starting")
@@ -170,7 +170,7 @@ class QuestSystem:
 
         if state.status == QuestStatus.ACTIVE:
             logger.info(f"Quest '{quest_id}' already active")
-            return state
+            raise ValueError(f"Quest '{quest_id}' is already active")
 
         # Start the quest
         state.status = QuestStatus.ACTIVE
@@ -202,16 +202,11 @@ class QuestSystem:
 
         if not definition:
             logger.error(f"Cannot advance quest '{quest_id}': definition not found")
-            return state
+            raise ValueError(f"Quest definition not found: {quest_id}")
 
-        # Start quest if not started
-        if state.status == QuestStatus.NOT_STARTED:
-            logger.info(f"Quest '{quest_id}' not started, starting now")
-            return self.start_quest(quest_id)
-
-        if state.status == QuestStatus.COMPLETED:
-            logger.info(f"Quest '{quest_id}' already completed, cannot advance")
-            return state
+        if state.status != QuestStatus.ACTIVE:
+            logger.error(f"Quest '{quest_id}' is not active (status: {state.status.value})")
+            raise ValueError(f"Quest '{quest_id}' is not active")
 
         # Determine next stage
         target_stage_id = next_stage_id
@@ -261,11 +256,11 @@ class QuestSystem:
 
         if not definition:
             logger.error(f"Cannot complete quest '{quest_id}': definition not found")
-            return state
+            raise ValueError(f"Quest definition not found: {quest_id}")
 
-        if state.status == QuestStatus.COMPLETED:
-            logger.info(f"Quest '{quest_id}' already completed")
-            return state
+        if state.status != QuestStatus.ACTIVE:
+            logger.error(f"Quest '{quest_id}' is not active (status: {state.status.value})")
+            raise ValueError(f"Quest '{quest_id}' is not active")
 
         # Mark as completed
         state.status = QuestStatus.COMPLETED

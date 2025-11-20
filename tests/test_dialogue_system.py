@@ -76,7 +76,9 @@ def test_start_dialogue_returns_first_node(
     assert view.speaker_id == "mc_adhira"
     assert len(view.lines) == 2  # Two lines in intro node
     assert "Adhira" in view.lines[0]
-    assert len(view.choices) == 3  # Three choices in intro node
+    # Note: There are 3 choices defined, but c_call_rajani is filtered out
+    # because Rajani is not in the party (COMPANION_IN_PARTY condition)
+    assert len(view.choices) == 2  # Two visible choices (c_meditate, c_continue)
 
 
 def test_choose_option_advances_to_next_node(
