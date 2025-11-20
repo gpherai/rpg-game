@@ -35,16 +35,12 @@ def inventory_system() -> InventorySystem:
 
 
 @pytest.fixture
-def quest_system(
-    party_system: PartySystem, inventory_system: InventorySystem
-) -> QuestSystem:
+def quest_system(party_system: PartySystem, inventory_system: InventorySystem) -> QuestSystem:
     """Create a QuestSystem for testing."""
     return QuestSystem(party_system, inventory_system)
 
 
-def test_load_quest_definitions(
-    quest_system: QuestSystem, data_repository: DataRepository
-) -> None:
+def test_load_quest_definitions(quest_system: QuestSystem, data_repository: DataRepository) -> None:
     """Test dat quest definities geladen kunnen worden uit JSON."""
     quest_system.load_definitions(data_repository)
 
@@ -59,9 +55,7 @@ def test_load_quest_definitions(
     assert definition.rewards.money == 10
 
 
-def test_start_quest(
-    quest_system: QuestSystem, data_repository: DataRepository
-) -> None:
+def test_start_quest(quest_system: QuestSystem, data_repository: DataRepository) -> None:
     """Test dat een quest gestart kan worden."""
     quest_system.load_definitions(data_repository)
 
@@ -79,9 +73,7 @@ def test_start_quest(
     assert quest_state.status == QuestStatus.ACTIVE
 
 
-def test_advance_quest(
-    quest_system: QuestSystem, data_repository: DataRepository
-) -> None:
+def test_advance_quest(quest_system: QuestSystem, data_repository: DataRepository) -> None:
     """Test dat een quest naar volgende stage kan worden geadvanced."""
     quest_system.load_definitions(data_repository)
 
@@ -140,9 +132,7 @@ def test_complete_quest(
     assert inventory_system.get_quantity("item_medium_herb") == 2
 
 
-def test_get_active_quests(
-    quest_system: QuestSystem, data_repository: DataRepository
-) -> None:
+def test_get_active_quests(quest_system: QuestSystem, data_repository: DataRepository) -> None:
     """Test dat actieve quests opgehaald kunnen worden."""
     quest_system.load_definitions(data_repository)
 
@@ -161,9 +151,7 @@ def test_get_active_quests(
     assert active[0].quest_id == "q_r1_shrine_intro"
 
 
-def test_build_quest_log_view(
-    quest_system: QuestSystem, data_repository: DataRepository
-) -> None:
+def test_build_quest_log_view(quest_system: QuestSystem, data_repository: DataRepository) -> None:
     """Test dat quest log view gebouwd kan worden."""
     quest_system.load_definitions(data_repository)
 

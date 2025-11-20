@@ -84,7 +84,9 @@ def test_add_companion_respects_party_limit():
     assert len(party.get_reserve_pool()) == 1, "Should have 1 in reserve"
     assert party.party_max_size == 2, "Party max size should be 2"
 
-    print(f"✓ Initial: {len(party.get_active_party())} active, {len(party.get_reserve_pool())} reserve")
+    print(
+        f"✓ Initial: {len(party.get_active_party())} active, {len(party.get_reserve_pool())} reserve"
+    )
 
     # Add Rajani to active party (should succeed)
     success = party.add_to_active_party("npc_comp_rajani")
@@ -92,7 +94,9 @@ def test_add_companion_respects_party_limit():
     assert len(party.get_active_party()) == 2, "Active party should now have 2 members"
     assert len(party.get_reserve_pool()) == 0, "Reserve should be empty"
 
-    print(f"✓ After adding Rajani: {len(party.get_active_party())} active, {len(party.get_reserve_pool())} reserve")
+    print(
+        f"✓ After adding Rajani: {len(party.get_active_party())} active, {len(party.get_reserve_pool())} reserve"
+    )
 
     # Try to add a third member (should fail - party is full)
     party.add_to_reserve_pool("npc_comp_third", "comp_third", tier="A")
@@ -101,7 +105,9 @@ def test_add_companion_respects_party_limit():
     assert len(party.get_active_party()) == 2, "Active party should still have 2 members"
     assert len(party.get_reserve_pool()) == 1, "Third member should remain in reserve"
 
-    print(f"✓ After trying to add third: {len(party.get_active_party())} active, {len(party.get_reserve_pool())} reserve")
+    print(
+        f"✓ After trying to add third: {len(party.get_active_party())} active, {len(party.get_reserve_pool())} reserve"
+    )
     print("✓ Party limit correctly enforced")
 
 
@@ -149,7 +155,9 @@ def test_move_companion_to_reserve_pool():
     assert len(party.get_active_party()) == 2, "Should start with 2 members"
     assert len(party.get_reserve_pool()) == 0, "Reserve should be empty"
 
-    print(f"✓ Initial: {len(party.get_active_party())} active, {len(party.get_reserve_pool())} reserve")
+    print(
+        f"✓ Initial: {len(party.get_active_party())} active, {len(party.get_reserve_pool())} reserve"
+    )
 
     # Move Rajani to reserve
     success = party.move_to_reserve("npc_comp_rajani")
@@ -158,7 +166,9 @@ def test_move_companion_to_reserve_pool():
     assert len(party.get_reserve_pool()) == 1, "Reserve should have 1 member"
     assert party.get_active_party()[0].is_main_character, "Only MC should remain in active party"
 
-    print(f"✓ After moving Rajani: {len(party.get_active_party())} active, {len(party.get_reserve_pool())} reserve")
+    print(
+        f"✓ After moving Rajani: {len(party.get_active_party())} active, {len(party.get_reserve_pool())} reserve"
+    )
 
     # Try to move MC to reserve (should fail)
     success = party.move_to_reserve("npc_mc_adhira")

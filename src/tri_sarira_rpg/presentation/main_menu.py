@@ -338,7 +338,9 @@ class MainMenuScene(Scene):
         surface.blit(title_text, title_rect)
 
         # Instructions
-        info_text = self._font_info.render("Selecteer een save slot (Esc om terug te gaan)", True, self._text_color)
+        info_text = self._font_info.render(
+            "Selecteer een save slot (Esc om terug te gaan)", True, self._text_color
+        )
         info_rect = info_text.get_rect(center=(self._screen_width // 2, 150))
         surface.blit(info_text, info_rect)
 
@@ -425,12 +427,16 @@ class MainMenuScene(Scene):
         surface.blit(title_text, title_rect)
 
         # Stub message
-        stub_text = self._font_menu.render("Opties zijn nog niet beschikbaar", True, self._text_color)
+        stub_text = self._font_menu.render(
+            "Opties zijn nog niet beschikbaar", True, self._text_color
+        )
         stub_rect = stub_text.get_rect(center=(self._screen_width // 2, 300))
         surface.blit(stub_text, stub_rect)
 
         # Instructions
-        info_text = self._font_info.render("Druk op Esc of Enter om terug te gaan", True, self._text_color)
+        info_text = self._font_info.render(
+            "Druk op Esc of Enter om terug te gaan", True, self._text_color
+        )
         info_rect = info_text.get_rect(center=(self._screen_width // 2, 350))
         surface.blit(info_text, info_rect)
 
@@ -446,7 +452,9 @@ class MainMenuScene(Scene):
             return
 
         feedback_text = self._font_info.render(self._feedback_message, True, (255, 100, 100))
-        feedback_rect = feedback_text.get_rect(center=(self._screen_width // 2, self._screen_height - 50))
+        feedback_rect = feedback_text.get_rect(
+            center=(self._screen_width // 2, self._screen_height - 50)
+        )
         surface.blit(feedback_text, feedback_rect)
 
 

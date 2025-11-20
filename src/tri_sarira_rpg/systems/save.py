@@ -150,7 +150,7 @@ class SaveSystem:
                 logger.warning(f"Save file not found: {save_file}")
                 return None
 
-            with open(save_file, "r", encoding="utf-8") as f:
+            with open(save_file, encoding="utf-8") as f:
                 save_data = json.load(f)
 
             logger.info(f"Save data loaded from {save_file}")

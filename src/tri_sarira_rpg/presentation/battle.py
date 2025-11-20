@@ -262,16 +262,12 @@ class BattleScene(Scene):
 
     def _execute_attack_action(self, actor: Combatant, target: Combatant) -> None:
         """Execute basic attack."""
-        action = BattleAction(
-            actor=actor, action_type=ActionType.ATTACK, target=target
-        )
+        action = BattleAction(actor=actor, action_type=ActionType.ATTACK, target=target)
         messages = self._combat.execute_action(action)
         self._add_to_log(messages)
         self._advance_turn()
 
-    def _execute_skill_action(
-        self, actor: Combatant, target: Combatant, skill_id: str
-    ) -> None:
+    def _execute_skill_action(self, actor: Combatant, target: Combatant, skill_id: str) -> None:
         """Execute skill."""
         action = BattleAction(
             actor=actor, action_type=ActionType.SKILL, target=target, skill_id=skill_id
@@ -291,9 +287,7 @@ class BattleScene(Scene):
         self._add_to_log(messages)
         self._advance_turn()
 
-    def _execute_item_action(
-        self, actor: Combatant, target: Combatant, item_id: str
-    ) -> None:
+    def _execute_item_action(self, actor: Combatant, target: Combatant, item_id: str) -> None:
         """Execute item use."""
         # Consume item from inventory
         if self._inventory.has_item(item_id):
@@ -363,9 +357,7 @@ class BattleScene(Scene):
             )
         else:
             # Basic attack
-            action = BattleAction(
-                actor=current_enemy, action_type=ActionType.ATTACK, target=target
-            )
+            action = BattleAction(actor=current_enemy, action_type=ActionType.ATTACK, target=target)
 
         messages = self._combat.execute_action(action)
         self._add_to_log(messages)
@@ -452,9 +444,7 @@ class BattleScene(Scene):
             bar_color = self._color_hp if hp_ratio > 0.3 else self._color_hp_low
 
             pygame.draw.rect(surface, (50, 50, 50), (x, y + 50, bar_width, bar_height))
-            pygame.draw.rect(
-                surface, bar_color, (x, y + 50, int(bar_width * hp_ratio), bar_height)
-            )
+            pygame.draw.rect(surface, bar_color, (x, y + 50, int(bar_width * hp_ratio), bar_height))
 
             # Draw resources
             stamina_text = self._font_small.render(
@@ -560,8 +550,12 @@ class BattleScene(Scene):
             # Main menu options
             options = ["Attack", "Skill", "Defend", "Item"]
             for i, option in enumerate(options):
-                color = self._color_highlight if i == self._selected_menu_index else self._color_text
-                text = self._font.render(f"> {option}" if i == self._selected_menu_index else f"  {option}", True, color)
+                color = (
+                    self._color_highlight if i == self._selected_menu_index else self._color_text
+                )
+                text = self._font.render(
+                    f"> {option}" if i == self._selected_menu_index else f"  {option}", True, color
+                )
                 surface.blit(text, (menu_x + 20, menu_y + 50 + i * 30))
 
         elif self._menu_state == MenuState.SKILL_SELECT:
@@ -570,7 +564,9 @@ class BattleScene(Scene):
             surface.blit(title, (menu_x + 20, menu_y + 50))
 
             for i, skill_id in enumerate(current_actor.skills):
-                color = self._color_highlight if i == self._selected_skill_index else self._color_text
+                color = (
+                    self._color_highlight if i == self._selected_skill_index else self._color_text
+                )
                 # Get skill name from data
                 skill_data = self._data_repository.get_skill(skill_id)
                 skill_name = skill_data.get("name", skill_id) if skill_data else skill_id
@@ -582,7 +578,11 @@ class BattleScene(Scene):
                     cost_amount = skill_data["resource_cost"].get("amount", 0)
                     cost_text = f" ({cost_amount} {cost_type.capitalize()})"
 
-                display_text = f"> {skill_name}{cost_text}" if i == self._selected_skill_index else f"  {skill_name}{cost_text}"
+                display_text = (
+                    f"> {skill_name}{cost_text}"
+                    if i == self._selected_skill_index
+                    else f"  {skill_name}{cost_text}"
+                )
                 text = self._font_small.render(display_text, True, color)
                 surface.blit(text, (menu_x + 20, menu_y + 80 + i * 25))
 
@@ -594,18 +594,28 @@ class BattleScene(Scene):
             available_items = self._inventory.get_available_items()
             if not available_items:
                 # No items available
-                no_items_text = self._font_small.render("No items available", True, self._color_text)
+                no_items_text = self._font_small.render(
+                    "No items available", True, self._color_text
+                )
                 surface.blit(no_items_text, (menu_x + 20, menu_y + 80))
             else:
                 for i, item_id in enumerate(available_items):
                     qty = self._inventory.get_quantity(item_id)
-                    color = self._color_highlight if i == self._selected_item_index else self._color_text
+                    color = (
+                        self._color_highlight
+                        if i == self._selected_item_index
+                        else self._color_text
+                    )
 
                     # Get item name from data
                     item_data = self._data_repository.get_item(item_id)
                     item_name = item_data.get("name", item_id) if item_data else item_id
 
-                    display_text = f"> {item_name} ({qty})" if i == self._selected_item_index else f"  {item_name} ({qty})"
+                    display_text = (
+                        f"> {item_name} ({qty})"
+                        if i == self._selected_item_index
+                        else f"  {item_name} ({qty})"
+                    )
                     text = self._font_small.render(display_text, True, color)
                     surface.blit(text, (menu_x + 20, menu_y + 80 + i * 25))
 
@@ -644,7 +654,9 @@ class BattleScene(Scene):
                     if pm_state:
                         # Use runtime level and name from PartySystem
                         current_level = pm_state.level
-                        actor_name = pm_state.actor_id.replace("mc_", "").replace("comp_", "").capitalize()
+                        actor_name = (
+                            pm_state.actor_id.replace("mc_", "").replace("comp_", "").capitalize()
+                        )
 
                         xp_line = self._font_small.render(
                             f"{actor_name}: LV {current_level} (XP +{xp})",
@@ -655,7 +667,9 @@ class BattleScene(Scene):
                         surface.blit(xp_line, xp_line_rect)
                         y_offset += 22
                     else:
-                        logger.warning(f"Cannot find party member {actor_id} in PartySystem for XP display")
+                        logger.warning(
+                            f"Cannot find party member {actor_id} in PartySystem for XP display"
+                        )
 
             # === BLOCK 3: Level-ups ===
             if result.level_ups:
@@ -717,9 +731,7 @@ class BattleScene(Scene):
                         line1_text = self._font_small.render(
                             ", ".join(line1_parts), True, (180, 180, 180)
                         )
-                        line1_rect = line1_text.get_rect(
-                            center=(self._screen_width // 2, y_offset)
-                        )
+                        line1_rect = line1_text.get_rect(center=(self._screen_width // 2, y_offset))
                         surface.blit(line1_text, line1_rect)
                         y_offset += 20
 
@@ -728,9 +740,7 @@ class BattleScene(Scene):
                         line2_text = self._font_small.render(
                             ", ".join(line2_parts), True, (180, 180, 180)
                         )
-                        line2_rect = line2_text.get_rect(
-                            center=(self._screen_width // 2, y_offset)
-                        )
+                        line2_rect = line2_text.get_rect(center=(self._screen_width // 2, y_offset))
                         surface.blit(line2_text, line2_rect)
                         y_offset += 20
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import time
-from typing import Iterator
+from collections.abc import Iterator
 
 
 @contextlib.contextmanager

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -45,7 +44,9 @@ class PartySystem:
     - Geen savegame integratie (in-memory only)
     """
 
-    def __init__(self, data_repository: Any | None = None, npc_meta: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, data_repository: Any | None = None, npc_meta: dict[str, Any] | None = None
+    ) -> None:
         """Initialize PartySystem op basis van npc_meta data.
 
         Parameters
@@ -65,14 +66,13 @@ class PartySystem:
             # Fallback: alleen MC in party
             logger.warning("PartySystem initialized without npc_meta, adding only MC")
             mc = PartyMember(
-                npc_id="npc_mc_adhira",
-                actor_id="mc_adhira",
-                is_main_character=True,
-                tier="S"
+                npc_id="npc_mc_adhira", actor_id="mc_adhira", is_main_character=True, tier="S"
             )
             self._state.active_party.append(mc)
 
-        logger.info(f"PartySystem initialized: {len(self._state.active_party)} active, {len(self._state.reserve_pool)} reserve")
+        logger.info(
+            f"PartySystem initialized: {len(self._state.active_party)} active, {len(self._state.reserve_pool)} reserve"
+        )
 
     def _init_from_npc_meta(self, npc_meta: dict[str, Any]) -> None:
         """Initialize party state op basis van npc_meta.json."""
@@ -127,12 +127,12 @@ class PartySystem:
         mc_count = sum(1 for m in self._state.active_party if m.is_main_character)
         if mc_count == 0:
             logger.error("No main character in party! Adding default MC")
-            self._state.active_party.insert(0, PartyMember(
-                npc_id="npc_mc_adhira",
-                actor_id="mc_adhira",
-                is_main_character=True,
-                tier="S"
-            ))
+            self._state.active_party.insert(
+                0,
+                PartyMember(
+                    npc_id="npc_mc_adhira", actor_id="mc_adhira", is_main_character=True, tier="S"
+                ),
+            )
         elif mc_count > 1:
             logger.warning(f"Multiple main characters in party ({mc_count})")
 
@@ -163,7 +163,9 @@ class PartySystem:
         """Check of NPC in reserve pool zit."""
         return any(m.npc_id == npc_id for m in self._state.reserve_pool)
 
-    def add_to_reserve_pool(self, npc_id: str, actor_id: str, tier: str | None = None, is_guest: bool = False) -> None:
+    def add_to_reserve_pool(
+        self, npc_id: str, actor_id: str, tier: str | None = None, is_guest: bool = False
+    ) -> None:
         """Voeg een companion toe aan reserve pool (recruitment).
 
         Parameters
@@ -186,11 +188,7 @@ class PartySystem:
             return
 
         member = PartyMember(
-            npc_id=npc_id,
-            actor_id=actor_id,
-            is_main_character=False,
-            is_guest=is_guest,
-            tier=tier
+            npc_id=npc_id, actor_id=actor_id, is_main_character=False, is_guest=is_guest, tier=tier
         )
         self._state.reserve_pool.append(member)
         logger.info(f"Added {npc_id} ({actor_id}) to reserve pool")

@@ -22,15 +22,15 @@ logger = logging.getLogger(__name__)
 # - Lv 10→11: ~250 XP
 
 XP_CURVE_V0 = {
-    1: 30,    # Lv 1 → Lv 2
-    2: 50,    # Lv 2 → Lv 3
-    3: 70,    # Lv 3 → Lv 4
-    4: 95,    # Lv 4 → Lv 5
-    5: 120,   # Lv 5 → Lv 6
-    6: 150,   # Lv 6 → Lv 7
-    7: 180,   # Lv 7 → Lv 8
-    8: 215,   # Lv 8 → Lv 9
-    9: 250,   # Lv 9 → Lv 10
+    1: 30,  # Lv 1 → Lv 2
+    2: 50,  # Lv 2 → Lv 3
+    3: 70,  # Lv 3 → Lv 4
+    4: 95,  # Lv 4 → Lv 5
+    5: 120,  # Lv 5 → Lv 6
+    6: 150,  # Lv 6 → Lv 7
+    7: 180,  # Lv 7 → Lv 8
+    8: 215,  # Lv 8 → Lv 9
+    9: 250,  # Lv 9 → Lv 10
     10: 300,  # Lv 10 → Lv 11 (future)
 }
 
@@ -47,9 +47,7 @@ class TriProfile:
         """Validate that weights sum to approximately 1.0."""
         total = self.phys_weight + self.ment_weight + self.spir_weight
         if not (0.95 <= total <= 1.05):
-            logger.warning(
-                f"TriProfile weights sum to {total:.2f}, expected ~1.0"
-            )
+            logger.warning(f"TriProfile weights sum to {total:.2f}, expected ~1.0")
 
 
 @dataclass
