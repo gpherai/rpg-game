@@ -5,11 +5,13 @@ from __future__ import annotations
 import logging
 import random
 from enum import Enum
+from typing import Any
 
 import pygame
 
 from tri_sarira_rpg.core.scene import Scene, SceneManager
 from tri_sarira_rpg.data_access.repository import DataRepository
+from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
 from tri_sarira_rpg.systems.combat import (
     ActionType,
     BattleAction,
@@ -50,11 +52,13 @@ class BattleScene(Scene):
         combat_system: CombatSystem,
         inventory_system: InventorySystem,
         data_repository: DataRepository,
+        game_instance: Any = None,
     ) -> None:
         super().__init__(manager)
         self._combat = combat_system
         self._inventory = inventory_system
         self._data_repository = data_repository
+        self._game = game_instance
         self._phase = BattlePhase.START
         self._menu_state = MenuState.MAIN_MENU
 
@@ -90,11 +94,47 @@ class BattleScene(Scene):
         else:
             self._screen_width, self._screen_height = 1280, 720
 
+        # Initialize PauseMenu (centered on screen)
+        # Note: Load is disabled during battle
+        self._paused: bool = False
+        pause_width = 500
+        pause_height = 400
+        pause_x = (self._screen_width - pause_width) // 2
+        pause_y = (self._screen_height - pause_height) // 2
+        pause_rect = pygame.Rect(pause_x, pause_y, pause_width, pause_height)
+        self._pause_menu = PauseMenu(pause_rect, game_instance=game_instance, allow_load=False)
+        # Set callback for returning to main menu
+        if game_instance:
+            self._pause_menu.set_main_menu_callback(game_instance.return_to_main_menu)
+
         logger.info("BattleScene initialized")
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """Verwerk skillselecties en menu-input."""
         if event.type == pygame.KEYDOWN:
+            # Pause menu toggle (Esc key) - only during player turn
+            if event.key == pygame.K_ESCAPE:
+                if self._paused:
+                    # Already paused, let pause menu handle it
+                    should_close = self._pause_menu.handle_input(event.key)
+                    if should_close:
+                        self._paused = False
+                        logger.debug("Resuming from pause menu")
+                else:
+                    # Not paused, open pause menu (only during player turn or battle end)
+                    if self._phase in (BattlePhase.PLAYER_TURN, BattlePhase.BATTLE_END):
+                        self._paused = True
+                        logger.debug("Opening pause menu")
+                return
+
+            # If paused, route all input to pause menu
+            if self._paused:
+                should_close = self._pause_menu.handle_input(event.key)
+                if should_close:
+                    self._paused = False
+                    logger.debug("Resuming from pause menu")
+                return
+
             if self._phase == BattlePhase.PLAYER_TURN:
                 self._handle_player_input(event.key)
             elif self._phase == BattlePhase.BATTLE_END:
@@ -347,6 +387,11 @@ class BattleScene(Scene):
 
     def update(self, dt: float) -> None:
         """Laat het combatsysteem vooruitgaan."""
+        # If paused, only update pause menu
+        if self._paused:
+            self._pause_menu.update(dt)
+            return
+
         # Update log display timer
         if self._log_display_time > 0:
             self._log_display_time -= dt
@@ -375,6 +420,10 @@ class BattleScene(Scene):
                 self._render_action_menu(surface)
             elif self._phase == BattlePhase.BATTLE_END:
                 self._render_battle_end(surface)
+
+        # Render pause menu if paused
+        if self._paused:
+            self._pause_menu.render(surface)
 
     def _render_party(self, surface: pygame.Surface) -> None:
         """Render party members."""

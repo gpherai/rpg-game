@@ -22,6 +22,7 @@ from tri_sarira_rpg.systems.state import GameStateFlags
 from tri_sarira_rpg.systems.time import TimeSystem
 from tri_sarira_rpg.systems.world import WorldSystem
 from tri_sarira_rpg.presentation.ui.dialogue_box import DialogueBox
+from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
 from tri_sarira_rpg.presentation.ui.quest_log import QuestLogUI
 
 logger = logging.getLogger(__name__)
@@ -102,9 +103,43 @@ class OverworldScene(Scene):
         quest_log_rect = pygame.Rect(quest_log_x, quest_log_y, quest_log_width, quest_log_height)
         self._quest_log_ui = QuestLogUI(quest_log_rect)
 
+        # Initialize PauseMenu (centered on screen)
+        self._paused: bool = False
+        pause_width = 500
+        pause_height = 400
+        pause_x = (self._screen_width - pause_width) // 2
+        pause_y = (self._screen_height - pause_height) // 2
+        pause_rect = pygame.Rect(pause_x, pause_y, pause_width, pause_height)
+        self._pause_menu = PauseMenu(pause_rect, game_instance=game_instance, allow_load=True)
+        # Set callback for returning to main menu
+        if game_instance:
+            self._pause_menu.set_main_menu_callback(game_instance.return_to_main_menu)
+
     def handle_event(self, event: pygame.event.Event) -> None:
         """Verwerk input events."""
         if event.type == pygame.KEYDOWN:
+            # Pause menu toggle (Esc key)
+            if event.key == pygame.K_ESCAPE:
+                if self._paused:
+                    # Already paused, let pause menu handle it
+                    should_close = self._pause_menu.handle_input(event.key)
+                    if should_close:
+                        self._paused = False
+                        logger.debug("Resuming from pause menu")
+                else:
+                    # Not paused, open pause menu
+                    self._paused = True
+                    logger.debug("Opening pause menu")
+                return
+
+            # If paused, route all input to pause menu
+            if self._paused:
+                should_close = self._pause_menu.handle_input(event.key)
+                if should_close:
+                    self._paused = False
+                    logger.debug("Resuming from pause menu")
+                return
+
             # If quest log is visible, route to quest log UI
             if self._quest_log_visible:
                 if event.key == pygame.K_q:
@@ -162,6 +197,11 @@ class OverworldScene(Scene):
 
     def update(self, dt: float) -> None:
         """Update overworld logic."""
+        # If paused, only update pause menu
+        if self._paused:
+            self._pause_menu.update(dt)
+            return
+
         # Update time system
         self._time.update(dt)
 
@@ -228,6 +268,10 @@ class OverworldScene(Scene):
         # Render quest log if visible
         if self._quest_log_visible and self._quest_log_ui:
             self._quest_log_ui.draw(surface)
+
+        # Render pause menu if paused
+        if self._paused:
+            self._pause_menu.render(surface)
 
     def _update_camera(self) -> None:
         """Update camera om player te volgen."""
@@ -586,7 +630,11 @@ class OverworldScene(Scene):
 
         # Push BattleScene onto scene stack
         battle_scene = BattleScene(
-            self.manager, self._combat, self._inventory, self._data_repository
+            self.manager,
+            self._combat,
+            self._inventory,
+            self._data_repository,
+            game_instance=self._game,
         )
         self.manager.push_scene(battle_scene)
 
