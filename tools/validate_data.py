@@ -23,9 +23,7 @@ from tri_sarira_rpg.core.config import Config
 from tri_sarira_rpg.data_access.repository import DataRepository
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(levelname)s: %(message)s", stream=sys.stdout
-)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s", stream=sys.stdout)
 logger = logging.getLogger(__name__)
 
 
@@ -94,25 +92,25 @@ def validate_data() -> bool:
         actors = repo.get_all_actors()
         logger.info(f"  - Actors: {len(actors)}")
         for actor in actors:
-            actor_id = actor.get('id')
-            actor_name = actor.get('name')
-            actor_level = actor.get('level')
+            actor_id = actor.get("id")
+            actor_name = actor.get("name")
+            actor_level = actor.get("level")
             logger.info(f"    * {actor_id}: {actor_name} (lvl {actor_level})")
 
         enemies = repo.get_all_enemies()
         logger.info(f"  - Enemies: {len(enemies)}")
         for enemy in enemies:
-            enemy_id = enemy.get('id')
-            enemy_name = enemy.get('name')
-            enemy_level = enemy.get('level')
+            enemy_id = enemy.get("id")
+            enemy_name = enemy.get("name")
+            enemy_level = enemy.get("level")
             logger.info(f"    * {enemy_id}: {enemy_name} (lvl {enemy_level})")
 
         zones = repo.get_all_zones()
         logger.info(f"  - Zones: {len(zones)}")
         for zone in zones:
-            zone_id = zone.get('id')
-            zone_name = zone.get('name')
-            zone_type = zone.get('type')
+            zone_id = zone.get("id")
+            zone_name = zone.get("name")
+            zone_type = zone.get("type")
             logger.info(f"    * {zone_id}: {zone_name} ({zone_type})")
 
         # NPC metadata (Step 4+, optional)
@@ -120,14 +118,18 @@ def validate_data() -> bool:
         if npcs:
             logger.info(f"  - NPCs: {len(npcs)}")
             for npc in npcs:
-                npc_id = npc.get('npc_id')
-                actor_id = npc.get('actor_id')
-                tier = npc.get('tier')
-                is_mc = npc.get('is_main_character', False)
-                flags = npc.get('companion_flags', {})
-                recruited = flags.get('recruited', False)
-                in_party = flags.get('in_party', False)
-                status = "MC" if is_mc else ("Party" if in_party else ("Recruited" if recruited else "Not recruited"))
+                npc_id = npc.get("npc_id")
+                actor_id = npc.get("actor_id")
+                tier = npc.get("tier")
+                is_mc = npc.get("is_main_character", False)
+                flags = npc.get("companion_flags", {})
+                recruited = flags.get("recruited", False)
+                in_party = flags.get("in_party", False)
+                status = (
+                    "MC"
+                    if is_mc
+                    else ("Party" if in_party else ("Recruited" if recruited else "Not recruited"))
+                )
                 logger.info(f"    * {npc_id} ({actor_id}): Tier {tier}, {status}")
 
     except Exception as e:

@@ -195,9 +195,7 @@ class DialogueSystem:
 
         # Check if start node exists
         if start_node_id not in graph.nodes:
-            logger.error(
-                f"Start node '{start_node_id}' not found in dialogue '{dialogue_id}'"
-            )
+            logger.error(f"Start node '{start_node_id}' not found in dialogue '{dialogue_id}'")
             return None
 
         # Create session
@@ -225,17 +223,13 @@ class DialogueSystem:
 
         node = session.get_current_node()
         if not node:
-            logger.error(
-                f"Current node '{session.current_node_id}' not found in graph"
-            )
+            logger.error(f"Current node '{session.current_node_id}' not found in graph")
             session.conversation_ended = True
             return None
 
         # Check node conditions
         if not self._evaluate_conditions(node.conditions, session.context):
-            logger.warning(
-                f"Node {node.node_id} conditions not met, ending conversation"
-            )
+            logger.warning(f"Node {node.node_id} conditions not met, ending conversation")
             session.conversation_ended = True
             return None
 
@@ -262,9 +256,7 @@ class DialogueSystem:
             can_auto_advance=can_auto_advance,
         )
 
-    def choose_option(
-        self, session: DialogueSession, choice_id: str
-    ) -> ConversationResult:
+    def choose_option(self, session: DialogueSession, choice_id: str) -> ConversationResult:
         """Verwerk spelerkeuze en advance naar volgende node.
 
         Parameters
@@ -300,9 +292,7 @@ class DialogueSystem:
         # Determine next state
         if chosen_choice.end_conversation:
             session.conversation_ended = True
-            return ConversationResult(
-                conversation_ended=True, effects_applied=effects_applied
-            )
+            return ConversationResult(conversation_ended=True, effects_applied=effects_applied)
 
         # Advance to next node
         next_node_id = chosen_choice.next_node_id
@@ -320,9 +310,7 @@ class DialogueSystem:
                 f"Choice '{choice_id}' has no next_node_id and end_conversation=False, ending anyway"
             )
             session.conversation_ended = True
-            return ConversationResult(
-                conversation_ended=True, effects_applied=effects_applied
-            )
+            return ConversationResult(conversation_ended=True, effects_applied=effects_applied)
 
     def auto_advance(self, session: DialogueSession) -> ConversationResult:
         """Auto-advance naar volgende node (als geen choices).
@@ -348,9 +336,7 @@ class DialogueSystem:
         if node.auto_advance_to:
             session.current_node_id = node.auto_advance_to
             logger.debug(f"Auto-advanced to node: {node.auto_advance_to}")
-            return ConversationResult(
-                conversation_ended=False, next_node_id=node.auto_advance_to
-            )
+            return ConversationResult(conversation_ended=False, next_node_id=node.auto_advance_to)
         else:
             # No auto_advance and no choices -> end conversation
             session.conversation_ended = True
@@ -477,9 +463,7 @@ class DialogueSystem:
             logger.error(f"Missing required key in effect data: {e}")
             return None
 
-    def _evaluate_conditions(
-        self, conditions: list[Condition], context: DialogueContext
-    ) -> bool:
+    def _evaluate_conditions(self, conditions: list[Condition], context: DialogueContext) -> bool:
         """Evalueer of alle conditions waar zijn.
 
         Parameters
@@ -499,9 +483,7 @@ class DialogueSystem:
                 return False
         return True
 
-    def _evaluate_single_condition(
-        self, condition: Condition, context: DialogueContext
-    ) -> bool:
+    def _evaluate_single_condition(self, condition: Condition, context: DialogueContext) -> bool:
         """Evalueer een enkele condition."""
         cond_type = condition.condition_type
 
@@ -536,9 +518,7 @@ class DialogueSystem:
             logger.warning(f"Unknown condition type: {cond_type}")
             return True  # Unknown conditions pass by default
 
-    def _apply_effects(
-        self, effects: list[EffectRef], context: DialogueContext
-    ) -> list[str]:
+    def _apply_effects(self, effects: list[EffectRef], context: DialogueContext) -> list[str]:
         """Pas alle effects toe en return lijst van toegepaste effects.
 
         Parameters
@@ -560,9 +540,7 @@ class DialogueSystem:
                 applied.append(result)
         return applied
 
-    def _apply_single_effect(
-        self, effect: EffectRef, context: DialogueContext
-    ) -> str | None:
+    def _apply_single_effect(self, effect: EffectRef, context: DialogueContext) -> str | None:
         """Pas een enkel effect toe."""
         effect_type = effect.effect_type
 

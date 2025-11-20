@@ -234,8 +234,8 @@ def test_xp_distribution_bug(combat_system: CombatSystem, party_system: PartySys
     # (not divided XP)
     assert len(result.earned_xp) == 2, "Both members should get XP"
 
-    adhira_xp = result.earned_xp.get("adhira", 0)
-    rajani_xp = result.earned_xp.get("rajani", 0)
+    adhira_xp = result.earned_xp.get("mc_adhira", 0)
+    rajani_xp = result.earned_xp.get("comp_rajani", 0)
 
     # Bug: Both should get the same FULL amount
     assert adhira_xp == rajani_xp, "BUG: Both members get full XP (not divided)"
@@ -281,7 +281,7 @@ def test_battle_defeat(combat_system: CombatSystem) -> None:
 def test_level_up_from_combat(combat_system: CombatSystem, party_system: PartySystem) -> None:
     """Test dat level-ups correct worden verwerkt na combat."""
     # Get initial state
-    member = party_system.get_party_member("npc_mc_adhira")
+    member = party_system.get_party_member("mc_adhira")
     assert member is not None
 
     initial_level = member.level

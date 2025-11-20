@@ -62,14 +62,10 @@ class QuestLogUI(Widget):
         # Navigation
         if event.key in (pygame.K_UP, pygame.K_w):
             if self._quest_entries:
-                self._selected_index = (self._selected_index - 1) % len(
-                    self._quest_entries
-                )
+                self._selected_index = (self._selected_index - 1) % len(self._quest_entries)
         elif event.key in (pygame.K_DOWN, pygame.K_s):
             if self._quest_entries:
-                self._selected_index = (self._selected_index + 1) % len(
-                    self._quest_entries
-                )
+                self._selected_index = (self._selected_index + 1) % len(self._quest_entries)
 
     def draw(self, surface: pygame.Surface) -> None:
         """Render quest log."""
@@ -94,9 +90,7 @@ class QuestLogUI(Widget):
         # Draw quests
         if not self._quest_entries:
             # No quests at all
-            no_quests_surf = self._font_description.render(
-                "Geen quests", True, self._text_color
-            )
+            no_quests_surf = self._font_description.render("Geen quests", True, self._text_color)
             surface.blit(no_quests_surf, (self.rect.left + 20, y_offset))
         else:
             for i, entry in enumerate(self._quest_entries):
@@ -109,9 +103,7 @@ class QuestLogUI(Widget):
                     quest_color = self._quest_completed_color
                 else:
                     quest_color = (
-                        self._quest_selected_color
-                        if is_selected
-                        else self._quest_active_color
+                        self._quest_selected_color if is_selected else self._quest_active_color
                     )
 
                 # Draw quest title
@@ -133,7 +125,7 @@ class QuestLogUI(Widget):
                         quest_color,
                         (line_start_x, line_y),
                         (line_end_x, line_y),
-                        2  # Line thickness
+                        2,  # Line thickness
                     )
 
                 y_offset += 25

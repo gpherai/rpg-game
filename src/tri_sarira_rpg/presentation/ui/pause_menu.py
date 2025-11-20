@@ -37,7 +37,9 @@ class PauseMenuState(Enum):
 class PauseMenu(Widget):
     """Pause menu overlay voor gameplay scenes."""
 
-    def __init__(self, rect: pygame.Rect, game_instance: Any = None, allow_load: bool = True) -> None:
+    def __init__(
+        self, rect: pygame.Rect, game_instance: Any = None, allow_load: bool = True
+    ) -> None:
         """Initialize pause menu.
 
         Parameters
@@ -377,7 +379,9 @@ class PauseMenu(Widget):
             surface.blit(option_text, option_rect)
 
         # Instructions
-        info_text = self._font_info.render("Gebruik Esc om direct door te gaan", True, self._text_color)
+        info_text = self._font_info.render(
+            "Gebruik Esc om direct door te gaan", True, self._text_color
+        )
         info_rect = info_text.get_rect(center=(self.rect.width // 2, self.rect.height - 30))
         surface.blit(info_text, info_rect)
 
@@ -395,7 +399,9 @@ class PauseMenu(Widget):
         surface.blit(title_text, title_rect)
 
         # Instructions
-        info_text = self._font_info.render("Selecteer een save slot (Esc om terug)", True, self._text_color)
+        info_text = self._font_info.render(
+            "Selecteer een save slot (Esc om terug)", True, self._text_color
+        )
         info_rect = info_text.get_rect(center=(self.rect.width // 2, 80))
         surface.blit(info_text, info_rect)
 

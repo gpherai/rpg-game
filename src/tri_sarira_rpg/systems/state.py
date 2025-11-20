@@ -43,9 +43,7 @@ class GameStateFlags:
             "choice_history": dict(self._choices),
         }
 
-    def restore_from_save(
-        self, state_dict: dict[str, list[str] | dict[str, str]]
-    ) -> None:
+    def restore_from_save(self, state_dict: dict[str, list[str] | dict[str, str]]) -> None:
         """Restore flags state from save data.
 
         Parameters

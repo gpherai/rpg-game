@@ -79,11 +79,7 @@ class TiledMap:
         """Haal alle PlayerSpawn objecten op."""
         if "Spawns" not in self.object_layers:
             return []
-        return [
-            obj
-            for obj in self.object_layers["Spawns"].objects
-            if obj.type == "PlayerSpawn"
-        ]
+        return [obj for obj in self.object_layers["Spawns"].objects if obj.type == "PlayerSpawn"]
 
     def get_default_spawn(self) -> TiledObject | None:
         """Haal de default PlayerSpawn op."""
@@ -106,27 +102,19 @@ class TiledMap:
         """Haal alle Portal objecten op."""
         if "Portals" not in self.object_layers:
             return []
-        return [
-            obj for obj in self.object_layers["Portals"].objects if obj.type == "Portal"
-        ]
+        return [obj for obj in self.object_layers["Portals"].objects if obj.type == "Portal"]
 
     def get_chests(self) -> list[TiledObject]:
         """Haal alle Chest objecten op."""
         if "Chests" not in self.object_layers:
             return []
-        return [
-            obj for obj in self.object_layers["Chests"].objects if obj.type == "Chest"
-        ]
+        return [obj for obj in self.object_layers["Chests"].objects if obj.type == "Chest"]
 
     def get_events(self) -> list[TiledObject]:
         """Haal alle EventTrigger objecten op."""
         if "Events" not in self.object_layers:
             return []
-        return [
-            obj
-            for obj in self.object_layers["Events"].objects
-            if obj.type == "EventTrigger"
-        ]
+        return [obj for obj in self.object_layers["Events"].objects if obj.type == "EventTrigger"]
 
 
 class TiledLoader:
@@ -226,9 +214,7 @@ class TiledLoader:
                 try:
                     props[name] = int(value)
                 except ValueError:
-                    logger.warning(
-                        f"Invalid int property '{name}' with value '{value}', using 0"
-                    )
+                    logger.warning(f"Invalid int property '{name}' with value '{value}', using 0")
                     props[name] = 0
             elif prop_type == "float":
                 try:
