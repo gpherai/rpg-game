@@ -675,6 +675,26 @@ class OverworldScene(Scene):
         # Update dialogue box
         self._dialogue_box.set_content(view.speaker_id, view.lines, choices)
 
+    def _refresh_quest_log(self) -> None:
+        """Refresh quest log UI with current quest data."""
+        if not self._quest or not self._quest_log_ui:
+            return
+
+        quest_log_entries = self._quest.build_quest_log_view()
+        # Convert QuestLogEntry objects to dicts for UI
+        entries_dict = [
+            {
+                "quest_id": entry.quest_id,
+                "title": entry.title,
+                "status": entry.status.value,
+                "current_stage_description": entry.current_stage_description,
+                "is_tracked": entry.is_tracked,
+            }
+            for entry in quest_log_entries
+        ]
+        self._quest_log_ui.set_quests(entries_dict)
+        logger.debug(f"Quest log refreshed with {len(entries_dict)} quests")
+
     def _toggle_quest_log(self) -> None:
         """Toggle quest log visibility."""
         if not self._quest:
@@ -683,22 +703,10 @@ class OverworldScene(Scene):
 
         self._quest_log_visible = not self._quest_log_visible
 
-        if self._quest_log_visible and self._quest_log_ui:
-            # Update quest log with current quest data
-            quest_log_entries = self._quest.build_quest_log_view()
-            # Convert QuestLogEntry objects to dicts for UI
-            entries_dict = [
-                {
-                    "quest_id": entry.quest_id,
-                    "title": entry.title,
-                    "status": entry.status.value,
-                    "current_stage_description": entry.current_stage_description,
-                    "is_tracked": entry.is_tracked,
-                }
-                for entry in quest_log_entries
-            ]
-            self._quest_log_ui.set_quests(entries_dict)
-            logger.info(f"Quest log opened with {len(entries_dict)} quests")
+        if self._quest_log_visible:
+            # Refresh quest log when opening
+            self._refresh_quest_log()
+            logger.info(f"Quest log opened")
         else:
             logger.info("Quest log closed")
 
@@ -715,6 +723,10 @@ class OverworldScene(Scene):
         try:
             state = self._quest.start_quest(quest_id)
             logger.info(f"[DEBUG] Quest started: {quest_id} (stage: {state.current_stage_id})")
+
+            # Refresh quest log if open
+            if self._quest_log_visible:
+                self._refresh_quest_log()
 
             # Toon feedback message
             self._feedback_message = f"Quest gestart: {quest_id}"
@@ -737,6 +749,10 @@ class OverworldScene(Scene):
             state = self._quest.advance_quest(quest_id)
             logger.info(f"[DEBUG] Quest advanced: {quest_id} (stage: {state.current_stage_id})")
 
+            # Refresh quest log if open
+            if self._quest_log_visible:
+                self._refresh_quest_log()
+
             # Toon feedback message
             self._feedback_message = f"Quest advanced naar: {state.current_stage_id}"
             self._feedback_timer = 3.0
@@ -757,6 +773,10 @@ class OverworldScene(Scene):
         try:
             state = self._quest.complete_quest(quest_id)
             logger.info(f"[DEBUG] Quest completed: {quest_id}")
+
+            # Refresh quest log if open
+            if self._quest_log_visible:
+                self._refresh_quest_log()
 
             # Toon feedback message
             self._feedback_message = f"Quest voltooid! Beloningen ontvangen"

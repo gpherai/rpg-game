@@ -288,12 +288,13 @@ class QuestSystem:
         Returns
         -------
         list[QuestLogEntry]
-            List of quest log entries (active + completed quests)
+            List of quest log entries (only ACTIVE quests)
         """
         entries = []
 
         for state in self._states.values():
-            if state.status == QuestStatus.NOT_STARTED:
+            # Only show ACTIVE quests in quest log
+            if state.status != QuestStatus.ACTIVE:
                 continue
 
             definition = self.get_definition(state.quest_id)
@@ -306,8 +307,6 @@ class QuestSystem:
                 stage = self._get_stage_definition(definition, state.current_stage_id)
                 if stage:
                     stage_desc = stage.description
-            elif state.status == QuestStatus.COMPLETED:
-                stage_desc = "Quest completed!"
 
             entries.append(
                 QuestLogEntry(
