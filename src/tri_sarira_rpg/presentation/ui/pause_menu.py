@@ -63,6 +63,10 @@ class PauseMenu(Widget):
         self._feedback_message: str = ""
         self._feedback_timer: float = 0.0
 
+        # Cache for slot info to avoid loading save files every frame
+        self._slot_info_cache: dict[int, str] = {}
+        self._cache_valid: bool = False
+
         # Fonts
         pygame.font.init()
         self._font_title = pygame.font.SysFont("monospace", 32, bold=True)
@@ -172,6 +176,8 @@ class PauseMenu(Widget):
             if self._allow_load:
                 self._state = PauseMenuState.LOAD_SELECT
                 self._selected_slot = 0
+                # Invalidate cache when entering load menu
+                self._cache_valid = False
             else:
                 self._show_feedback("Laden niet beschikbaar tijdens gevecht", 2.0)
             return False
@@ -305,6 +311,10 @@ class PauseMenu(Widget):
         dt : float
             Delta time in seconds
         """
+        # Refresh slot cache when entering load menu (only once)
+        if self._state == PauseMenuState.LOAD_SELECT and not self._cache_valid:
+            self._refresh_slot_cache()
+
         # Update feedback timer
         if self._feedback_timer > 0:
             self._feedback_timer -= dt
@@ -318,7 +328,7 @@ class PauseMenu(Widget):
             Surface to render on
         """
         # Create semi-transparent background
-        overlay = pygame.Surface(self._rect.size, pygame.SRCALPHA)
+        overlay = pygame.Surface(self.rect.size, pygame.SRCALPHA)
         overlay.fill(self._bg_color)
 
         # Draw border
@@ -335,7 +345,7 @@ class PauseMenu(Widget):
             self._render_feedback(overlay)
 
         # Blit overlay to surface
-        surface.blit(overlay, self._rect.topleft)
+        surface.blit(overlay, self.rect.topleft)
 
     def _render_main_menu(self, surface: pygame.Surface) -> None:
         """Render main pause menu.
@@ -347,7 +357,7 @@ class PauseMenu(Widget):
         """
         # Title
         title_text = self._font_title.render("GEPAUZEERD", True, self._title_color)
-        title_rect = title_text.get_rect(center=(self._rect.width // 2, 60))
+        title_rect = title_text.get_rect(center=(self.rect.width // 2, 60))
         surface.blit(title_text, title_rect)
 
         # Menu options
@@ -363,12 +373,12 @@ class PauseMenu(Widget):
                 prefix = "► " if i == self._selected_index else "  "
 
             option_text = self._font_menu.render(f"{prefix}{text}", True, color)
-            option_rect = option_text.get_rect(center=(self._rect.width // 2, start_y + i * 40))
+            option_rect = option_text.get_rect(center=(self.rect.width // 2, start_y + i * 40))
             surface.blit(option_text, option_rect)
 
         # Instructions
         info_text = self._font_info.render("Gebruik Esc om direct door te gaan", True, self._text_color)
-        info_rect = info_text.get_rect(center=(self._rect.width // 2, self._rect.height - 30))
+        info_rect = info_text.get_rect(center=(self.rect.width // 2, self.rect.height - 30))
         surface.blit(info_text, info_rect)
 
     def _render_load_select(self, surface: pygame.Surface) -> None:
@@ -381,12 +391,12 @@ class PauseMenu(Widget):
         """
         # Title
         title_text = self._font_title.render("Load Spel", True, self._title_color)
-        title_rect = title_text.get_rect(center=(self._rect.width // 2, 40))
+        title_rect = title_text.get_rect(center=(self.rect.width // 2, 40))
         surface.blit(title_text, title_rect)
 
         # Instructions
         info_text = self._font_info.render("Selecteer een save slot (Esc om terug)", True, self._text_color)
-        info_rect = info_text.get_rect(center=(self._rect.width // 2, 80))
+        info_rect = info_text.get_rect(center=(self.rect.width // 2, 80))
         surface.blit(info_text, info_rect)
 
         # Save slots
@@ -401,7 +411,7 @@ class PauseMenu(Widget):
             slot_text = f"{prefix}Slot {slot_id}: {slot_info}"
 
             text_surface = self._font_menu.render(slot_text, True, color)
-            text_rect = text_surface.get_rect(center=(self._rect.width // 2, start_y + i * 40))
+            text_rect = text_surface.get_rect(center=(self.rect.width // 2, start_y + i * 40))
             surface.blit(text_surface, text_rect)
 
     def _get_slot_info(self, slot_id: int) -> str:
@@ -417,29 +427,46 @@ class PauseMenu(Widget):
         str
             Slot info string
         """
+        # Use cached info if available
+        if self._cache_valid and slot_id in self._slot_info_cache:
+            return self._slot_info_cache[slot_id]
+
+        # Load slot info
         if not self._game:
-            return "[Leeg]"
+            info = "[Leeg]"
+        else:
+            # Check if slot exists via SaveSystem
+            save_system = getattr(self._game, "_save_system", None)
+            if not save_system:
+                info = "[Leeg]"
+            elif save_system.slot_exists(slot_id):
+                # Try to load slot data for preview
+                save_data = save_system.load_from_file(slot_id)
+                if save_data:
+                    # Extract some info
+                    world_state = save_data.get("world_state", {})
+                    time_state = save_data.get("time_state", {})
+                    zone_id = world_state.get("current_zone_id", "Unknown")
+                    dag = time_state.get("dag", 0)
 
-        # Check if slot exists via SaveSystem
-        save_system = getattr(self._game, "_save_system", None)
-        if not save_system:
-            return "[Leeg]"
+                    # Simplify zone name
+                    zone_name = zone_id.split("_")[-1] if zone_id else "Unknown"
+                    info = f"Dag {dag} - {zone_name}"
+                else:
+                    info = "[Leeg]"
+            else:
+                info = "[Leeg]"
 
-        if save_system.slot_exists(slot_id):
-            # Try to load slot data for preview
-            save_data = save_system.load_from_file(slot_id)
-            if save_data:
-                # Extract some info
-                world_state = save_data.get("world_state", {})
-                time_state = save_data.get("time_state", {})
-                zone_id = world_state.get("current_zone_id", "Unknown")
-                dag = time_state.get("dag", 0)
+        # Cache the result
+        self._slot_info_cache[slot_id] = info
+        return info
 
-                # Simplify zone name
-                zone_name = zone_id.split("_")[-1] if zone_id else "Unknown"
-                return f"Dag {dag} - {zone_name}"
-
-        return "[Leeg]"
+    def _refresh_slot_cache(self) -> None:
+        """Refresh slot info cache for all 5 slots."""
+        self._slot_info_cache.clear()
+        for slot_id in range(1, 6):
+            self._get_slot_info(slot_id)
+        self._cache_valid = True
 
     def _render_feedback(self, surface: pygame.Surface) -> None:
         """Render feedback message.
@@ -453,7 +480,7 @@ class PauseMenu(Widget):
             return
 
         feedback_text = self._font_info.render(self._feedback_message, True, (100, 255, 100))
-        feedback_rect = feedback_text.get_rect(center=(self._rect.width // 2, self._rect.height - 60))
+        feedback_rect = feedback_text.get_rect(center=(self.rect.width // 2, self.rect.height - 60))
         surface.blit(feedback_text, feedback_rect)
 
 

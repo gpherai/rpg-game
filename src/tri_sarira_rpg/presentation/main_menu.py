@@ -61,6 +61,10 @@ class MainMenuScene(Scene):
         self._feedback_message: str = ""
         self._feedback_timer: float = 0.0
 
+        # Cache for slot info to avoid loading save files every frame
+        self._slot_info_cache: dict[int, str] = {}
+        self._cache_valid: bool = False
+
         # Screen setup
         screen = pygame.display.get_surface()
         if screen:
@@ -136,6 +140,8 @@ class MainMenuScene(Scene):
         elif option == MainMenuOption.LOAD_GAME:
             self._state = MainMenuState.LOAD_SELECT
             self._selected_slot = 0
+            # Invalidate cache when entering load menu
+            self._cache_valid = False
         elif option == MainMenuOption.OPTIONS:
             self._state = MainMenuState.OPTIONS
         elif option == MainMenuOption.QUIT:
@@ -266,6 +272,10 @@ class MainMenuScene(Scene):
         dt : float
             Delta time in seconds
         """
+        # Refresh slot cache when entering load menu (only once)
+        if self._state == MainMenuState.LOAD_SELECT and not self._cache_valid:
+            self._refresh_slot_cache()
+
         # Update feedback timer
         if self._feedback_timer > 0:
             self._feedback_timer -= dt
@@ -360,29 +370,46 @@ class MainMenuScene(Scene):
         str
             Slot info string
         """
+        # Use cached info if available
+        if self._cache_valid and slot_id in self._slot_info_cache:
+            return self._slot_info_cache[slot_id]
+
+        # Load slot info
         if not self._game:
-            return "[Leeg]"
+            info = "[Leeg]"
+        else:
+            # Check if slot exists via SaveSystem
+            save_system: SaveSystem | None = getattr(self._game, "_save_system", None)
+            if not save_system:
+                info = "[Leeg]"
+            elif save_system.slot_exists(slot_id):
+                # Try to load slot data for preview
+                save_data = save_system.load_from_file(slot_id)
+                if save_data:
+                    # Extract some info
+                    world_state = save_data.get("world_state", {})
+                    time_state = save_data.get("time_state", {})
+                    zone_id = world_state.get("current_zone_id", "Unknown")
+                    dag = time_state.get("dag", 0)
 
-        # Check if slot exists via SaveSystem
-        save_system: SaveSystem | None = getattr(self._game, "_save_system", None)
-        if not save_system:
-            return "[Leeg]"
+                    # Simplify zone name
+                    zone_name = zone_id.split("_")[-1] if zone_id else "Unknown"
+                    info = f"Dag {dag} - {zone_name}"
+                else:
+                    info = "[Leeg]"
+            else:
+                info = "[Leeg]"
 
-        if save_system.slot_exists(slot_id):
-            # Try to load slot data for preview
-            save_data = save_system.load_from_file(slot_id)
-            if save_data:
-                # Extract some info
-                world_state = save_data.get("world_state", {})
-                time_state = save_data.get("time_state", {})
-                zone_id = world_state.get("current_zone_id", "Unknown")
-                dag = time_state.get("dag", 0)
+        # Cache the result
+        self._slot_info_cache[slot_id] = info
+        return info
 
-                # Simplify zone name
-                zone_name = zone_id.split("_")[-1] if zone_id else "Unknown"
-                return f"Dag {dag} - {zone_name}"
-
-        return "[Leeg]"
+    def _refresh_slot_cache(self) -> None:
+        """Refresh slot info cache for all 5 slots."""
+        self._slot_info_cache.clear()
+        for slot_id in range(1, 6):
+            self._get_slot_info(slot_id)
+        self._cache_valid = True
 
     def _render_options(self, surface: pygame.Surface) -> None:
         """Render options menu (stub for v0).
