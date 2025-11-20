@@ -10,10 +10,17 @@ import pygame
 from tri_sarira_rpg.core.scene import Scene, SceneManager
 from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.systems.combat import CombatSystem
+from tri_sarira_rpg.systems.dialogue import (
+    DialogueContext,
+    DialogueSession,
+    DialogueSystem,
+)
 from tri_sarira_rpg.systems.inventory import InventorySystem
 from tri_sarira_rpg.systems.party import PartySystem
+from tri_sarira_rpg.systems.state import GameStateFlags
 from tri_sarira_rpg.systems.time import TimeSystem
 from tri_sarira_rpg.systems.world import WorldSystem
+from tri_sarira_rpg.presentation.ui.dialogue_box import DialogueBox
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +37,7 @@ class OverworldScene(Scene):
         combat_system: CombatSystem,
         inventory_system: InventorySystem,
         data_repository: DataRepository,
+        flags_system: GameStateFlags | None = None,
         game_instance: Any = None,
     ) -> None:
         super().__init__(manager)
@@ -39,7 +47,13 @@ class OverworldScene(Scene):
         self._combat = combat_system
         self._inventory = inventory_system
         self._data_repository = data_repository
+        self._flags = flags_system or GameStateFlags()
         self._game = game_instance
+
+        # Dialogue system and UI
+        self._dialogue_system = DialogueSystem(data_repository)
+        self._dialogue_session: DialogueSession | None = None
+        self._dialogue_box: DialogueBox | None = None
 
         # Feedback message for save/load
         self._feedback_message: str = ""
@@ -66,9 +80,20 @@ class OverworldScene(Scene):
         self._font = pygame.font.SysFont("monospace", 16)
         self._font_large = pygame.font.SysFont("monospace", 24)
 
+        # Initialize DialogueBox (at bottom of screen)
+        dialogue_height = 250
+        dialogue_y = self._screen_height - dialogue_height - 20
+        dialogue_rect = pygame.Rect(20, dialogue_y, self._screen_width - 40, dialogue_height)
+        self._dialogue_box = DialogueBox(dialogue_rect)
+
     def handle_event(self, event: pygame.event.Event) -> None:
         """Verwerk input events."""
         if event.type == pygame.KEYDOWN:
+            # If in dialogue mode, route to dialogue box
+            if self._dialogue_session:
+                self._handle_dialogue_input(event)
+                return
+
             # Interact key
             if event.key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_e):
                 self._world.interact()
@@ -80,6 +105,10 @@ class OverworldScene(Scene):
             # Load game (F9 key - industry standard)
             elif event.key == pygame.K_F9:
                 self._quick_load()
+
+            # Debug key: Start dialogue (Step 6 Dialogue v0)
+            elif event.key == pygame.K_n:
+                self._debug_start_dialogue()
 
             # Debug key: Toggle Rajani in/out of party (Step 4 v0)
             elif event.key == pygame.K_j:
@@ -97,6 +126,10 @@ class OverworldScene(Scene):
         # Update feedback timer
         if self._feedback_timer > 0:
             self._feedback_timer -= dt
+
+        # Skip movement if in dialogue
+        if self._dialogue_session:
+            return
 
         # Update move cooldown
         if self._move_cooldown > 0:
@@ -145,6 +178,10 @@ class OverworldScene(Scene):
 
         # Render HUD
         self._render_hud(surface)
+
+        # Render dialogue box if active
+        if self._dialogue_session and self._dialogue_box:
+            self._render_dialogue(surface)
 
     def _update_camera(self) -> None:
         """Update camera om player te volgen."""
@@ -506,6 +543,96 @@ class OverworldScene(Scene):
             self.manager, self._combat, self._inventory, self._data_repository
         )
         self.manager.push_scene(battle_scene)
+
+    def _debug_start_dialogue(self) -> None:
+        """Debug functie: start test dialogue (Step 6 Dialogue v0)."""
+        logger.info("[DEBUG] Starting test dialogue...")
+
+        # Create dialogue context with system references
+        context = DialogueContext(
+            flags_system=self._flags,
+            party_system=self._party,
+            inventory_system=self._inventory,
+            economy_system=None,  # Not implemented yet
+            quest_system=None,  # Not implemented yet
+        )
+
+        # Start dialogue session
+        dialogue_id = "dbg_adhira_rajani_intro"
+        session = self._dialogue_system.start_dialogue(dialogue_id, context)
+
+        if session:
+            self._dialogue_session = session
+            self._update_dialogue_view()
+            logger.info(f"[DEBUG] Started dialogue: {dialogue_id}")
+        else:
+            logger.error(f"[DEBUG] Failed to start dialogue: {dialogue_id}")
+
+    def _handle_dialogue_input(self, event: pygame.event.Event) -> None:
+        """Handle input tijdens dialogue."""
+        if not self._dialogue_session or not self._dialogue_box:
+            return
+
+        # Pass event to dialogue box and get selected choice_id
+        choice_id = self._dialogue_box.handle_event(event)
+
+        if choice_id:
+            # Player made a choice
+            logger.debug(f"Player chose: {choice_id}")
+            result = self._dialogue_system.choose_option(self._dialogue_session, choice_id)
+
+            if result.conversation_ended:
+                logger.info("Dialogue ended")
+                self._dialogue_session = None
+            else:
+                # Update dialogue view for next node
+                self._update_dialogue_view()
+        else:
+            # Check for continue/advance (Space/Enter when no choices)
+            if event.key in (pygame.K_SPACE, pygame.K_RETURN):
+                view = self._dialogue_system.get_current_view(self._dialogue_session)
+                if not view:
+                    # No view means conversation ended
+                    self._dialogue_session = None
+                    return
+
+                # If no choices, allow advancing/ending
+                if len(view.choices) == 0:
+                    if view.can_auto_advance:
+                        # Auto-advance to next node
+                        result = self._dialogue_system.auto_advance(self._dialogue_session)
+                        if result.conversation_ended:
+                            logger.info("Dialogue ended (auto-advance)")
+                            self._dialogue_session = None
+                        else:
+                            self._update_dialogue_view()
+                    else:
+                        # No auto_advance and no choices = end conversation
+                        # (this handles end_conversation=true nodes)
+                        logger.info("Dialogue ended (no choices, player continued)")
+                        self._dialogue_session = None
+
+    def _update_dialogue_view(self) -> None:
+        """Update dialogue box met huidige node view."""
+        if not self._dialogue_session or not self._dialogue_box:
+            return
+
+        view = self._dialogue_system.get_current_view(self._dialogue_session)
+        if not view:
+            # Conversation ended
+            self._dialogue_session = None
+            return
+
+        # Convert ChoiceView list to (choice_id, text) tuples
+        choices = [(c.choice_id, c.text) for c in view.choices]
+
+        # Update dialogue box
+        self._dialogue_box.set_content(view.speaker_id, view.lines, choices)
+
+    def _render_dialogue(self, surface: pygame.Surface) -> None:
+        """Render dialogue box."""
+        if self._dialogue_box:
+            self._dialogue_box.draw(surface)
 
 
 __all__ = ["OverworldScene"]

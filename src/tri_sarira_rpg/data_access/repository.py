@@ -228,8 +228,25 @@ class DataRepository:
 
     def get_dialogue(self, dialogue_id: str) -> dict[str, Any] | None:
         """Geef dialooggraph-definitie terug."""
-        # Not implemented yet (no dialogue.json in this step)
-        return None
+        try:
+            data = self._loader.load_json("dialogue.json")
+            dialogues = data.get("dialogues", [])
+            for dialogue in dialogues:
+                if dialogue.get("dialogue_id") == dialogue_id:
+                    return dialogue
+            return None
+        except FileNotFoundError:
+            logger.warning("dialogue.json not found")
+            return None
+
+    def get_all_dialogues(self) -> list[dict[str, Any]]:
+        """Haal alle dialooggraphs op."""
+        try:
+            data = self._loader.load_json("dialogue.json")
+            return data.get("dialogues", [])
+        except FileNotFoundError:
+            logger.warning("dialogue.json not found")
+            return []
 
     def get_events_for_zone(self, zone_id: str) -> list[dict[str, Any]]:
         """Filter eventdefinities voor de opgegeven zone."""
