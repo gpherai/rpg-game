@@ -2,60 +2,46 @@
   "quests": [
     {
       "quest_id": "q_r1_shrine_intro",
-      "title": "De stille shrine",
-      "quest_type": "MSQ",
-      "region_id": "r1_chandrapur_valley",
-      "tri_focus_primary": "SPIRIT",
-      "tri_focus_secondary": "BODY",
-      "giver_npc_id": "npc_r1_elder",
-      "required_flags": [],
-      "forbidden_flags": [],
-      "time_window": null,
+      "title": "De Weg naar het Heiligdom",
+      "description": "De dorpsoudste vraagt je om het pad naar het heiligdom te verkennen.",
       "stages": [
         {
-          "stage_id": "s1_talk",
-          "description": "Praat met de elder in Chandrapur.",
-          "objectives": [
-            {"objective_type": "TALK_TO_NPC", "target_npc_id": "npc_r1_elder"}
-          ],
-          "auto_advance": true,
-          "next_on_success": "s2_reach_shrine",
-          "next_on_fail": null,
-          "enter_effect_ids": [],
-          "complete_effect_ids": []
+          "stage_id": "talk_to_elder",
+          "description": "Praat met de dorpsoudste over het heiligdom.",
+          "is_final": false,
+          "next_stage_id": "reach_shrine_clearing"
         },
         {
-          "stage_id": "s2_reach_shrine",
+          "stage_id": "reach_shrine_clearing",
           "description": "Bereik de shrine clearing.",
-          "objectives": [
-            {"objective_type": "REACH_ZONE", "target_zone_id": "z_r1_shrine_clearing"}
-          ],
-          "auto_advance": true,
-          "next_on_success": "s3_clear_trial",
-          "next_on_fail": null,
-          "enter_effect_ids": [],
-          "complete_effect_ids": []
-        },
-        {
-          "stage_id": "s3_clear_trial",
-          "description": "Versla de bewaker en reinig de shrine.",
-          "objectives": [
-            {"objective_type": "DEFEAT_ENEMY_GROUP", "enemy_group_id": "eg_r1_guardian"}
-          ],
-          "auto_advance": false,
-          "next_on_success": "COMPLETE_SUCCESS",
-          "next_on_fail": null,
-          "enter_effect_ids": [],
-          "complete_effect_ids": ["flag_shrine_cleansed_r1"]
+          "is_final": true
         }
       ],
       "rewards": {
-        "xp": 50,
-        "money": 25,
-        "item_rewards": [
-          {"item_id": "item_small_herb", "quantity": 2}
-        ],
-        "flag_rewards": ["flag_shrine_intro_complete"]
+        "xp": 20,
+        "money": 10,
+        "items": [
+          { "item_id": "item_medium_herb", "quantity": 2 }
+        ]
+      }
+    },
+    {
+      "quest_id": "q_test_simple",
+      "title": "Test Quest: Simpel",
+      "description": "Een simpele test quest met één stage voor testing.",
+      "stages": [
+        {
+          "stage_id": "do_something",
+          "description": "Doe iets simpels.",
+          "is_final": true
+        }
+      ],
+      "rewards": {
+        "xp": 10,
+        "money": 5,
+        "items": [
+          { "item_id": "item_small_herb", "quantity": 1 }
+        ]
       }
     }
   ]

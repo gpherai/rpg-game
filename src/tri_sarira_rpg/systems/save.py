@@ -21,6 +21,7 @@ class SaveSystem:
         time_system: Any | None = None,
         inventory_system: Any | None = None,
         flags_system: Any | None = None,
+        quest_system: Any | None = None,
     ) -> None:
         """Initialize SaveSystem with references to game systems.
 
@@ -36,12 +37,15 @@ class SaveSystem:
             InventorySystem reference
         flags_system : Any | None
             GameStateFlags reference
+        quest_system : Any | None
+            QuestSystem reference
         """
         self._party = party_system
         self._world = world_system
         self._time = time_system
         self._inventory = inventory_system
         self._flags = flags_system
+        self._quest = quest_system
 
         # Save directory
         self._save_dir = Path("saves")
@@ -70,6 +74,7 @@ class SaveSystem:
             "party_state": {},
             "inventory_state": {},
             "flags_state": {},
+            "quest_state": [],
         }
 
         # Collect state from each system
@@ -87,6 +92,9 @@ class SaveSystem:
 
         if self._flags:
             save_data["flags_state"] = self._flags.get_save_state()
+
+        if self._quest:
+            save_data["quest_state"] = self._quest.get_save_state()
 
         logger.info("Save data built successfully")
         return save_data
@@ -181,6 +189,9 @@ class SaveSystem:
 
             if self._flags and "flags_state" in payload:
                 self._flags.restore_from_save(payload["flags_state"])
+
+            if self._quest and "quest_state" in payload:
+                self._quest.restore_from_save(payload["quest_state"])
 
             logger.info("Game state restored successfully")
             return True

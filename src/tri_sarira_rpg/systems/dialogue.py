@@ -610,14 +610,57 @@ class DialogueSystem:
                 logger.info(f"Modify money: {amount} (no economy system)")
                 return None
 
-        elif effect_type in ["QUEST_START", "QUEST_ADVANCE", "QUEST_COMPLETE"]:
+        elif effect_type == "QUEST_START":
             quest_id = effect.params.get("quest_id")
             if not quest_id:
-                logger.warning(f"{effect_type} effect missing quest_id")
+                logger.warning("QUEST_START effect missing quest_id")
                 return None
-            # Quest system integration - voor nu log als no-op
-            logger.info(f"{effect_type}: {quest_id} (not implemented yet)")
-            return f"{effect_type}: {quest_id} (not implemented yet)"
+            if context.quest_system:
+                try:
+                    context.quest_system.start_quest(quest_id)
+                    logger.info(f"Started quest: {quest_id}")
+                    return f"Started quest: {quest_id}"
+                except Exception as e:
+                    logger.error(f"Failed to start quest {quest_id}: {e}")
+                    return None
+            else:
+                logger.warning(f"QUEST_START: {quest_id} (no quest system)")
+                return None
+
+        elif effect_type == "QUEST_ADVANCE":
+            quest_id = effect.params.get("quest_id")
+            next_stage_id = effect.params.get("next_stage_id")
+            if not quest_id:
+                logger.warning("QUEST_ADVANCE effect missing quest_id")
+                return None
+            if context.quest_system:
+                try:
+                    context.quest_system.advance_quest(quest_id, next_stage_id)
+                    logger.info(f"Advanced quest: {quest_id} to stage {next_stage_id}")
+                    return f"Advanced quest: {quest_id}"
+                except Exception as e:
+                    logger.error(f"Failed to advance quest {quest_id}: {e}")
+                    return None
+            else:
+                logger.warning(f"QUEST_ADVANCE: {quest_id} (no quest system)")
+                return None
+
+        elif effect_type == "QUEST_COMPLETE":
+            quest_id = effect.params.get("quest_id")
+            if not quest_id:
+                logger.warning("QUEST_COMPLETE effect missing quest_id")
+                return None
+            if context.quest_system:
+                try:
+                    context.quest_system.complete_quest(quest_id)
+                    logger.info(f"Completed quest: {quest_id}")
+                    return f"Completed quest: {quest_id}"
+                except Exception as e:
+                    logger.error(f"Failed to complete quest {quest_id}: {e}")
+                    return None
+            else:
+                logger.warning(f"QUEST_COMPLETE: {quest_id} (no quest system)")
+                return None
 
         else:
             logger.warning(f"Unknown effect type: {effect_type}")
