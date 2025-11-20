@@ -2,8 +2,10 @@
 """Test script to verify portal navigation between all zones."""
 
 from pathlib import Path
+
 from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.systems.world import WorldSystem
+
 
 def test_portal_navigation():
     """Test navigating through all portals: Town → Route → Shrine → back."""
@@ -34,7 +36,9 @@ def test_portal_navigation():
     # Step 2: Navigate to Forest Route
     print("\n[Step 2] Navigating to portal to Forest Route...")
     portals = world.current_map.get_portals()
-    portal_to_route = next(p for p in portals if p.properties.get("target_zone_id") == "z_r1_forest_route")
+    portal_to_route = next(
+        p for p in portals if p.properties.get("target_zone_id") == "z_r1_forest_route"
+    )
     portal_tile = portal_to_route.get_tile_coords()
     print(f"Portal to route at tile: {portal_tile}")
 
@@ -46,7 +50,9 @@ def test_portal_navigation():
     # Step 3: Navigate to Shrine Clearing
     print("\n[Step 3] Navigating to portal to Shrine Clearing...")
     portals = world.current_map.get_portals()
-    portal_to_shrine = next(p for p in portals if p.properties.get("target_zone_id") == "z_r1_shrine_clearing")
+    portal_to_shrine = next(
+        p for p in portals if p.properties.get("target_zone_id") == "z_r1_shrine_clearing"
+    )
     portal_tile = portal_to_shrine.get_tile_coords()
     print(f"Portal to shrine at tile: {portal_tile}")
 
@@ -66,7 +72,9 @@ def test_portal_navigation():
     # Step 4: Return to Forest Route
     print("\n[Step 4] Returning to Forest Route...")
     portals = world.current_map.get_portals()
-    portal_to_route_back = next(p for p in portals if p.properties.get("target_zone_id") == "z_r1_forest_route")
+    portal_to_route_back = next(
+        p for p in portals if p.properties.get("target_zone_id") == "z_r1_forest_route"
+    )
     portal_tile = portal_to_route_back.get_tile_coords()
     print(f"Portal to route at tile: {portal_tile}")
 
@@ -77,7 +85,9 @@ def test_portal_navigation():
     # Step 5: Return to Town
     print("\n[Step 5] Returning to Chandrapur Town...")
     portals = world.current_map.get_portals()
-    portal_to_town = next(p for p in portals if p.properties.get("target_zone_id") == "z_r1_chandrapur_town")
+    portal_to_town = next(
+        p for p in portals if p.properties.get("target_zone_id") == "z_r1_chandrapur_town"
+    )
     portal_tile = portal_to_town.get_tile_coords()
     print(f"Portal to town at tile: {portal_tile}")
 
@@ -97,5 +107,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Error during portal test: {e}")
         import traceback
+
         traceback.print_exc()
         exit(1)
