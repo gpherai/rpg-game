@@ -1,6 +1,160 @@
 {
   "dialogues": [
     {
+      "dialogue_id": "dbg_adhira_rajani_intro",
+      "scope": "SCENE",
+      "owner_id": "SCENE_DEBUG",
+      "nodes": [
+        {
+          "node_id": "n_intro",
+          "speaker_id": "mc_adhira",
+          "lines": [
+            {"text": "Adhira: Het is stil hier in de ochtend..."},
+            {"text": "Misschien tijd om even te pauzeren."}
+          ],
+          "choices": [
+            {
+              "choice_id": "c_meditate",
+              "text": "Mediteer een moment",
+              "effects": [
+                {"effect_type": "SET_FLAG", "flag_id": "dbg_meditated"}
+              ],
+              "next_node_id": "n_meditate",
+              "end_conversation": false
+            },
+            {
+              "choice_id": "c_call_rajani",
+              "text": "Roep Rajani",
+              "conditions": [
+                {"condition_type": "COMPANION_IN_PARTY", "params": {"npc_id": "npc_comp_rajani"}}
+              ],
+              "next_node_id": "n_rajani_appears",
+              "end_conversation": false
+            },
+            {
+              "choice_id": "c_continue",
+              "text": "Ga verder met je reis",
+              "next_node_id": "n_farewell",
+              "end_conversation": false
+            }
+          ]
+        },
+        {
+          "node_id": "n_meditate",
+          "speaker_id": "mc_adhira",
+          "lines": [
+            {"text": "Je sluit je ogen en voelt de energie om je heen..."},
+            {"text": "Een moment van rust in een wereld vol chaos."}
+          ],
+          "choices": [
+            {
+              "choice_id": "c_deep_meditation",
+              "text": "Mediteer dieper (vereist vorige meditatie)",
+              "conditions": [
+                {"condition_type": "FLAG_SET", "params": {"flag_id": "dbg_meditated"}}
+              ],
+              "effects": [
+                {"effect_type": "GIVE_ITEM", "item_id": "item_meditation_token", "quantity": 1},
+                {"effect_type": "SET_FLAG", "flag_id": "dbg_deep_meditation"}
+              ],
+              "next_node_id": "n_meditation_reward",
+              "end_conversation": false
+            },
+            {
+              "choice_id": "c_finish_meditation",
+              "text": "Open je ogen en ga verder",
+              "next_node_id": "n_farewell",
+              "end_conversation": false
+            }
+          ]
+        },
+        {
+          "node_id": "n_meditation_reward",
+          "speaker_id": "mc_adhira",
+          "lines": [
+            {"text": "Je voelt een diepe verbinding met je innerlijke kracht."},
+            {"text": "Je hebt een Meditation Token ontvangen!"}
+          ],
+          "choices": [
+            {
+              "choice_id": "c_thank",
+              "text": "Bedank het universum",
+              "next_node_id": "n_farewell",
+              "end_conversation": false
+            }
+          ]
+        },
+        {
+          "node_id": "n_rajani_appears",
+          "speaker_id": "npc_comp_rajani",
+          "lines": [
+            {"text": "Rajani: Je riep, Adhira?"},
+            {"text": "Rajani: Wat kan ik voor je doen?"}
+          ],
+          "choices": [
+            {
+              "choice_id": "c_talk_rajani",
+              "text": "Vertel me over deze plek",
+              "next_node_id": "n_rajani_story",
+              "end_conversation": false
+            },
+            {
+              "choice_id": "c_gift_rajani",
+              "text": "Geef Rajani een geschenk",
+              "effects": [
+                {"effect_type": "GIVE_ITEM", "item_id": "item_friendship_charm", "quantity": 1},
+                {"effect_type": "SET_FLAG", "flag_id": "dbg_rajani_gift_given"}
+              ],
+              "next_node_id": "n_rajani_thanks",
+              "end_conversation": false
+            },
+            {
+              "choice_id": "c_dismiss_rajani",
+              "text": "Niets, laat maar",
+              "next_node_id": "n_farewell",
+              "end_conversation": false
+            }
+          ]
+        },
+        {
+          "node_id": "n_rajani_story",
+          "speaker_id": "npc_comp_rajani",
+          "lines": [
+            {"text": "Rajani: Deze regio is oud, Adhira. Heel oud."},
+            {"text": "Rajani: De shrines hier bevatten mysteries uit een vervlogen tijd."},
+            {"text": "Rajani: Wees voorzichtig in je reis."}
+          ],
+          "choices": [
+            {
+              "choice_id": "c_rajani_understood",
+              "text": "Bedankt voor de waarschuwing",
+              "next_node_id": "n_farewell",
+              "end_conversation": false
+            }
+          ]
+        },
+        {
+          "node_id": "n_rajani_thanks",
+          "speaker_id": "npc_comp_rajani",
+          "lines": [
+            {"text": "Rajani: Een geschenk? Voor mij?"},
+            {"text": "Rajani: Dit... betekent veel. Dank je, Adhira."}
+          ],
+          "choices": [],
+          "auto_advance_to": "n_farewell"
+        },
+        {
+          "node_id": "n_farewell",
+          "speaker_id": "mc_adhira",
+          "lines": [
+            {"text": "De dag roept. Tijd om verder te gaan."}
+          ],
+          "choices": [],
+          "end_conversation": true
+        }
+      ]
+    },
+    {
       "dialogue_id": "dlg_r1_elder_shrine_intro",
       "scope": "NPC",
       "owner_id": "npc_r1_elder",

@@ -155,6 +155,10 @@ class PartySystem:
         """Check of NPC in active party zit."""
         return any(m.npc_id == npc_id for m in self._state.active_party)
 
+    def is_in_active_party(self, npc_id: str) -> bool:
+        """Check of NPC in active party zit (alias voor is_in_party)."""
+        return self.is_in_party(npc_id)
+
     def is_in_reserve(self, npc_id: str) -> bool:
         """Check of NPC in reserve pool zit."""
         return any(m.npc_id == npc_id for m in self._state.reserve_pool)
