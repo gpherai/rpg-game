@@ -724,12 +724,21 @@ class OverworldScene(Scene):
             state = self._quest.start_quest(quest_id)
             logger.info(f"[DEBUG] Quest started: {quest_id} (stage: {state.current_stage_id})")
 
+            # Get stage description for feedback
+            definition = self._quest.get_definition(quest_id)
+            stage_desc = "Quest gestart"
+            if definition and state.current_stage_id:
+                for stage in definition.stages:
+                    if stage.stage_id == state.current_stage_id:
+                        stage_desc = stage.description
+                        break
+
             # Refresh quest log if open
             if self._quest_log_visible:
                 self._refresh_quest_log()
 
             # Toon feedback message
-            self._feedback_message = f"Quest gestart: {state.current_stage_id}"
+            self._feedback_message = f"Quest gestart: {stage_desc}"
             self._feedback_timer = 3.0
         except ValueError as e:
             logger.warning(f"[DEBUG] Failed to start quest: {e}")
@@ -755,12 +764,21 @@ class OverworldScene(Scene):
             state = self._quest.advance_quest(quest_id)
             logger.info(f"[DEBUG] Quest advanced: {quest_id} (stage: {state.current_stage_id})")
 
+            # Get stage description for feedback
+            definition = self._quest.get_definition(quest_id)
+            stage_desc = state.current_stage_id
+            if definition and state.current_stage_id:
+                for stage in definition.stages:
+                    if stage.stage_id == state.current_stage_id:
+                        stage_desc = stage.description
+                        break
+
             # Refresh quest log if open
             if self._quest_log_visible:
                 self._refresh_quest_log()
 
             # Toon feedback message
-            self._feedback_message = f"Quest advanced naar: {state.current_stage_id}"
+            self._feedback_message = f"Quest: {stage_desc}"
             self._feedback_timer = 3.0
         except ValueError as e:
             logger.warning(f"[DEBUG] Failed to advance quest: {e}")
