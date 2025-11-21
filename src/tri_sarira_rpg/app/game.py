@@ -14,6 +14,7 @@ from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.presentation.main_menu import MainMenuScene
 from tri_sarira_rpg.presentation.overworld import OverworldScene
 from tri_sarira_rpg.systems.combat import CombatSystem
+from tri_sarira_rpg.systems.equipment import EquipmentSystem
 from tri_sarira_rpg.systems.inventory import InventorySystem
 from tri_sarira_rpg.systems.party import PartySystem
 from tri_sarira_rpg.systems.quest import QuestSystem
@@ -69,10 +70,18 @@ class Game:
         self._inventory_system.add_item("item_medium_herb", 1)
         self._inventory_system.add_item("item_stamina_tonic", 2)
 
+        # Equipment system (Step 9: Gear System v0)
+        self._equipment_system = EquipmentSystem(
+            party_system=self._party_system,
+            inventory_system=self._inventory_system,
+            data_repository=self._data_repository,
+        )
+
         # Combat system (Step 5: Combat v0)
         self._combat_system = CombatSystem(
             party_system=self._party_system,
             data_repository=self._data_repository,
+            equipment_system=self._equipment_system,
         )
 
         # Game state flags
@@ -248,6 +257,13 @@ class Game:
         self._inventory_system.add_item("item_medium_herb", 1)
         self._inventory_system.add_item("item_stamina_tonic", 2)
 
+        # Re-initialize equipment system
+        self._equipment_system = EquipmentSystem(
+            party_system=self._party_system,
+            inventory_system=self._inventory_system,
+            data_repository=self._data_repository,
+        )
+
         # Re-initialize flags and quests
         self._flags_system = GameStateFlags()
         self._quest_system = QuestSystem(
@@ -268,6 +284,7 @@ class Game:
         self._combat_system = CombatSystem(
             party_system=self._party_system,
             data_repository=self._data_repository,
+            equipment_system=self._equipment_system,
         )
 
         # Re-initialize save system with new references
