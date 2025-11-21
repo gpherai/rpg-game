@@ -62,6 +62,7 @@
    <properties>
     <property name="spawn_id" value="spawn_from_clearing"/>
     <property name="is_default" type="bool" value="true"/>
+    <property name="spawn_facing" value="north"/>
    </properties>
   </object>
  </objectgroup>
