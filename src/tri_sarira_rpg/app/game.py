@@ -18,6 +18,7 @@ from tri_sarira_rpg.systems.inventory import InventorySystem
 from tri_sarira_rpg.systems.party import PartySystem
 from tri_sarira_rpg.systems.quest import QuestSystem
 from tri_sarira_rpg.systems.save import SaveSystem
+from tri_sarira_rpg.systems.shop import ShopSystem
 from tri_sarira_rpg.systems.state import GameStateFlags
 from tri_sarira_rpg.systems.time import TimeSystem
 from tri_sarira_rpg.systems.world import WorldSystem
@@ -85,6 +86,14 @@ class Game:
         # Load quest definitions from JSON
         self._quest_system.load_definitions(self._data_repository)
 
+        # Shop system (Step 8: Shop System v0)
+        economy_state = {"currency_amount": 500, "shop_states": {}}  # Start with 500 Rūpa
+        self._shop_system = ShopSystem(
+            data_repository=self._data_repository,
+            inventory_system=self._inventory_system,
+            economy_state=economy_state,
+        )
+
         # Save system
         self._save_system = SaveSystem(
             party_system=self._party_system,
@@ -93,6 +102,7 @@ class Game:
             inventory_system=self._inventory_system,
             flags_system=self._flags_system,
             quest_system=self._quest_system,
+            shop_system=self._shop_system,
         )
 
         # Play time tracking
@@ -246,6 +256,14 @@ class Game:
         )
         self._quest_system.load_definitions(self._data_repository)
 
+        # Re-initialize shop system with starting currency
+        economy_state = {"currency_amount": 500, "shop_states": {}}
+        self._shop_system = ShopSystem(
+            data_repository=self._data_repository,
+            inventory_system=self._inventory_system,
+            economy_state=economy_state,
+        )
+
         # Re-initialize combat system with new party
         self._combat_system = CombatSystem(
             party_system=self._party_system,
@@ -260,6 +278,7 @@ class Game:
             inventory_system=self._inventory_system,
             flags_system=self._flags_system,
             quest_system=self._quest_system,
+            shop_system=self._shop_system,
         )
 
         # Load starting zone
@@ -299,6 +318,7 @@ class Game:
             self._data_repository,
             flags_system=self._flags_system,
             quest_system=self._quest_system,
+            shop_system=self._shop_system,
             game_instance=self,
         )
         self._scene_manager.push_scene(overworld_scene)
