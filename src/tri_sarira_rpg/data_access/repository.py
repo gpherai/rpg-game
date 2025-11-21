@@ -270,5 +270,27 @@ class DataRepository:
         # Not implemented yet (no events.json in this step)
         return []
 
+    # Shop methods (Step 8: Shop System v0)
+    def get_shop(self, shop_id: str) -> dict[str, Any] | None:
+        """Haal een shop-definitie op uit shops.json."""
+        try:
+            data = self._loader.load_json("shops.json")
+            shops = data.get("shops", [])
+            for shop in shops:
+                if shop.get("shop_id") == shop_id:
+                    return shop
+        except FileNotFoundError:
+            logger.warning("shops.json not found, shop data not available")
+        return None
+
+    def get_all_shops(self) -> list[dict[str, Any]]:
+        """Haal alle shop-definities op uit shops.json."""
+        try:
+            data = self._loader.load_json("shops.json")
+            return data.get("shops", [])
+        except FileNotFoundError:
+            logger.warning("shops.json not found, returning empty list")
+            return []
+
 
 __all__ = ["DataRepository"]
