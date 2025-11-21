@@ -129,7 +129,33 @@ class OverworldScene(Scene):
     def handle_event(self, event: pygame.event.Event) -> None:
         """Verwerk input events."""
         if event.type == pygame.KEYDOWN:
-            # Pause menu toggle (Esc key)
+            # Priority 1: If shop menu is visible, route to shop menu UI first
+            # (so ESC closes shop instead of opening pause menu)
+            if self._shop_menu_visible:
+                if self._shop_menu_ui:
+                    should_close = self._shop_menu_ui.handle_event(event)
+                    if should_close:
+                        self._shop_menu_visible = False
+                        logger.debug("Closing shop menu")
+                return
+
+            # Priority 2: If quest log is visible, route to quest log UI
+            if self._quest_log_visible:
+                if event.key == pygame.K_q:
+                    # Toggle quest log off
+                    self._quest_log_visible = False
+                elif self._quest_log_ui:
+                    # Route other events to quest log for navigation
+                    self._quest_log_ui.handle_event(event)
+                return
+
+            # Priority 3: If in dialogue mode, route to dialogue box
+            if self._dialogue_session:
+                self._handle_dialogue_input(event)
+                return
+
+            # Priority 4: Pause menu toggle (Esc key)
+            # Only handles ESC if no other overlay is active
             if event.key == pygame.K_ESCAPE:
                 if self._paused:
                     # Already paused, let pause menu handle it
@@ -149,30 +175,6 @@ class OverworldScene(Scene):
                 if should_close:
                     self._paused = False
                     logger.debug("Resuming from pause menu")
-                return
-
-            # If shop menu is visible, route to shop menu UI
-            if self._shop_menu_visible:
-                if self._shop_menu_ui:
-                    should_close = self._shop_menu_ui.handle_event(event)
-                    if should_close:
-                        self._shop_menu_visible = False
-                        logger.debug("Closing shop menu")
-                return
-
-            # If quest log is visible, route to quest log UI
-            if self._quest_log_visible:
-                if event.key == pygame.K_q:
-                    # Toggle quest log off
-                    self._quest_log_visible = False
-                elif self._quest_log_ui:
-                    # Route other events to quest log for navigation
-                    self._quest_log_ui.handle_event(event)
-                return
-
-            # If in dialogue mode, route to dialogue box
-            if self._dialogue_session:
-                self._handle_dialogue_input(event)
                 return
 
             # Quest log toggle (Q key)
