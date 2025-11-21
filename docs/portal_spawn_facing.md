@@ -42,17 +42,23 @@ When a player teleports to a spawn point:
 
 If `spawn_facing` is missing, use a sensible default (e.g., `south`).
 
+**Direction Mapping (Top-Down View):**
+- `north` = Face down/bottom of screen (toward higher Y values)
+- `south` = Face up/top of screen (toward lower Y values)
+- `east` = Face right
+- `west` = Face left
+
 ## Current Map Configuration
 
 | Map | Spawn Point | Facing | Reason |
 |-----|-------------|--------|--------|
-| **chandrapur_town** | spawn_default | south | Default center position |
-| | spawn_from_route | north | Coming from south, face into town |
-| **forest_route** | spawn_from_town | south | Coming from north, face down path |
-| | spawn_from_shrine | north | Coming from south, face up path |
-| **shrine_clearing** | spawn_from_route | south | Coming from north, face into clearing |
-| | spawn_from_inner | north | Coming from south, face back toward route |
-| **shrine_inner** | spawn_from_clearing | north | Coming from south, face into dungeon |
+| **chandrapur_town** | spawn_default | south | Default center, face upward |
+| | spawn_from_route | south | At bottom edge, face up into town |
+| **forest_route** | spawn_from_town | north | At top edge, face down the path |
+| | spawn_from_shrine | south | At bottom edge, face up the path |
+| **shrine_clearing** | spawn_from_route | north | At top edge, face down into clearing |
+| | spawn_from_inner | south | At bottom edge, face up toward route |
+| **shrine_inner** | spawn_from_clearing | south | At bottom edge, face up into dungeon |
 
 ## Benefits
 

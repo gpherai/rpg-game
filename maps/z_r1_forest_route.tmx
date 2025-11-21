@@ -80,14 +80,14 @@
    <properties>
     <property name="spawn_id" value="spawn_from_town"/>
     <property name="is_default" type="bool" value="true"/>
-    <property name="spawn_facing" value="south"/>
+    <property name="spawn_facing" value="north"/>
    </properties>
   </object>
   <object id="2" name="spawn_from_shrine" type="PlayerSpawn" x="320" y="896" width="32" height="32">
    <properties>
     <property name="spawn_id" value="spawn_from_shrine"/>
     <property name="is_default" type="bool" value="false"/>
-    <property name="spawn_facing" value="north"/>
+    <property name="spawn_facing" value="south"/>
    </properties>
   </object>
  </objectgroup>

@@ -67,7 +67,7 @@
    <properties>
     <property name="spawn_id" value="spawn_from_route"/>
     <property name="is_default" type="bool" value="false"/>
-    <property name="spawn_facing" value="north"/>
+    <property name="spawn_facing" value="south"/>
    </properties>
   </object>
  </objectgroup>
