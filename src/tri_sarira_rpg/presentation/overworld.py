@@ -12,6 +12,7 @@ from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.presentation.ui.dialogue_box import DialogueBox
 from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
 from tri_sarira_rpg.presentation.ui.quest_log import QuestLogUI
+from tri_sarira_rpg.presentation.ui.shop_menu import ShopMenuUI
 from tri_sarira_rpg.systems.combat import CombatSystem
 from tri_sarira_rpg.systems.dialogue import (
     DialogueContext,
@@ -21,6 +22,7 @@ from tri_sarira_rpg.systems.dialogue import (
 from tri_sarira_rpg.systems.inventory import InventorySystem
 from tri_sarira_rpg.systems.party import PartySystem
 from tri_sarira_rpg.systems.quest import QuestSystem
+from tri_sarira_rpg.systems.shop import ShopSystem
 from tri_sarira_rpg.systems.state import GameStateFlags
 from tri_sarira_rpg.systems.time import TimeSystem
 from tri_sarira_rpg.systems.world import WorldSystem
@@ -42,6 +44,7 @@ class OverworldScene(Scene):
         data_repository: DataRepository,
         flags_system: GameStateFlags | None = None,
         quest_system: QuestSystem | None = None,
+        shop_system: ShopSystem | None = None,
         game_instance: Any = None,
     ) -> None:
         super().__init__(manager)
@@ -53,6 +56,7 @@ class OverworldScene(Scene):
         self._data_repository = data_repository
         self._flags = flags_system or GameStateFlags()
         self._quest = quest_system
+        self._shop = shop_system
         self._game = game_instance
 
         # Dialogue system and UI
@@ -63,6 +67,10 @@ class OverworldScene(Scene):
         # Quest log UI
         self._quest_log_visible: bool = False
         self._quest_log_ui: QuestLogUI | None = None
+
+        # Shop UI (Step 8: Shop System v0)
+        self._shop_menu_visible: bool = False
+        self._shop_menu_ui: ShopMenuUI | None = None
 
         # Feedback message for save/load
         self._feedback_message: str = ""
@@ -115,6 +123,9 @@ class OverworldScene(Scene):
         if game_instance:
             self._pause_menu.set_main_menu_callback(game_instance.return_to_main_menu)
 
+        # Initialize ShopMenuUI (will be created when needed)
+        # This gets initialized when opening shop for first time
+
     def handle_event(self, event: pygame.event.Event) -> None:
         """Verwerk input events."""
         if event.type == pygame.KEYDOWN:
@@ -138,6 +149,15 @@ class OverworldScene(Scene):
                 if should_close:
                     self._paused = False
                     logger.debug("Resuming from pause menu")
+                return
+
+            # If shop menu is visible, route to shop menu UI
+            if self._shop_menu_visible:
+                if self._shop_menu_ui:
+                    should_close = self._shop_menu_ui.handle_event(event)
+                    if should_close:
+                        self._shop_menu_visible = False
+                        logger.debug("Closing shop menu")
                 return
 
             # If quest log is visible, route to quest log UI
@@ -195,11 +215,21 @@ class OverworldScene(Scene):
             elif event.key == pygame.K_u:
                 self._debug_complete_quest()
 
+            # Debug key: Open shop (Step 8 Shop v0)
+            elif event.key == pygame.K_g:
+                self._debug_open_shop()
+
     def update(self, dt: float) -> None:
         """Update overworld logic."""
         # If paused, only update pause menu
         if self._paused:
             self._pause_menu.update(dt)
+            return
+
+        # If shop menu is visible, only update shop menu
+        if self._shop_menu_visible:
+            if self._shop_menu_ui:
+                self._shop_menu_ui.update(dt)
             return
 
         # Update time system
@@ -268,6 +298,10 @@ class OverworldScene(Scene):
         # Render quest log if visible
         if self._quest_log_visible and self._quest_log_ui:
             self._quest_log_ui.draw(surface)
+
+        # Render shop menu if visible
+        if self._shop_menu_visible and self._shop_menu_ui:
+            self._shop_menu_ui.draw(surface)
 
         # Render pause menu if paused
         if self._paused:
@@ -521,8 +555,8 @@ class OverworldScene(Scene):
             "Arrows: Move",
             "Space/E: Interact",
             "F5: Save  |  F9: Load",
-            "J: Toggle Rajani (debug)",
-            "B: Start Battle (debug)",
+            "G: Shop (debug, Chandrapur)",
+            "B: Battle (debug)",
         ]
         for i, line in enumerate(controls_lines):
             text = self._font.render(line, True, (200, 200, 200))
@@ -854,6 +888,45 @@ class OverworldScene(Scene):
         """Render dialogue box."""
         if self._dialogue_box:
             self._dialogue_box.draw(surface)
+
+    def _debug_open_shop(self) -> None:
+        """Debug functie: open shop menu (Step 8 Shop v0)."""
+        if not self._shop:
+            logger.warning("[DEBUG] No shop system available")
+            return
+
+        # Check if in Chandrapur town
+        current_zone_id = self._world.current_zone_id
+        if current_zone_id != "z_r1_chandrapur_town":
+            logger.info(f"[DEBUG] Shop only available in Chandrapur (current: {current_zone_id})")
+            self._feedback_message = "Geen shop hier (debug: gebruik alleen in Chandrapur)"
+            self._feedback_timer = 2.0
+            return
+
+        # Shop ID and chapter
+        shop_id = "shop_r1_town_general"
+        chapter_id = 1  # v0: hardcoded to chapter 1
+
+        # Initialize shop menu UI if not done yet
+        if not self._shop_menu_ui:
+            shop_width = 900
+            shop_height = 600
+            shop_x = (self._screen_width - shop_width) // 2
+            shop_y = (self._screen_height - shop_height) // 2
+            shop_rect = pygame.Rect(shop_x, shop_y, shop_width, shop_height)
+
+            self._shop_menu_ui = ShopMenuUI(
+                rect=shop_rect,
+                shop_system=self._shop,
+                inventory_system=self._inventory,
+                data_repository=self._data_repository,
+                shop_id=shop_id,
+                chapter_id=chapter_id,
+            )
+
+        # Open shop menu
+        self._shop_menu_visible = True
+        logger.info(f"[DEBUG] Opened shop: {shop_id}")
 
 
 __all__ = ["OverworldScene"]
