@@ -52,6 +52,12 @@
     <property name="is_default" type="bool" value="true"/>
    </properties>
   </object>
+  <object id="5" name="spawn_from_inner" type="PlayerSpawn" x="288" y="384" width="32" height="32">
+   <properties>
+    <property name="spawn_id" value="spawn_from_inner"/>
+    <property name="is_default" type="bool" value="false"/>
+   </properties>
+  </object>
  </objectgroup>
  <objectgroup id="4" name="Portals">
   <object id="2" name="portal_to_route" type="Portal" x="288" y="32" width="32" height="32">
