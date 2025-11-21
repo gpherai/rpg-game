@@ -70,6 +70,31 @@
         "threshold",
         "spirit_activity"
       ]
+    },
+    {
+      "id": "z_r1_shrine_inner",
+      "name": "Shrine Inner Sanctum",
+      "type": "dungeon",
+      "description": "The inner chambers of the shrine, filled with ancient trials and corrupted spirits.",
+      "region": "R1",
+      "recommended_level": 5,
+      "map_id": "z_r1_shrine_inner",
+      "tags": ["dungeon", "trial", "story", "multi_room"],
+      "connected_zones": ["z_r1_shrine_clearing"],
+      "tri_sharira_bias": {
+        "body": 5,
+        "mind": 6,
+        "spirit": 10
+      },
+      "sanctity": 10,
+      "danger_tier": 4,
+      "ambient_tags": [
+        "shrine_interior",
+        "corrupted",
+        "trial_chambers",
+        "spirit_concentration",
+        "ancient"
+      ]
     }
   ]
 }

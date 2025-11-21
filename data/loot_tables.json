@@ -18,6 +18,77 @@
           "rarity_tag": "UNCOMMON"
         }
       ]
+    },
+    {
+      "loot_table_id": "lt_r1_shrine_spirits",
+      "entries": [
+        {
+          "item_id": "item_small_herb",
+          "drop_chance": 0.2,
+          "quantity_min": 1,
+          "quantity_max": 1,
+          "rarity_tag": "COMMON"
+        },
+        {
+          "item_id": "item_stamina_tonic",
+          "drop_chance": 0.15,
+          "quantity_min": 1,
+          "quantity_max": 1,
+          "rarity_tag": "UNCOMMON"
+        },
+        {
+          "item_id": "item_medium_herb",
+          "drop_chance": 0.1,
+          "quantity_min": 1,
+          "quantity_max": 1,
+          "rarity_tag": "UNCOMMON"
+        }
+      ]
+    },
+    {
+      "loot_table_id": "lt_r1_shrine_constructs",
+      "entries": [
+        {
+          "item_id": "item_stamina_tonic",
+          "drop_chance": 0.2,
+          "quantity_min": 1,
+          "quantity_max": 1,
+          "rarity_tag": "COMMON"
+        },
+        {
+          "item_id": "item_medium_herb",
+          "drop_chance": 0.15,
+          "quantity_min": 1,
+          "quantity_max": 1,
+          "rarity_tag": "UNCOMMON"
+        }
+      ]
+    },
+    {
+      "loot_table_id": "lt_r1_shrine_guardian",
+      "entries": [
+        {
+          "item_id": "item_medium_herb",
+          "drop_chance": 0.8,
+          "quantity_min": 2,
+          "quantity_max": 3,
+          "rarity_tag": "COMMON"
+        },
+        {
+          "item_id": "item_stamina_tonic",
+          "drop_chance": 0.6,
+          "quantity_min": 1,
+          "quantity_max": 2,
+          "rarity_tag": "UNCOMMON"
+        },
+        {
+          "item_id": "item_stamina_tonic",
+          "drop_chance": 0.6,
+          "quantity_min": 1,
+          "quantity_max": 2,
+          "rarity_tag": "UNCOMMON"
+        }
+      ]
     }
   ]
 }

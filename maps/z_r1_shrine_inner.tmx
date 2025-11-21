@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.0" orientation="orthogonal" renderorder="right-down" width="24" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="30">
+ <properties>
+  <property name="zone_id" value="z_r1_shrine_inner"/>
+  <property name="region_id" value="r1_chandrapur_valley"/>
+  <property name="zone_type" value="DUNGEON"/>
+  <property name="recommended_level" type="int" value="5"/>
+  <property name="allow_random_encounters" type="bool" value="false"/>
+  <property name="lighting_profile" value="INTERIOR_DARK"/>
+  <property name="ambient_sfx_id" value="sfx_shrine_interior"/>
+ </properties>
+ <layer id="1" name="Ground" width="24" height="20">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+  </data>
+ </layer>
+ <layer id="2" name="Collision" width="24" height="20">
+  <data encoding="csv">
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,0,0,1,1,0,0,1,1,0,0,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,
+1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,
+1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,
+1,1,1,0,0,1,1,0,0,1,1,1,1,1,1,0,0,1,1,0,0,1,1,1,
+1,1,1,0,0,1,1,0,0,1,1,1,1,1,1,0,0,1,1,0,0,1,1,1,
+1,1,1,0,0,1,1,0,0,1,1,1,1,1,1,0,0,1,1,0,0,1,1,1,
+1,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,1,
+1,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,1,
+1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,
+1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,
+1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+  </data>
+ </layer>
+ <objectgroup id="3" name="Spawns">
+  <object id="1" name="spawn_from_clearing" type="PlayerSpawn" x="384" y="608" width="32" height="32">
+   <properties>
+    <property name="spawn_id" value="spawn_from_clearing"/>
+    <property name="is_default" type="bool" value="true"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="4" name="Portals">
+  <object id="2" name="portal_to_clearing" type="Portal" x="384" y="608" width="32" height="32">
+   <properties>
+    <property name="target_zone_id" value="z_r1_shrine_clearing"/>
+    <property name="target_spawn_id" value="spawn_from_inner"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="5" name="Chests">
+  <object id="3" name="ch_r1_shrine_inner_01" type="Chest" x="256" y="160" width="32" height="32">
+   <properties>
+    <property name="chest_id" value="ch_r1_shrine_inner_01"/>
+   </properties>
+  </object>
+  <object id="4" name="ch_r1_shrine_inner_02" type="Chest" x="608" y="288" width="32" height="32">
+   <properties>
+    <property name="chest_id" value="ch_r1_shrine_inner_02"/>
+   </properties>
+  </object>
+  <object id="5" name="ch_r1_shrine_inner_03" type="Chest" x="128" y="544" width="32" height="32">
+   <properties>
+    <property name="chest_id" value="ch_r1_shrine_inner_03"/>
+   </properties>
+  </object>
+  <object id="6" name="ch_r1_shrine_inner_completion" type="Chest" x="384" y="544" width="32" height="32">
+   <properties>
+    <property name="chest_id" value="ch_r1_shrine_inner_completion"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="6" name="Events">
+  <object id="7" name="ev_shrine_trap_01" type="EventTrigger" x="224" y="160" width="32" height="32">
+   <properties>
+    <property name="event_id" value="ev_shrine_trap_floor"/>
+    <property name="trigger_type" value="ON_ENTER"/>
+    <property name="once_per_save" type="bool" value="false"/>
+   </properties>
+  </object>
+  <object id="8" name="ev_shrine_trap_02" type="EventTrigger" x="512" y="288" width="32" height="32">
+   <properties>
+    <property name="event_id" value="ev_shrine_trap_floor"/>
+    <property name="trigger_type" value="ON_ENTER"/>
+    <property name="once_per_save" type="bool" value="false"/>
+   </properties>
+  </object>
+  <object id="9" name="ev_shrine_encounter_01" type="EventTrigger" x="352" y="160" width="32" height="32">
+   <properties>
+    <property name="event_id" value="ev_shrine_encounter_wisps"/>
+    <property name="trigger_type" value="ON_ENTER"/>
+    <property name="once_per_save" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="10" name="ev_shrine_encounter_02" type="EventTrigger" x="256" y="288" width="32" height="32">
+   <properties>
+    <property name="event_id" value="ev_shrine_encounter_constructs"/>
+    <property name="trigger_type" value="ON_ENTER"/>
+    <property name="once_per_save" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="11" name="ev_shrine_encounter_03" type="EventTrigger" x="512" y="416" width="32" height="32">
+   <properties>
+    <property name="event_id" value="ev_shrine_encounter_elite"/>
+    <property name="trigger_type" value="ON_ENTER"/>
+    <property name="once_per_save" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="12" name="ev_shrine_puzzle_pedestal_01" type="EventTrigger" x="160" y="352" width="32" height="32">
+   <properties>
+    <property name="event_id" value="ev_shrine_puzzle_pedestal_01"/>
+    <property name="trigger_type" value="ON_INTERACT"/>
+    <property name="once_per_save" type="bool" value="false"/>
+   </properties>
+  </object>
+  <object id="13" name="ev_shrine_puzzle_pedestal_02" type="EventTrigger" x="640" y="352" width="32" height="32">
+   <properties>
+    <property name="event_id" value="ev_shrine_puzzle_pedestal_02"/>
+    <property name="trigger_type" value="ON_INTERACT"/>
+    <property name="once_per_save" type="bool" value="false"/>
+   </properties>
+  </object>
+  <object id="14" name="ev_shrine_boss_battle" type="EventTrigger" x="384" y="512" width="32" height="32">
+   <properties>
+    <property name="event_id" value="ev_shrine_boss_guardian"/>
+    <property name="trigger_type" value="ON_ENTER"/>
+    <property name="once_per_save" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="15" name="ev_shrine_completion" type="EventTrigger" x="352" y="544" width="32" height="32">
+   <properties>
+    <property name="event_id" value="ev_shrine_completion"/>
+    <property name="trigger_type" value="ON_INTERACT"/>
+    <property name="once_per_save" type="bool" value="true"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="7" name="Markers">
+  <object id="16" name="marker_shrine_core" type="Marker" x="384" y="544" width="32" height="32">
+   <properties>
+    <property name="marker_type" value="SHRINE_CORE"/>
+    <property name="shrine_id" value="shrine_r1_inner"/>
+   </properties>
+  </object>
+  <object id="17" name="marker_room_entrance" type="Marker" x="384" y="608" width="32" height="32">
+   <properties>
+    <property name="marker_type" value="ROOM"/>
+    <property name="room_name" value="Entrance Hall"/>
+   </properties>
+  </object>
+  <object id="18" name="marker_room_north" type="Marker" x="384" y="160" width="32" height="32">
+   <properties>
+    <property name="marker_type" value="ROOM"/>
+    <property name="room_name" value="North Chamber"/>
+   </properties>
+  </object>
+  <object id="19" name="marker_room_west" type="Marker" x="160" y="288" width="32" height="32">
+   <properties>
+    <property name="marker_type" value="ROOM"/>
+    <property name="room_name" value="West Wing"/>
+   </properties>
+  </object>
+  <object id="20" name="marker_room_east" type="Marker" x="608" y="288" width="32" height="32">
+   <properties>
+    <property name="marker_type" value="ROOM"/>
+    <property name="room_name" value="East Wing"/>
+   </properties>
+  </object>
+  <object id="21" name="marker_room_final" type="Marker" x="384" y="544" width="32" height="32">
+   <properties>
+    <property name="marker_type" value="ROOM"/>
+    <property name="room_name" value="Sanctum Core"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

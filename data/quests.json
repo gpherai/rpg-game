@@ -43,6 +43,53 @@
           { "item_id": "item_small_herb", "quantity": 1 }
         ]
       }
+    },
+    {
+      "quest_id": "q_r1_shrine_silent",
+      "title": "De Stille Shrine",
+      "description": "Het lokale heiligdom is 'stil' geworden - de offers lijken niet meer aan te komen. Onderzoek wat er aan de hand is en herstel de verbinding met de spirits.",
+      "quest_type": "MSQ",
+      "tri_focus_primary": "SPIRIT",
+      "tri_focus_secondary": "BODY",
+      "stages": [
+        {
+          "stage_id": "investigate_village",
+          "description": "Spreek met dorpsbewoners over het stille heiligdom.",
+          "is_final": false,
+          "next_stage_id": "reach_shrine_clearing"
+        },
+        {
+          "stage_id": "reach_shrine_clearing",
+          "description": "Reis naar de shrine clearing buiten het dorp.",
+          "is_final": false,
+          "next_stage_id": "enter_shrine_inner"
+        },
+        {
+          "stage_id": "enter_shrine_inner",
+          "description": "Betreed het binnenste heiligdom.",
+          "is_final": false,
+          "next_stage_id": "clear_shrine_inner"
+        },
+        {
+          "stage_id": "clear_shrine_inner",
+          "description": "Versla de corrumpeerde bewakers en herstel het heiligdom.",
+          "is_final": false,
+          "next_stage_id": "complete_ritual"
+        },
+        {
+          "stage_id": "complete_ritual",
+          "description": "Voer het zuiveringsritueel uit bij de shrine core.",
+          "is_final": true
+        }
+      ],
+      "rewards": {
+        "xp": 150,
+        "money": 75,
+        "items": [
+          { "item_id": "item_medium_herb", "quantity": 3 },
+          { "item_id": "item_stamina_tonic", "quantity": 2 }
+        ]
+      }
     }
   ]
 }

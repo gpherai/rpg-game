@@ -83,6 +83,126 @@
         "temperament": "stern",
         "alignment_hint": "tests_dharma"
       }
+    },
+    {
+      "id": "en_corrupted_wisp",
+      "name": "Corrupted Wisp",
+      "type": "minion",
+      "level": 4,
+      "base_stats": {
+        "STR": 3,
+        "END": 4,
+        "DEF": 3,
+        "FOC": 6,
+        "INS": 5,
+        "WILL": 6,
+        "MAG": 7,
+        "PRA": 6,
+        "RES": 5
+      },
+      "tags": [
+        "spirit",
+        "ethereal",
+        "common",
+        "shrine",
+        "corrupted"
+      ],
+      "skills": [
+        "sk_spirit_drain"
+      ],
+      "xp_reward": 12,
+      "money_min": 3,
+      "money_max": 7,
+      "archetype": "lesser_spirit",
+      "tri_sharira_profile": {
+        "body": 2,
+        "mind": 5,
+        "spirit": 8
+      },
+      "traits": {
+        "temperament": "erratic",
+        "alignment_hint": "corrupted"
+      }
+    },
+    {
+      "id": "en_shrine_construct",
+      "name": "Shrine Construct",
+      "type": "minion",
+      "level": 5,
+      "base_stats": {
+        "STR": 8,
+        "END": 7,
+        "DEF": 7,
+        "FOC": 4,
+        "INS": 3,
+        "WILL": 5,
+        "MAG": 3,
+        "PRA": 4,
+        "RES": 6
+      },
+      "tags": [
+        "construct",
+        "physical",
+        "common",
+        "shrine",
+        "guardian_minion"
+      ],
+      "skills": [
+        "sk_enemy_tackle"
+      ],
+      "xp_reward": 15,
+      "money_min": 4,
+      "money_max": 9,
+      "archetype": "tank",
+      "tri_sharira_profile": {
+        "body": 7,
+        "mind": 3,
+        "spirit": 5
+      },
+      "traits": {
+        "temperament": "relentless",
+        "alignment_hint": "dutiful"
+      }
+    },
+    {
+      "id": "en_shadow_apparition",
+      "name": "Shadow Apparition",
+      "type": "minion",
+      "level": 4,
+      "base_stats": {
+        "STR": 5,
+        "END": 5,
+        "DEF": 4,
+        "FOC": 7,
+        "INS": 6,
+        "WILL": 7,
+        "MAG": 6,
+        "PRA": 5,
+        "RES": 6
+      },
+      "tags": [
+        "spirit",
+        "shadow",
+        "common",
+        "shrine",
+        "illusion"
+      ],
+      "skills": [
+        "sk_spirit_drain"
+      ],
+      "xp_reward": 13,
+      "money_min": 3,
+      "money_max": 8,
+      "archetype": "trickster",
+      "tri_sharira_profile": {
+        "body": 3,
+        "mind": 7,
+        "spirit": 6
+      },
+      "traits": {
+        "temperament": "deceptive",
+        "alignment_hint": "chaotic"
+      }
     }
   ]
 }
