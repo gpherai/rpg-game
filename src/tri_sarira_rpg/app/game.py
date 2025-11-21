@@ -70,6 +70,14 @@ class Game:
         self._inventory_system.add_item("item_medium_herb", 1)
         self._inventory_system.add_item("item_stamina_tonic", 2)
 
+        # Add starter gear items (Step 9: Gear System v0)
+        self._inventory_system.add_item("item_gear_simple_staff", 1)
+        self._inventory_system.add_item("item_gear_iron_dagger", 1)
+        self._inventory_system.add_item("item_gear_travelers_cloth", 1)
+        self._inventory_system.add_item("item_gear_leather_vest", 1)
+        self._inventory_system.add_item("item_gear_copper_ring", 1)
+        self._inventory_system.add_item("item_gear_focus_charm", 1)
+
         # Equipment system (Step 9: Gear System v0)
         self._equipment_system = EquipmentSystem(
             party_system=self._party_system,
@@ -256,6 +264,14 @@ class Game:
         self._inventory_system.add_item("item_small_herb", 3)
         self._inventory_system.add_item("item_medium_herb", 1)
         self._inventory_system.add_item("item_stamina_tonic", 2)
+
+        # Add starter gear items (Step 9: Gear System v0)
+        self._inventory_system.add_item("item_gear_simple_staff", 1)
+        self._inventory_system.add_item("item_gear_iron_dagger", 1)
+        self._inventory_system.add_item("item_gear_travelers_cloth", 1)
+        self._inventory_system.add_item("item_gear_leather_vest", 1)
+        self._inventory_system.add_item("item_gear_copper_ring", 1)
+        self._inventory_system.add_item("item_gear_focus_charm", 1)
 
         # Re-initialize equipment system
         self._equipment_system = EquipmentSystem(
