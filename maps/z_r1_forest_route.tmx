@@ -80,23 +80,25 @@
    <properties>
     <property name="spawn_id" value="spawn_from_town"/>
     <property name="is_default" type="bool" value="true"/>
+    <property name="spawn_facing" value="north"/>
    </properties>
   </object>
   <object id="2" name="spawn_from_shrine" type="PlayerSpawn" x="320" y="896" width="32" height="32">
    <properties>
     <property name="spawn_id" value="spawn_from_shrine"/>
     <property name="is_default" type="bool" value="false"/>
+    <property name="spawn_facing" value="south"/>
    </properties>
   </object>
  </objectgroup>
  <objectgroup id="4" name="Portals">
-  <object id="3" name="portal_to_town" type="Portal" x="320" y="32" width="32" height="32">
+  <object id="3" name="portal_to_town" type="Portal" x="320" y="64" width="32" height="32">
    <properties>
     <property name="target_zone_id" value="z_r1_chandrapur_town"/>
     <property name="target_spawn_id" value="spawn_from_route"/>
    </properties>
   </object>
-  <object id="4" name="portal_to_shrine" type="Portal" x="320" y="928" width="32" height="32">
+  <object id="4" name="portal_to_shrine" type="Portal" x="320" y="896" width="32" height="32">
    <properties>
     <property name="target_zone_id" value="z_r1_shrine_clearing"/>
     <property name="target_spawn_id" value="spawn_from_route"/>

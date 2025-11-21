@@ -19,6 +19,190 @@
           "value": true
         }
       ]
+    },
+    {
+      "event_id": "ev_shrine_trap_floor",
+      "name": "Shrine Floor Trap",
+      "trigger": {
+        "type": "ON_ENTER"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "action_type": "DAMAGE_PARTY",
+          "damage_amount": 10,
+          "damage_type": "physical"
+        },
+        {
+          "action_type": "SHOW_MESSAGE",
+          "message": "A hidden floor trap activates! The party takes damage."
+        }
+      ]
+    },
+    {
+      "event_id": "ev_shrine_encounter_wisps",
+      "name": "Corrupted Wisps Encounter",
+      "trigger": {
+        "type": "ON_ENTER"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "action_type": "START_BATTLE",
+          "enemy_group_id": "eg_r1_shrine_wisps"
+        }
+      ]
+    },
+    {
+      "event_id": "ev_shrine_encounter_constructs",
+      "name": "Shrine Constructs Encounter",
+      "trigger": {
+        "type": "ON_ENTER"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "action_type": "START_BATTLE",
+          "enemy_group_id": "eg_r1_shrine_constructs"
+        }
+      ]
+    },
+    {
+      "event_id": "ev_shrine_encounter_elite",
+      "name": "Elite Defenders Encounter",
+      "trigger": {
+        "type": "ON_ENTER"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "action_type": "START_BATTLE",
+          "enemy_group_id": "eg_r1_shrine_elite_trio"
+        }
+      ]
+    },
+    {
+      "event_id": "ev_shrine_puzzle_pedestal_01",
+      "name": "Shrine Pedestal 1",
+      "trigger": {
+        "type": "ON_INTERACT"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "action_type": "SHOW_MESSAGE",
+          "message": "You activate the western pedestal. It glows with a faint blue light."
+        },
+        {
+          "action_type": "SET_FLAG",
+          "flag_id": "flag_shrine_pedestal_01_activated",
+          "value": true
+        },
+        {
+          "action_type": "CHECK_PUZZLE_COMPLETION",
+          "puzzle_id": "shrine_pedestals",
+          "required_flags": [
+            "flag_shrine_pedestal_01_activated",
+            "flag_shrine_pedestal_02_activated"
+          ],
+          "completion_flag": "flag_shrine_puzzle_complete",
+          "completion_message": "Both pedestals resonate! You hear a click as the completion chest unlocks.",
+          "partial_message": "The pedestal glows, waiting for its partner..."
+        }
+      ]
+    },
+    {
+      "event_id": "ev_shrine_puzzle_pedestal_02",
+      "name": "Shrine Pedestal 2",
+      "trigger": {
+        "type": "ON_INTERACT"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "action_type": "SHOW_MESSAGE",
+          "message": "You activate the eastern pedestal. It glows with a faint blue light."
+        },
+        {
+          "action_type": "SET_FLAG",
+          "flag_id": "flag_shrine_pedestal_02_activated",
+          "value": true
+        },
+        {
+          "action_type": "CHECK_PUZZLE_COMPLETION",
+          "puzzle_id": "shrine_pedestals",
+          "required_flags": [
+            "flag_shrine_pedestal_01_activated",
+            "flag_shrine_pedestal_02_activated"
+          ],
+          "completion_flag": "flag_shrine_puzzle_complete",
+          "completion_message": "Both pedestals resonate! You hear a click as the completion chest unlocks.",
+          "partial_message": "The pedestal glows, waiting for its partner..."
+        }
+      ]
+    },
+    {
+      "event_id": "ev_shrine_boss_guardian",
+      "name": "Shrine Guardian Boss Battle",
+      "trigger": {
+        "type": "ON_ENTER"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "action_type": "SHOW_MESSAGE",
+          "message": "The Shrine Guardian rises before you, eyes glowing with corrupted energy!"
+        },
+        {
+          "action_type": "START_BATTLE",
+          "enemy_group_id": "eg_r1_shrine_boss_encounter"
+        },
+        {
+          "action_type": "SET_FLAG",
+          "flag_id": "flag_shrine_boss_defeated",
+          "value": true
+        }
+      ]
+    },
+    {
+      "event_id": "ev_shrine_completion",
+      "name": "Shrine Completion Ritual",
+      "trigger": {
+        "type": "ON_INTERACT"
+      },
+      "conditions": [
+        {
+          "type": "FLAG",
+          "flag_id": "flag_shrine_boss_defeated",
+          "operator": "EQ",
+          "value": true
+        }
+      ],
+      "actions": [
+        {
+          "action_type": "PLAY_CUTSCENE",
+          "cutscene_id": "cs_r1_shrine_cleansing"
+        },
+        {
+          "action_type": "SHOW_MESSAGE",
+          "message": "You perform a cleansing ritual at the shrine's core. The corruption fades..."
+        },
+        {
+          "action_type": "SET_FLAG",
+          "flag_id": "flag_r1_shrine_inner_cleared",
+          "value": true
+        },
+        {
+          "action_type": "COMPLETE_QUEST_STAGE",
+          "quest_id": "q_r1_shrine_silent",
+          "stage_id": "clear_shrine_inner"
+        },
+        {
+          "action_type": "GRANT_REWARDS",
+          "xp": 100,
+          "money": 50
+        }
+      ]
     }
   ]
 }

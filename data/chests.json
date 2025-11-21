@@ -24,6 +24,52 @@
           "value": true
         }
       ]
+    },
+    {
+      "chest_id": "ch_r1_shrine_inner_01",
+      "zone_id": "z_r1_shrine_inner",
+      "contents": [
+        {"item_id": "item_gear_simple_staff", "quantity": 1}
+      ],
+      "one_time_only": true,
+      "conditions": []
+    },
+    {
+      "chest_id": "ch_r1_shrine_inner_02",
+      "zone_id": "z_r1_shrine_inner",
+      "contents": [
+        {"item_id": "item_medium_herb", "quantity": 2},
+        {"item_id": "item_stamina_tonic", "quantity": 1}
+      ],
+      "one_time_only": true,
+      "conditions": []
+    },
+    {
+      "chest_id": "ch_r1_shrine_inner_03",
+      "zone_id": "z_r1_shrine_inner",
+      "contents": [
+        {"item_id": "item_gear_leather_vest", "quantity": 1}
+      ],
+      "one_time_only": true,
+      "conditions": []
+    },
+    {
+      "chest_id": "ch_r1_shrine_inner_completion",
+      "zone_id": "z_r1_shrine_inner",
+      "contents": [
+        {"item_id": "item_medium_herb", "quantity": 3},
+        {"item_id": "item_stamina_tonic", "quantity": 2},
+        {"item_id": "item_stamina_tonic", "quantity": 2}
+      ],
+      "one_time_only": true,
+      "conditions": [
+        {
+          "type": "FLAG",
+          "flag_id": "flag_r1_shrine_inner_cleared",
+          "operator": "EQ",
+          "value": true
+        }
+      ]
     }
   ]
 }

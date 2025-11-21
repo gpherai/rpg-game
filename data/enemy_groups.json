@@ -1,0 +1,125 @@
+{
+  "enemy_groups": [
+    {
+      "group_id": "eg_r1_shrine_wisps",
+      "name": "Corrupted Wisps",
+      "description": "A pair of corrupted wisps guarding the shrine corridors.",
+      "enemies": [
+        "en_corrupted_wisp",
+        "en_corrupted_wisp"
+      ],
+      "tags": ["shrine", "spirit", "common"],
+      "encounter_weight": 30,
+      "min_level": 4,
+      "tri_sharira_profile": {
+        "body": 2,
+        "mind": 5,
+        "spirit": 8
+      }
+    },
+    {
+      "group_id": "eg_r1_shrine_mixed_patrol",
+      "name": "Shrine Patrol",
+      "description": "A shrine construct accompanied by wisps.",
+      "enemies": [
+        "en_shrine_construct",
+        "en_corrupted_wisp",
+        "en_corrupted_wisp"
+      ],
+      "tags": ["shrine", "mixed", "common"],
+      "encounter_weight": 25,
+      "min_level": 5,
+      "tri_sharira_profile": {
+        "body": 4,
+        "mind": 4,
+        "spirit": 7
+      }
+    },
+    {
+      "group_id": "eg_r1_shrine_apparitions",
+      "name": "Shadow Apparitions",
+      "description": "Deceptive shadow spirits lurking in dark corners.",
+      "enemies": [
+        "en_shadow_apparition",
+        "en_shadow_apparition"
+      ],
+      "tags": ["shrine", "mind", "illusion"],
+      "encounter_weight": 20,
+      "min_level": 4,
+      "tri_sharira_profile": {
+        "body": 3,
+        "mind": 7,
+        "spirit": 6
+      }
+    },
+    {
+      "group_id": "eg_r1_shrine_constructs",
+      "name": "Guardian Constructs",
+      "description": "Heavy shrine constructs blocking the path.",
+      "enemies": [
+        "en_shrine_construct",
+        "en_shrine_construct"
+      ],
+      "tags": ["shrine", "body", "physical"],
+      "encounter_weight": 15,
+      "min_level": 5,
+      "tri_sharira_profile": {
+        "body": 7,
+        "mind": 3,
+        "spirit": 5
+      }
+    },
+    {
+      "group_id": "eg_r1_shrine_elite_trio",
+      "name": "Elite Shrine Defenders",
+      "description": "A dangerous mix of shrine defenders - the toughest non-boss encounter.",
+      "enemies": [
+        "en_shrine_construct",
+        "en_shadow_apparition",
+        "en_corrupted_wisp"
+      ],
+      "tags": ["shrine", "elite", "mixed", "rare"],
+      "encounter_weight": 10,
+      "min_level": 5,
+      "tri_sharira_profile": {
+        "body": 5,
+        "mind": 6,
+        "spirit": 7
+      }
+    },
+    {
+      "group_id": "eg_r1_shrine_boss_encounter",
+      "name": "Shrine Guardian Final Battle",
+      "description": "The corrupted shrine guardian, ready to test intruders.",
+      "enemies": [
+        "en_shrine_guardian"
+      ],
+      "tags": ["shrine", "boss", "story", "unique"],
+      "encounter_weight": 0,
+      "min_level": 6,
+      "tri_sharira_profile": {
+        "body": 7,
+        "mind": 5,
+        "spirit": 9
+      }
+    },
+    {
+      "group_id": "eg_r1_shrine_boss_with_adds",
+      "name": "Shrine Guardian with Minions",
+      "description": "The shrine guardian accompanied by corrupted wisps.",
+      "enemies": [
+        "en_shrine_guardian",
+        "en_corrupted_wisp",
+        "en_corrupted_wisp"
+      ],
+      "tags": ["shrine", "boss", "story", "adds"],
+      "encounter_weight": 0,
+      "min_level": 6,
+      "tri_sharira_profile": {
+        "body": 6,
+        "mind": 5,
+        "spirit": 9
+      }
+    }
+  ]
+}
