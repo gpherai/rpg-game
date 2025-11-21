@@ -10,6 +10,7 @@ import pygame
 from tri_sarira_rpg.core.scene import Scene, SceneManager
 from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.presentation.ui.dialogue_box import DialogueBox
+from tri_sarira_rpg.presentation.ui.equipment_menu import EquipmentMenuUI
 from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
 from tri_sarira_rpg.presentation.ui.quest_log import QuestLogUI
 from tri_sarira_rpg.presentation.ui.shop_menu import ShopMenuUI
@@ -19,6 +20,7 @@ from tri_sarira_rpg.systems.dialogue import (
     DialogueSession,
     DialogueSystem,
 )
+from tri_sarira_rpg.systems.equipment import EquipmentSystem
 from tri_sarira_rpg.systems.inventory import InventorySystem
 from tri_sarira_rpg.systems.party import PartySystem
 from tri_sarira_rpg.systems.quest import QuestSystem
@@ -45,6 +47,7 @@ class OverworldScene(Scene):
         flags_system: GameStateFlags | None = None,
         quest_system: QuestSystem | None = None,
         shop_system: ShopSystem | None = None,
+        equipment_system: EquipmentSystem | None = None,
         game_instance: Any = None,
     ) -> None:
         super().__init__(manager)
@@ -57,6 +60,7 @@ class OverworldScene(Scene):
         self._flags = flags_system or GameStateFlags()
         self._quest = quest_system
         self._shop = shop_system
+        self._equipment = equipment_system
         self._game = game_instance
 
         # Dialogue system and UI
@@ -71,6 +75,10 @@ class OverworldScene(Scene):
         # Shop UI (Step 8: Shop System v0)
         self._shop_menu_visible: bool = False
         self._shop_menu_ui: ShopMenuUI | None = None
+
+        # Equipment UI (Step 9: Gear System v0)
+        self._equipment_menu_visible: bool = False
+        self._equipment_menu_ui: EquipmentMenuUI | None = None
 
         # Feedback message for save/load
         self._feedback_message: str = ""
@@ -139,6 +147,15 @@ class OverworldScene(Scene):
                         logger.debug("Closing shop menu")
                 return
 
+            # Priority 1.5: If equipment menu is visible, route to equipment menu UI
+            if self._equipment_menu_visible:
+                if self._equipment_menu_ui:
+                    should_close = self._equipment_menu_ui.handle_event(event)
+                    if should_close:
+                        self._equipment_menu_visible = False
+                        logger.debug("Closing equipment menu")
+                return
+
             # Priority 2: If quest log is visible, route to quest log UI
             if self._quest_log_visible:
                 if event.key == pygame.K_q:
@@ -180,6 +197,10 @@ class OverworldScene(Scene):
             # Quest log toggle (Q key)
             if event.key == pygame.K_q:
                 self._toggle_quest_log()
+
+            # Equipment menu toggle (I key for Inventory/Equipment)
+            elif event.key == pygame.K_i:
+                self._toggle_equipment_menu()
 
             # Interact key
             elif event.key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_e):
@@ -232,6 +253,12 @@ class OverworldScene(Scene):
         if self._shop_menu_visible:
             if self._shop_menu_ui:
                 self._shop_menu_ui.update(dt)
+            return
+
+        # If equipment menu is visible, only update equipment menu
+        if self._equipment_menu_visible:
+            if self._equipment_menu_ui:
+                self._equipment_menu_ui.update(dt)
             return
 
         # Update time system
@@ -304,6 +331,10 @@ class OverworldScene(Scene):
         # Render shop menu if visible
         if self._shop_menu_visible and self._shop_menu_ui:
             self._shop_menu_ui.draw(surface)
+
+        # Render equipment menu if visible
+        if self._equipment_menu_visible and self._equipment_menu_ui:
+            self._equipment_menu_ui.render(surface)
 
         # Render pause menu if paused
         if self._paused:
@@ -785,6 +816,40 @@ class OverworldScene(Scene):
             logger.info("Quest log opened")
         else:
             logger.info("Quest log closed")
+
+    def _toggle_equipment_menu(self) -> None:
+        """Toggle equipment menu visibility."""
+        if not self._equipment:
+            logger.warning("No equipment system available")
+            return
+
+        self._equipment_menu_visible = not self._equipment_menu_visible
+
+        if self._equipment_menu_visible:
+            # Create equipment menu UI when opening
+            main_char = self._party.get_main_character()
+            if not main_char:
+                logger.error("No main character found in party")
+                self._equipment_menu_visible = False
+                return
+
+            # Create equipment menu rect (centered, similar to shop menu)
+            menu_width = 800
+            menu_height = 600
+            menu_x = (self._screen_width - menu_width) // 2
+            menu_y = (self._screen_height - menu_height) // 2
+            menu_rect = pygame.Rect(menu_x, menu_y, menu_width, menu_height)
+
+            self._equipment_menu_ui = EquipmentMenuUI(
+                rect=menu_rect,
+                equipment_system=self._equipment,
+                data_repository=self._data_repository,
+                actor_id=main_char.actor_id,
+                party_member=main_char,
+            )
+            logger.info("Equipment menu opened")
+        else:
+            logger.info("Equipment menu closed")
 
     def _debug_start_quest(self) -> None:
         """Debug functie: start een test quest (Step 7 Quest v0)."""

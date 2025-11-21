@@ -336,6 +336,7 @@ class Game:
             flags_system=self._flags_system,
             quest_system=self._quest_system,
             shop_system=self._shop_system,
+            equipment_system=self._equipment_system,
             game_instance=self,
         )
         self._scene_manager.push_scene(overworld_scene)
