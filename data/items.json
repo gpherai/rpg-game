@@ -44,6 +44,111 @@
       "usable_in_overworld": true,
       "price": 15,
       "sellable": true
+    },
+    {
+      "id": "item_gear_simple_staff",
+      "name": "Simple Staff",
+      "description": "Een eenvoudige wandelstaf, geschikt voor beginners",
+      "type": "gear",
+      "category": "weapon",
+      "gear_type": "weapon",
+      "slot": "weapon",
+      "stat_mods": {
+        "STR": 2,
+        "MAG": 1
+      },
+      "tri_focus_primary": "body",
+      "tri_focus_secondary": "spirit",
+      "rarity": "common",
+      "price": 50,
+      "sellable": true
+    },
+    {
+      "id": "item_gear_iron_dagger",
+      "name": "Iron Dagger",
+      "description": "Een scherpe dolk, snel en dodelijk",
+      "type": "gear",
+      "category": "weapon",
+      "gear_type": "weapon",
+      "slot": "weapon",
+      "stat_mods": {
+        "STR": 3,
+        "SPD": 1
+      },
+      "tri_focus_primary": "body",
+      "rarity": "common",
+      "price": 80,
+      "sellable": true
+    },
+    {
+      "id": "item_gear_travelers_cloth",
+      "name": "Traveler's Cloth",
+      "description": "Lichte kleding voor reizigers, biedt basisbescherming",
+      "type": "gear",
+      "category": "armor",
+      "gear_type": "armor",
+      "slot": "body",
+      "stat_mods": {
+        "DEF": 2,
+        "RES": 1
+      },
+      "tri_focus_primary": "body",
+      "tri_focus_secondary": "spirit",
+      "rarity": "common",
+      "price": 60,
+      "sellable": true
+    },
+    {
+      "id": "item_gear_leather_vest",
+      "name": "Leather Vest",
+      "description": "Stevig leren harnas, goed voor fysieke bescherming",
+      "type": "gear",
+      "category": "armor",
+      "gear_type": "armor",
+      "slot": "body",
+      "stat_mods": {
+        "DEF": 3,
+        "END": 1
+      },
+      "tri_focus_primary": "body",
+      "rarity": "common",
+      "price": 100,
+      "sellable": true
+    },
+    {
+      "id": "item_gear_copper_ring",
+      "name": "Copper Ring",
+      "description": "Een eenvoudige koperen ring die lichaam en geest versterkt",
+      "type": "gear",
+      "category": "accessory",
+      "gear_type": "accessory",
+      "slot": "accessory1",
+      "stat_mods": {
+        "END": 1,
+        "WILL": 1
+      },
+      "tri_focus_primary": "body",
+      "tri_focus_secondary": "mind",
+      "rarity": "common",
+      "price": 70,
+      "sellable": true
+    },
+    {
+      "id": "item_gear_focus_charm",
+      "name": "Focus Charm",
+      "description": "Een amulet die mentale scherpte bevordert",
+      "type": "gear",
+      "category": "accessory",
+      "gear_type": "accessory",
+      "slot": "accessory1",
+      "stat_mods": {
+        "FOC": 2,
+        "ACC": 1
+      },
+      "tri_focus_primary": "mind",
+      "rarity": "uncommon",
+      "price": 120,
+      "sellable": true
     }
   ]
 }

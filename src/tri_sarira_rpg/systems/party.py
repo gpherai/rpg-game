@@ -24,6 +24,11 @@ class PartyMember:
     xp: int = 0  # XP towards next level
     base_stats: dict[str, int] = field(default_factory=dict)  # Current base stats
 
+    # Equipment (Step 9: Gear System v0)
+    weapon_id: str | None = None
+    armor_id: str | None = None
+    accessory1_id: str | None = None
+
 
 @dataclass
 class PartyState:
@@ -363,6 +368,9 @@ class PartySystem:
                     "level": m.level,
                     "xp": m.xp,
                     "base_stats": dict(m.base_stats),
+                    "weapon_id": m.weapon_id,
+                    "armor_id": m.armor_id,
+                    "accessory1_id": m.accessory1_id,
                 }
                 for m in self._state.active_party
             ],
@@ -376,6 +384,9 @@ class PartySystem:
                     "level": m.level,
                     "xp": m.xp,
                     "base_stats": dict(m.base_stats),
+                    "weapon_id": m.weapon_id,
+                    "armor_id": m.armor_id,
+                    "accessory1_id": m.accessory1_id,
                 }
                 for m in self._state.reserve_pool
             ],
@@ -405,6 +416,9 @@ class PartySystem:
                 level=member_data.get("level", 1),
                 xp=member_data.get("xp", 0),
                 base_stats=member_data.get("base_stats", {}),
+                weapon_id=member_data.get("weapon_id"),
+                armor_id=member_data.get("armor_id"),
+                accessory1_id=member_data.get("accessory1_id"),
             )
             self._state.active_party.append(member)
 
@@ -419,6 +433,9 @@ class PartySystem:
                 level=member_data.get("level", 1),
                 xp=member_data.get("xp", 0),
                 base_stats=member_data.get("base_stats", {}),
+                weapon_id=member_data.get("weapon_id"),
+                armor_id=member_data.get("armor_id"),
+                accessory1_id=member_data.get("accessory1_id"),
             )
             self._state.reserve_pool.append(member)
 

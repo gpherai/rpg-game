@@ -206,10 +206,12 @@ class CombatSystem:
         party_system: Any,
         data_repository: Any,
         items_system: Any | None = None,
+        equipment_system: Any | None = None,
     ) -> None:
         self._party = party_system
         self._data_repository = data_repository
         self._items = items_system
+        self._equipment = equipment_system
         self._battle_state: BattleState | None = None
         self._progression = ProgressionSystem(data_repository=data_repository)
 
@@ -224,7 +226,17 @@ class CombatSystem:
         for member in active_party:
             actor_data = self._data_repository.get_actor(member.actor_id)
             if actor_data:
-                combatant = self._create_combatant_from_actor(actor_data)
+                # Use effective stats (base + gear) if equipment system available
+                if self._equipment:
+                    stats = self._equipment.get_effective_stats(member.actor_id)
+                else:
+                    stats = member.base_stats
+
+                combatant = self._create_combatant_from_actor(
+                    actor_data=actor_data,
+                    level=member.level,
+                    stats=stats,
+                )
                 party_combatants.append(combatant)
                 logger.debug(
                     f"Party member: {combatant.name} (HP: {combatant.current_hp}/{combatant.max_hp})"
@@ -255,13 +267,33 @@ class CombatSystem:
         logger.info(f"Battle initialized: {len(party_combatants)} vs {len(enemy_combatants)}")
         return self._battle_state
 
-    def _create_combatant_from_actor(self, actor_data: dict[str, Any]) -> Combatant:
-        """Create a Combatant from actor data."""
-        stats = actor_data.get("base_stats", {})
+    def _create_combatant_from_actor(
+        self,
+        actor_data: dict[str, Any],
+        level: int | None = None,
+        stats: dict[str, int] | None = None,
+    ) -> Combatant:
+        """Create a Combatant from actor data.
+
+        Parameters
+        ----------
+        actor_data : dict[str, Any]
+            Actor data from repository
+        level : int | None
+            Override level (from PartyMember), if None uses actor_data level
+        stats : dict[str, int] | None
+            Override stats (effective stats with gear), if None uses actor_data base_stats
+        """
+        # Use provided stats or fall back to actor_data
+        if stats is None:
+            stats = actor_data.get("base_stats", {})
+        if level is None:
+            level = actor_data.get("level", 1)
+
         return Combatant(
             actor_id=actor_data["id"],
             name=actor_data["name"],
-            level=actor_data.get("level", 1),
+            level=level,
             is_enemy=False,
             STR=stats.get("STR", 5),
             END=stats.get("END", 5),
