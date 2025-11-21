@@ -21,6 +21,29 @@
       ]
     },
     {
+      "event_id": "ev_shrine_guardian_encounter",
+      "name": "Shrine Guardian Encounter",
+      "trigger": {
+        "type": "ON_ENTER"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "action_type": "SHOW_MESSAGE",
+          "message": "Corrupted guardians block your path to the shrine's entrance!"
+        },
+        {
+          "action_type": "START_BATTLE",
+          "enemy_group_id": "eg_r1_shrine_mixed_patrol"
+        },
+        {
+          "action_type": "SET_FLAG",
+          "flag_id": "flag_shrine_clearing_guardians_defeated",
+          "value": true
+        }
+      ]
+    },
+    {
       "event_id": "ev_shrine_trap_floor",
       "name": "Shrine Floor Trap",
       "trigger": {

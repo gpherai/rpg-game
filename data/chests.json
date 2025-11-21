@@ -1,6 +1,16 @@
 {
   "chests": [
     {
+      "chest_id": "ch_route_01",
+      "zone_id": "z_r1_forest_route",
+      "contents": [
+        {"item_id": "item_small_herb", "quantity": 1},
+        {"item_id": "item_stamina_tonic", "quantity": 1}
+      ],
+      "one_time_only": true,
+      "conditions": []
+    },
+    {
       "chest_id": "ch_r1_route_sidepath_01",
       "zone_id": "z_r1_forest_route",
       "contents": [
