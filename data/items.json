@@ -149,6 +149,25 @@
       "rarity": "uncommon",
       "price": 120,
       "sellable": true
+    },
+    {
+      "id": "item_friendship_charm",
+      "name": "Friendship Charm",
+      "description": "Een persoonlijk geschenk van Rajani, symbool van vertrouwen en vriendschap",
+      "type": "gear",
+      "category": "accessory",
+      "gear_type": "accessory",
+      "slot": "accessory2",
+      "stat_mods": {
+        "WILL": 1,
+        "INS": 1,
+        "PRA": 1
+      },
+      "tri_focus_primary": "spirit",
+      "tri_focus_secondary": "mind",
+      "rarity": "unique",
+      "price": 0,
+      "sellable": false
     }
   ]
 }

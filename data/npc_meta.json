@@ -31,6 +31,22 @@
       },
       "home_region_id": "r1_chandrapur_valley",
       "role_hint": "Mind-controller / Tactician"
+    },
+    {
+      "npc_id": "npc_r1_elder",
+      "actor_id": null,
+      "tier": "C",
+      "is_companion_candidate": false,
+      "is_main_character": false,
+      "companion_flags": {
+        "recruited": false,
+        "in_party": false,
+        "in_reserve_pool": false,
+        "phase": "NONE",
+        "guest_only": false
+      },
+      "home_region_id": "r1_chandrapur_valley",
+      "role_hint": "Village elder / Quest giver"
     }
   ]
 }
