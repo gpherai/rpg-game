@@ -7,13 +7,11 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from tri_sarira_rpg.systems.party import PartySystem, PartyMember
-from tri_sarira_rpg.systems.world import WorldSystem, PlayerState
-from tri_sarira_rpg.systems.time import TimeSystem
 from tri_sarira_rpg.systems.inventory import InventorySystem
-from tri_sarira_rpg.systems.state import GameStateFlags
+from tri_sarira_rpg.systems.party import PartyMember, PartySystem
 from tri_sarira_rpg.systems.save import SaveSystem
-from tri_sarira_rpg.core.entities import Position
+from tri_sarira_rpg.systems.state import GameStateFlags
+from tri_sarira_rpg.systems.time import TimeSystem
 
 print("=" * 60)
 print("SAVE/LOAD SYSTEM TEST")
@@ -147,7 +145,9 @@ if not flags2.has_flag("met_rajani"):
     errors.append("Flag 'met_rajani' not restored")
 
 if flags2._choices.get("first_choice") != "helped_npc":
-    errors.append(f"Choice mismatch: expected 'helped_npc', got {flags2._choices.get('first_choice')}")
+    errors.append(
+        f"Choice mismatch: expected 'helped_npc', got {flags2._choices.get('first_choice')}"
+    )
 
 # Check meta
 meta = loaded_data.get("meta", {})
@@ -176,6 +176,7 @@ print("=" * 60)
 
 # Cleanup test save
 import os
+
 test_save = Path("saves/save_slot_99.json")
 if test_save.exists():
     os.remove(test_save)

@@ -22,6 +22,7 @@ class SaveSystem:
         inventory_system: Any | None = None,
         flags_system: Any | None = None,
         quest_system: Any | None = None,
+        shop_system: Any | None = None,
     ) -> None:
         """Initialize SaveSystem with references to game systems.
 
@@ -39,6 +40,8 @@ class SaveSystem:
             GameStateFlags reference
         quest_system : Any | None
             QuestSystem reference
+        shop_system : Any | None
+            ShopSystem reference (Step 8: Shop System v0)
         """
         self._party = party_system
         self._world = world_system
@@ -46,6 +49,7 @@ class SaveSystem:
         self._inventory = inventory_system
         self._flags = flags_system
         self._quest = quest_system
+        self._shop = shop_system
 
         # Save directory
         self._save_dir = Path("saves")
@@ -73,6 +77,7 @@ class SaveSystem:
             "world_state": {},
             "party_state": {},
             "inventory_state": {},
+            "economy_state": {},
             "flags_state": {},
             "quest_state": [],
         }
@@ -89,6 +94,9 @@ class SaveSystem:
 
         if self._inventory:
             save_data["inventory_state"] = self._inventory.get_save_state()
+
+        if self._shop:
+            save_data["economy_state"] = self._shop.get_save_state()
 
         if self._flags:
             save_data["flags_state"] = self._flags.get_save_state()
@@ -150,7 +158,7 @@ class SaveSystem:
                 logger.warning(f"Save file not found: {save_file}")
                 return None
 
-            with open(save_file, "r", encoding="utf-8") as f:
+            with open(save_file, encoding="utf-8") as f:
                 save_data = json.load(f)
 
             logger.info(f"Save data loaded from {save_file}")
@@ -186,6 +194,9 @@ class SaveSystem:
 
             if self._inventory and "inventory_state" in payload:
                 self._inventory.restore_from_save(payload["inventory_state"])
+
+            if self._shop and "economy_state" in payload:
+                self._shop.restore_from_save(payload["economy_state"])
 
             if self._flags and "flags_state" in payload:
                 self._flags.restore_from_save(payload["flags_state"])

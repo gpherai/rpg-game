@@ -31,9 +31,7 @@ class DialogueBox(Widget):
         self._choice_color = (200, 200, 255)
         self._choice_selected_color = (255, 255, 100)
 
-    def set_content(
-        self, speaker: str, lines: list[str], choices: list[tuple[str, str]]
-    ) -> None:
+    def set_content(self, speaker: str, lines: list[str], choices: list[tuple[str, str]]) -> None:
         """Update tekst en keuzeopties.
 
         Parameters
@@ -69,14 +67,10 @@ class DialogueBox(Widget):
         # Navigation
         if event.key in (pygame.K_UP, pygame.K_w):
             if self._choices:
-                self._selected_choice_index = (
-                    self._selected_choice_index - 1
-                ) % len(self._choices)
+                self._selected_choice_index = (self._selected_choice_index - 1) % len(self._choices)
         elif event.key in (pygame.K_DOWN, pygame.K_s):
             if self._choices:
-                self._selected_choice_index = (
-                    self._selected_choice_index + 1
-                ) % len(self._choices)
+                self._selected_choice_index = (self._selected_choice_index + 1) % len(self._choices)
 
         # Confirmation
         elif event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_z):
@@ -102,9 +96,7 @@ class DialogueBox(Widget):
         # Draw speaker name
         y_offset = self.rect.top + 10
         if self._speaker:
-            speaker_surf = self._font_speaker.render(
-                self._speaker, True, self._speaker_color
-            )
+            speaker_surf = self._font_speaker.render(self._speaker, True, self._speaker_color)
             surface.blit(speaker_surf, (self.rect.left + 15, y_offset))
             y_offset += 30
 

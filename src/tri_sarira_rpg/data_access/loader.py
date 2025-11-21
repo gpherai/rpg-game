@@ -90,17 +90,13 @@ class DataLoader:
         entries = data[data_type]
 
         if not isinstance(entries, list):
-            errors.append(
-                f"Expected '{data_type}' to be a list, got {type(entries).__name__}"
-            )
+            errors.append(f"Expected '{data_type}' to be a list, got {type(entries).__name__}")
             return errors
 
         # Validate each entry
         for idx, entry in enumerate(entries):
             if not isinstance(entry, dict):
-                errors.append(
-                    f"Entry {idx} in '{data_type}' is not a dict: {type(entry).__name__}"
-                )
+                errors.append(f"Entry {idx} in '{data_type}' is not a dict: {type(entry).__name__}")
                 continue
 
             # Check required keys
@@ -113,24 +109,16 @@ class DataLoader:
 
             # Validate key types
             if "id" in entry and not isinstance(entry["id"], str):
-                errors.append(
-                    f"Entry '{entry_id}' in {data_type}.json has non-string 'id'"
-                )
+                errors.append(f"Entry '{entry_id}' in {data_type}.json has non-string 'id'")
 
             if "name" in entry and not isinstance(entry["name"], str):
-                errors.append(
-                    f"Entry '{entry_id}' in {data_type}.json has non-string 'name'"
-                )
+                errors.append(f"Entry '{entry_id}' in {data_type}.json has non-string 'name'")
 
             if "type" in entry and not isinstance(entry["type"], str):
-                errors.append(
-                    f"Entry '{entry_id}' in {data_type}.json has non-string 'type'"
-                )
+                errors.append(f"Entry '{entry_id}' in {data_type}.json has non-string 'type'")
 
             if "level" in entry and not isinstance(entry["level"], int):
-                errors.append(
-                    f"Entry '{entry_id}' in {data_type}.json has non-int 'level'"
-                )
+                errors.append(f"Entry '{entry_id}' in {data_type}.json has non-int 'level'")
 
         return errors
 

@@ -5,11 +5,13 @@ from __future__ import annotations
 import logging
 import random
 from enum import Enum
+from typing import Any
 
 import pygame
 
 from tri_sarira_rpg.core.scene import Scene, SceneManager
 from tri_sarira_rpg.data_access.repository import DataRepository
+from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
 from tri_sarira_rpg.systems.combat import (
     ActionType,
     BattleAction,
@@ -50,11 +52,13 @@ class BattleScene(Scene):
         combat_system: CombatSystem,
         inventory_system: InventorySystem,
         data_repository: DataRepository,
+        game_instance: Any = None,
     ) -> None:
         super().__init__(manager)
         self._combat = combat_system
         self._inventory = inventory_system
         self._data_repository = data_repository
+        self._game = game_instance
         self._phase = BattlePhase.START
         self._menu_state = MenuState.MAIN_MENU
 
@@ -90,11 +94,47 @@ class BattleScene(Scene):
         else:
             self._screen_width, self._screen_height = 1280, 720
 
+        # Initialize PauseMenu (centered on screen)
+        # Note: Load is disabled during battle
+        self._paused: bool = False
+        pause_width = 500
+        pause_height = 400
+        pause_x = (self._screen_width - pause_width) // 2
+        pause_y = (self._screen_height - pause_height) // 2
+        pause_rect = pygame.Rect(pause_x, pause_y, pause_width, pause_height)
+        self._pause_menu = PauseMenu(pause_rect, game_instance=game_instance, allow_load=False)
+        # Set callback for returning to main menu
+        if game_instance:
+            self._pause_menu.set_main_menu_callback(game_instance.return_to_main_menu)
+
         logger.info("BattleScene initialized")
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """Verwerk skillselecties en menu-input."""
         if event.type == pygame.KEYDOWN:
+            # Pause menu toggle (Esc key) - only during player turn
+            if event.key == pygame.K_ESCAPE:
+                if self._paused:
+                    # Already paused, let pause menu handle it
+                    should_close = self._pause_menu.handle_input(event.key)
+                    if should_close:
+                        self._paused = False
+                        logger.debug("Resuming from pause menu")
+                else:
+                    # Not paused, open pause menu (only during player turn or battle end)
+                    if self._phase in (BattlePhase.PLAYER_TURN, BattlePhase.BATTLE_END):
+                        self._paused = True
+                        logger.debug("Opening pause menu")
+                return
+
+            # If paused, route all input to pause menu
+            if self._paused:
+                should_close = self._pause_menu.handle_input(event.key)
+                if should_close:
+                    self._paused = False
+                    logger.debug("Resuming from pause menu")
+                return
+
             if self._phase == BattlePhase.PLAYER_TURN:
                 self._handle_player_input(event.key)
             elif self._phase == BattlePhase.BATTLE_END:
@@ -222,16 +262,12 @@ class BattleScene(Scene):
 
     def _execute_attack_action(self, actor: Combatant, target: Combatant) -> None:
         """Execute basic attack."""
-        action = BattleAction(
-            actor=actor, action_type=ActionType.ATTACK, target=target
-        )
+        action = BattleAction(actor=actor, action_type=ActionType.ATTACK, target=target)
         messages = self._combat.execute_action(action)
         self._add_to_log(messages)
         self._advance_turn()
 
-    def _execute_skill_action(
-        self, actor: Combatant, target: Combatant, skill_id: str
-    ) -> None:
+    def _execute_skill_action(self, actor: Combatant, target: Combatant, skill_id: str) -> None:
         """Execute skill."""
         action = BattleAction(
             actor=actor, action_type=ActionType.SKILL, target=target, skill_id=skill_id
@@ -251,9 +287,7 @@ class BattleScene(Scene):
         self._add_to_log(messages)
         self._advance_turn()
 
-    def _execute_item_action(
-        self, actor: Combatant, target: Combatant, item_id: str
-    ) -> None:
+    def _execute_item_action(self, actor: Combatant, target: Combatant, item_id: str) -> None:
         """Execute item use."""
         # Consume item from inventory
         if self._inventory.has_item(item_id):
@@ -323,9 +357,7 @@ class BattleScene(Scene):
             )
         else:
             # Basic attack
-            action = BattleAction(
-                actor=current_enemy, action_type=ActionType.ATTACK, target=target
-            )
+            action = BattleAction(actor=current_enemy, action_type=ActionType.ATTACK, target=target)
 
         messages = self._combat.execute_action(action)
         self._add_to_log(messages)
@@ -347,6 +379,11 @@ class BattleScene(Scene):
 
     def update(self, dt: float) -> None:
         """Laat het combatsysteem vooruitgaan."""
+        # If paused, only update pause menu
+        if self._paused:
+            self._pause_menu.update(dt)
+            return
+
         # Update log display timer
         if self._log_display_time > 0:
             self._log_display_time -= dt
@@ -376,6 +413,10 @@ class BattleScene(Scene):
             elif self._phase == BattlePhase.BATTLE_END:
                 self._render_battle_end(surface)
 
+        # Render pause menu if paused
+        if self._paused:
+            self._pause_menu.render(surface)
+
     def _render_party(self, surface: pygame.Surface) -> None:
         """Render party members."""
         if not self._combat.battle_state:
@@ -403,9 +444,7 @@ class BattleScene(Scene):
             bar_color = self._color_hp if hp_ratio > 0.3 else self._color_hp_low
 
             pygame.draw.rect(surface, (50, 50, 50), (x, y + 50, bar_width, bar_height))
-            pygame.draw.rect(
-                surface, bar_color, (x, y + 50, int(bar_width * hp_ratio), bar_height)
-            )
+            pygame.draw.rect(surface, bar_color, (x, y + 50, int(bar_width * hp_ratio), bar_height))
 
             # Draw resources
             stamina_text = self._font_small.render(
@@ -511,8 +550,12 @@ class BattleScene(Scene):
             # Main menu options
             options = ["Attack", "Skill", "Defend", "Item"]
             for i, option in enumerate(options):
-                color = self._color_highlight if i == self._selected_menu_index else self._color_text
-                text = self._font.render(f"> {option}" if i == self._selected_menu_index else f"  {option}", True, color)
+                color = (
+                    self._color_highlight if i == self._selected_menu_index else self._color_text
+                )
+                text = self._font.render(
+                    f"> {option}" if i == self._selected_menu_index else f"  {option}", True, color
+                )
                 surface.blit(text, (menu_x + 20, menu_y + 50 + i * 30))
 
         elif self._menu_state == MenuState.SKILL_SELECT:
@@ -521,7 +564,9 @@ class BattleScene(Scene):
             surface.blit(title, (menu_x + 20, menu_y + 50))
 
             for i, skill_id in enumerate(current_actor.skills):
-                color = self._color_highlight if i == self._selected_skill_index else self._color_text
+                color = (
+                    self._color_highlight if i == self._selected_skill_index else self._color_text
+                )
                 # Get skill name from data
                 skill_data = self._data_repository.get_skill(skill_id)
                 skill_name = skill_data.get("name", skill_id) if skill_data else skill_id
@@ -533,7 +578,11 @@ class BattleScene(Scene):
                     cost_amount = skill_data["resource_cost"].get("amount", 0)
                     cost_text = f" ({cost_amount} {cost_type.capitalize()})"
 
-                display_text = f"> {skill_name}{cost_text}" if i == self._selected_skill_index else f"  {skill_name}{cost_text}"
+                display_text = (
+                    f"> {skill_name}{cost_text}"
+                    if i == self._selected_skill_index
+                    else f"  {skill_name}{cost_text}"
+                )
                 text = self._font_small.render(display_text, True, color)
                 surface.blit(text, (menu_x + 20, menu_y + 80 + i * 25))
 
@@ -545,18 +594,28 @@ class BattleScene(Scene):
             available_items = self._inventory.get_available_items()
             if not available_items:
                 # No items available
-                no_items_text = self._font_small.render("No items available", True, self._color_text)
+                no_items_text = self._font_small.render(
+                    "No items available", True, self._color_text
+                )
                 surface.blit(no_items_text, (menu_x + 20, menu_y + 80))
             else:
                 for i, item_id in enumerate(available_items):
                     qty = self._inventory.get_quantity(item_id)
-                    color = self._color_highlight if i == self._selected_item_index else self._color_text
+                    color = (
+                        self._color_highlight
+                        if i == self._selected_item_index
+                        else self._color_text
+                    )
 
                     # Get item name from data
                     item_data = self._data_repository.get_item(item_id)
                     item_name = item_data.get("name", item_id) if item_data else item_id
 
-                    display_text = f"> {item_name} ({qty})" if i == self._selected_item_index else f"  {item_name} ({qty})"
+                    display_text = (
+                        f"> {item_name} ({qty})"
+                        if i == self._selected_item_index
+                        else f"  {item_name} ({qty})"
+                    )
                     text = self._font_small.render(display_text, True, color)
                     surface.blit(text, (menu_x + 20, menu_y + 80 + i * 25))
 
@@ -595,7 +654,9 @@ class BattleScene(Scene):
                     if pm_state:
                         # Use runtime level and name from PartySystem
                         current_level = pm_state.level
-                        actor_name = pm_state.actor_id.replace("mc_", "").replace("comp_", "").capitalize()
+                        actor_name = (
+                            pm_state.actor_id.replace("mc_", "").replace("comp_", "").capitalize()
+                        )
 
                         xp_line = self._font_small.render(
                             f"{actor_name}: LV {current_level} (XP +{xp})",
@@ -606,7 +667,9 @@ class BattleScene(Scene):
                         surface.blit(xp_line, xp_line_rect)
                         y_offset += 22
                     else:
-                        logger.warning(f"Cannot find party member {actor_id} in PartySystem for XP display")
+                        logger.warning(
+                            f"Cannot find party member {actor_id} in PartySystem for XP display"
+                        )
 
             # === BLOCK 3: Level-ups ===
             if result.level_ups:
@@ -668,9 +731,7 @@ class BattleScene(Scene):
                         line1_text = self._font_small.render(
                             ", ".join(line1_parts), True, (180, 180, 180)
                         )
-                        line1_rect = line1_text.get_rect(
-                            center=(self._screen_width // 2, y_offset)
-                        )
+                        line1_rect = line1_text.get_rect(center=(self._screen_width // 2, y_offset))
                         surface.blit(line1_text, line1_rect)
                         y_offset += 20
 
@@ -679,9 +740,7 @@ class BattleScene(Scene):
                         line2_text = self._font_small.render(
                             ", ".join(line2_parts), True, (180, 180, 180)
                         )
-                        line2_rect = line2_text.get_rect(
-                            center=(self._screen_width // 2, y_offset)
-                        )
+                        line2_rect = line2_text.get_rect(center=(self._screen_width // 2, y_offset))
                         surface.blit(line2_text, line2_rect)
                         y_offset += 20
 

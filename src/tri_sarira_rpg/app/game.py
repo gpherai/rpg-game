@@ -11,6 +11,7 @@ from tri_sarira_rpg.core.config import Config
 from tri_sarira_rpg.core.logging_setup import configure_logging
 from tri_sarira_rpg.core.scene import SceneManager
 from tri_sarira_rpg.data_access.repository import DataRepository
+from tri_sarira_rpg.presentation.main_menu import MainMenuScene
 from tri_sarira_rpg.presentation.overworld import OverworldScene
 from tri_sarira_rpg.systems.combat import CombatSystem
 from tri_sarira_rpg.systems.inventory import InventorySystem
@@ -53,16 +54,12 @@ class Game:
             data_dir = Path("data")
 
         self._data_repository = DataRepository(data_dir=data_dir)
-        self._world_system = WorldSystem(
-            data_repository=self._data_repository, maps_dir=maps_dir
-        )
+        self._world_system = WorldSystem(data_repository=self._data_repository, maps_dir=maps_dir)
         self._time_system = TimeSystem()
 
         # Party system (Step 4: NPC & Party)
         npc_meta = self._data_repository.get_npc_meta()
-        self._party_system = PartySystem(
-            data_repository=self._data_repository, npc_meta=npc_meta
-        )
+        self._party_system = PartySystem(data_repository=self._data_repository, npc_meta=npc_meta)
 
         # Inventory system (Step 5: Combat v0)
         self._inventory_system = InventorySystem()
@@ -105,32 +102,11 @@ class Game:
         self._running = True
         self._scene_manager = SceneManager()
 
-        # Start directly in overworld (Step 3 requirement)
-        # Load initial zone
-        start_zone_id = "z_r1_chandrapur_town"
-        try:
-            self._world_system.load_zone(start_zone_id)
-            logger.info(f"✓ Starting in zone: {start_zone_id}")
-        except Exception as e:
-            logger.error(f"Failed to load start zone {start_zone_id}: {e}")
-            logger.info("Will use placeholder zone instead")
+        # Start with main menu (F11 requirement)
+        main_menu = MainMenuScene(self._scene_manager, game_instance=self)
+        self._scene_manager.push_scene(main_menu)
 
-        # Create and push overworld scene
-        overworld_scene = OverworldScene(
-            self._scene_manager,
-            self._world_system,
-            self._time_system,
-            self._party_system,
-            self._combat_system,
-            self._inventory_system,
-            self._data_repository,
-            flags_system=self._flags_system,
-            quest_system=self._quest_system,
-            game_instance=self,
-        )
-        self._scene_manager.push_scene(overworld_scene)
-
-        logger.info("✓ Game initialized, entering overworld")
+        logger.info("✓ Game initialized, entering main menu")
 
     def run(self) -> None:
         """Voer de hoofdloop uit totdat de applicatie afsluit."""
@@ -227,6 +203,124 @@ class Game:
             logger.error(f"✗ Failed to load game (slot {slot_id})")
 
         return success
+
+    def start_new_game(self) -> None:
+        """Start a fresh new game with default state.
+
+        Initializes a new game with:
+        - Adhira as main character
+        - Starting zone: Chandrapur town
+        - Default inventory (healing herbs, tonics)
+        - Day 1, Morgen
+        """
+        logger.info("Initializing new game...")
+
+        # Reset play time
+        self._play_time = 0.0
+
+        # Re-initialize time system (Day 1)
+        self._time_system = TimeSystem()
+
+        # Re-initialize party with main character
+        npc_meta = self._data_repository.get_npc_meta()
+        self._party_system = PartySystem(data_repository=self._data_repository, npc_meta=npc_meta)
+        main_char_id = "adhira"
+        try:
+            self._party_system.recruit_character(main_char_id)
+            self._party_system.set_active_party([main_char_id])
+            logger.info(f"✓ Main character {main_char_id} added to party")
+        except Exception as e:
+            logger.error(f"Failed to add main character: {e}")
+
+        # Re-initialize inventory with starter items
+        self._inventory_system = InventorySystem()
+        self._inventory_system.add_item("item_small_herb", 3)
+        self._inventory_system.add_item("item_medium_herb", 1)
+        self._inventory_system.add_item("item_stamina_tonic", 2)
+
+        # Re-initialize flags and quests
+        self._flags_system = GameStateFlags()
+        self._quest_system = QuestSystem(
+            party_system=self._party_system,
+            inventory_system=self._inventory_system,
+        )
+        self._quest_system.load_definitions(self._data_repository)
+
+        # Re-initialize combat system with new party
+        self._combat_system = CombatSystem(
+            party_system=self._party_system,
+            data_repository=self._data_repository,
+        )
+
+        # Re-initialize save system with new references
+        self._save_system = SaveSystem(
+            party_system=self._party_system,
+            world_system=self._world_system,
+            time_system=self._time_system,
+            inventory_system=self._inventory_system,
+            flags_system=self._flags_system,
+            quest_system=self._quest_system,
+        )
+
+        # Load starting zone
+        start_zone_id = "z_r1_chandrapur_town"
+        try:
+            self._world_system.load_zone(start_zone_id)
+            logger.info(f"✓ Starting zone loaded: {start_zone_id}")
+        except Exception as e:
+            logger.error(f"Failed to load start zone {start_zone_id}: {e}")
+
+        # Switch to overworld scene
+        self.start_overworld()
+
+    def start_overworld(self) -> None:
+        """Create and switch to overworld scene.
+
+        Used when:
+        - Starting a new game
+        - Loading a game
+        - Returning from battle
+        """
+        logger.info("Starting overworld scene...")
+
+        # Clear scene stack and push overworld
+        # (Keep only the current scene if it's main menu)
+        while len(list(self._scene_manager.iter_scenes())) > 0:
+            self._scene_manager.pop_scene()
+
+        # Create and push overworld scene
+        overworld_scene = OverworldScene(
+            self._scene_manager,
+            self._world_system,
+            self._time_system,
+            self._party_system,
+            self._combat_system,
+            self._inventory_system,
+            self._data_repository,
+            flags_system=self._flags_system,
+            quest_system=self._quest_system,
+            game_instance=self,
+        )
+        self._scene_manager.push_scene(overworld_scene)
+
+        logger.info("✓ Overworld scene started")
+
+    def return_to_main_menu(self) -> None:
+        """Return to main menu from gameplay.
+
+        Clears all scenes and pushes a fresh main menu.
+        """
+        logger.info("Returning to main menu...")
+
+        # Clear all scenes
+        while len(list(self._scene_manager.iter_scenes())) > 0:
+            self._scene_manager.pop_scene()
+
+        # Push fresh main menu
+        main_menu = MainMenuScene(self._scene_manager, game_instance=self)
+        self._scene_manager.push_scene(main_menu)
+
+        logger.info("✓ Returned to main menu")
 
 
 __all__ = ["Game"]

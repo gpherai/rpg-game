@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Callable, DefaultDict, Iterable
+from collections.abc import Callable, Iterable
 
 EventCallback = Callable[..., None]
 
@@ -12,7 +12,7 @@ class EventBus:
     """Registreer luisteraars en zend events naar gekoppelde systemen."""
 
     def __init__(self) -> None:
-        self._listeners: DefaultDict[str, list[EventCallback]] = defaultdict(list)
+        self._listeners: defaultdict[str, list[EventCallback]] = defaultdict(list)
 
     def subscribe(self, event_name: str, callback: EventCallback) -> None:
         """Registreer een callback voor het opgegeven event."""
