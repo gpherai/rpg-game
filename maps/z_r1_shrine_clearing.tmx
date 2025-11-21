@@ -60,6 +60,12 @@
     <property name="target_spawn_id" value="spawn_from_shrine"/>
    </properties>
   </object>
+  <object id="4" name="portal_to_inner" type="Portal" x="288" y="384" width="32" height="32">
+   <properties>
+    <property name="target_zone_id" value="z_r1_shrine_inner"/>
+    <property name="target_spawn_id" value="spawn_from_clearing"/>
+   </properties>
+  </object>
  </objectgroup>
  <objectgroup id="5" name="Events">
   <object id="3" name="ev_shrine_guardian" type="EventTrigger" x="288" y="352" width="32" height="32">
