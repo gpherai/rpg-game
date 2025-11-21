@@ -249,15 +249,11 @@ class Game:
         self._time_system = TimeSystem()
 
         # Re-initialize party with main character
+        # NOTE: PartySystem.__init__ automatically reads npc_meta.json and initializes
+        # the party based on companion_flags. Adhira (npc_mc_adhira) is already marked
+        # with recruited=true and in_party=true, so no manual party manipulation needed.
         npc_meta = self._data_repository.get_npc_meta()
         self._party_system = PartySystem(data_repository=self._data_repository, npc_meta=npc_meta)
-        main_char_id = "adhira"
-        try:
-            self._party_system.recruit_character(main_char_id)
-            self._party_system.set_active_party([main_char_id])
-            logger.info(f"✓ Main character {main_char_id} added to party")
-        except Exception as e:
-            logger.error(f"Failed to add main character: {e}")
 
         # Re-initialize inventory with starter items
         self._inventory_system = InventorySystem()
