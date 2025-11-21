@@ -60,7 +60,7 @@
   </object>
  </objectgroup>
  <objectgroup id="4" name="Portals">
-  <object id="2" name="portal_to_route" type="Portal" x="288" y="32" width="32" height="32">
+  <object id="2" name="portal_to_route" type="Portal" x="288" y="64" width="32" height="32">
    <properties>
     <property name="target_zone_id" value="z_r1_forest_route"/>
     <property name="target_spawn_id" value="spawn_from_shrine"/>
