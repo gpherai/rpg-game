@@ -242,10 +242,6 @@ class OverworldScene(Scene):
             elif event.key == pygame.K_g:
                 self._debug_open_shop()
 
-            # Debug key: Add gear items (Step 9 Gear v0)
-            elif event.key == pygame.K_l:
-                self._debug_add_gear_items()
-
     def update(self, dt: float) -> None:
         """Update overworld logic."""
         # If paused, only update pause menu
@@ -999,27 +995,6 @@ class OverworldScene(Scene):
         self._shop_menu_visible = True
         logger.info(f"[DEBUG] Opened shop: {shop_id}")
 
-    def _debug_add_gear_items(self) -> None:
-        """Debug functie: voeg gear items toe aan inventory (Step 9 Gear v0)."""
-        logger.info("[DEBUG] Adding gear items to inventory...")
-
-        # Add all gear items
-        gear_items = [
-            "item_gear_simple_staff",
-            "item_gear_iron_dagger",
-            "item_gear_travelers_cloth",
-            "item_gear_leather_vest",
-            "item_gear_copper_ring",
-            "item_gear_focus_charm",
-        ]
-
-        for item_id in gear_items:
-            self._inventory.add_item(item_id, 1)
-            logger.info(f"[DEBUG] Added {item_id}")
-
-        self._feedback_message = "Gear items toegevoegd! (L key)"
-        self._feedback_timer = 2.0
-        logger.info("[DEBUG] All gear items added to inventory")
 
 
 __all__ = ["OverworldScene"]
