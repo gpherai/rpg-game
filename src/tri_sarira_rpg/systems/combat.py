@@ -149,15 +149,8 @@ class Combatant:
         return False
 
 
-@dataclass
-class BattleAction:
-    """Een actie die uitgevoerd wordt in combat."""
-
-    actor: Combatant
-    action_type: ActionType
-    target: Combatant | None = None
-    skill_id: str | None = None
-    item_id: str | None = None
+# BattleAction is now imported from combat_viewmodels (uses string IDs)
+BattleAction = BattleActionView
 
 
 @dataclass
@@ -212,7 +205,7 @@ class CombatSystem:
         self._battle_state: BattleState | None = None
         self._progression = ProgressionSystem(data_repository=data_repository)
 
-    def start_battle(self, enemy_ids: list[str]) -> BattleState:
+    def start_battle(self, enemy_ids: list[str]) -> BattleStateView:
         """Initialiseer een battlecontext voor de gegeven enemies."""
         logger.info(f"Starting battle with enemies: {enemy_ids}")
 
@@ -262,7 +255,11 @@ class CombatSystem:
         )
 
         logger.info(f"Battle initialized: {len(party_combatants)} vs {len(enemy_combatants)}")
-        return self._battle_state
+
+        # Return viewmodel instead of internal state
+        view = self.get_battle_state_view()
+        assert view is not None  # We just created battle_state
+        return view
 
     def _create_combatant_from_actor(
         self,
@@ -328,8 +325,8 @@ class CombatSystem:
             skills=enemy_data.get("skills", []),
         )
 
-    def get_current_actor(self) -> Combatant | None:
-        """Haal de huidige actor op (wiens beurt het is)."""
+    def _get_current_combatant(self) -> Combatant | None:
+        """Interne helper: haal huidige combatant op (met side effects voor skip dead)."""
         if not self._battle_state:
             return None
 
@@ -344,25 +341,54 @@ class CombatSystem:
         # End of round, reset turn order
         if self._battle_state.current_turn_index >= len(self._battle_state.turn_order):
             self._battle_state.current_turn_index = 0
-            return self.get_current_actor()
+            return self._get_current_combatant()
 
         return None
 
+    def get_current_actor(self) -> CombatantView | None:
+        """Haal de huidige actor op (wiens beurt het is) als viewmodel."""
+        combatant = self._get_current_combatant()
+        if combatant is None:
+            return None
+        return self._combatant_to_view(combatant)
+
+    def _get_combatant_by_id(self, actor_id: str) -> Combatant | None:
+        """Zoek een combatant op basis van actor_id."""
+        if not self._battle_state:
+            return None
+        for combatant in self._battle_state.party + self._battle_state.enemies:
+            if combatant.actor_id == actor_id:
+                return combatant
+        return None
+
     def execute_action(self, action: BattleAction) -> list[str]:
-        """Voer een actie uit en retourneer feedback messages."""
+        """Voer een actie uit en retourneer feedback messages.
+
+        BattleAction bevat actor_id en target_id (strings).
+        Deze method zoekt de daadwerkelijke Combatant objecten op.
+        """
+        # Look up actual combatants from string IDs
+        actor = self._get_combatant_by_id(action.actor_id)
+        if not actor:
+            return [f"Actor {action.actor_id} not found in battle!"]
+
+        target: Combatant | None = None
+        if action.target_id:
+            target = self._get_combatant_by_id(action.target_id)
+
         messages = []
 
         if action.action_type == ActionType.ATTACK:
-            messages.extend(self._execute_basic_attack(action.actor, action.target))
+            messages.extend(self._execute_basic_attack(actor, target))
         elif action.action_type == ActionType.SKILL:
-            messages.extend(self._execute_skill(action.actor, action.target, action.skill_id))
+            messages.extend(self._execute_skill(actor, target, action.skill_id))
         elif action.action_type == ActionType.DEFEND:
-            messages.extend(self._execute_defend(action.actor))
+            messages.extend(self._execute_defend(actor))
         elif action.action_type == ActionType.ITEM:
-            messages.extend(self._execute_item(action.actor, action.target, action.item_id))
+            messages.extend(self._execute_item(actor, target, action.item_id))
 
         # Clear defend flag at end of action
-        action.actor.is_defending = False
+        actor.is_defending = False
 
         return messages
 
@@ -773,8 +799,8 @@ class CombatSystem:
         )
 
         # Build turn order entries
-        current_actor = self.get_current_actor()
-        current_actor_id = current_actor.actor_id if current_actor else None
+        current_combatant = self._get_current_combatant()
+        current_actor_id = current_combatant.actor_id if current_combatant else None
 
         turn_order = tuple(
             TurnOrderEntry(
