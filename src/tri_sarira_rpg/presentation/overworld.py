@@ -9,6 +9,14 @@ import pygame
 
 from tri_sarira_rpg.core.scene import Scene, SceneManager
 from tri_sarira_rpg.data_access.repository import DataRepository
+from tri_sarira_rpg.presentation.theme import (
+    Colors,
+    FontSizes,
+    Sizes,
+    Spacing,
+    Timing,
+    FONT_FAMILY,
+)
 from tri_sarira_rpg.presentation.ui.dialogue_box import DialogueBox
 from tri_sarira_rpg.presentation.ui.equipment_menu import EquipmentMenuUI
 from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
@@ -90,11 +98,11 @@ class OverworldScene(Scene):
             self._screen_width, self._screen_height = screen.get_size()
         else:
             # Fallback to default resolution if no surface exists yet
-            self._screen_width, self._screen_height = 1280, 720
+            self._screen_width, self._screen_height = Sizes.SCREEN_DEFAULT
 
         # Movement timing (tile-based)
         self._move_cooldown: float = 0.0
-        self._move_delay: float = 0.15  # Seconds between moves
+        self._move_delay: float = Timing.MOVE_DELAY
 
         # Camera (simple follow)
         self._camera_x: int = 0
@@ -102,18 +110,22 @@ class OverworldScene(Scene):
 
         # Fonts for HUD
         pygame.font.init()
-        self._font = pygame.font.SysFont("monospace", 16)
-        self._font_large = pygame.font.SysFont("monospace", 24)
+        self._font = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL)
+        self._font_large = pygame.font.SysFont(FONT_FAMILY, FontSizes.XLARGE)
 
         # Initialize DialogueBox (at bottom of screen)
-        dialogue_height = 250
-        dialogue_y = self._screen_height - dialogue_height - 20
-        dialogue_rect = pygame.Rect(20, dialogue_y, self._screen_width - 40, dialogue_height)
+        dialogue_height = Sizes.DIALOGUE_HEIGHT
+        dialogue_y = self._screen_height - dialogue_height - Sizes.DIALOGUE_MARGIN
+        dialogue_rect = pygame.Rect(
+            Sizes.DIALOGUE_MARGIN,
+            dialogue_y,
+            self._screen_width - Sizes.DIALOGUE_MARGIN * 2,
+            dialogue_height,
+        )
         self._dialogue_box = DialogueBox(dialogue_rect)
 
         # Initialize QuestLogUI (centered on screen)
-        quest_log_width = 600
-        quest_log_height = 500
+        quest_log_width, quest_log_height = Sizes.QUEST_LOG
         quest_log_x = (self._screen_width - quest_log_width) // 2
         quest_log_y = (self._screen_height - quest_log_height) // 2
         quest_log_rect = pygame.Rect(quest_log_x, quest_log_y, quest_log_width, quest_log_height)
@@ -121,8 +133,7 @@ class OverworldScene(Scene):
 
         # Initialize PauseMenu (centered on screen)
         self._paused: bool = False
-        pause_width = 500
-        pause_height = 400
+        pause_width, pause_height = Sizes.PAUSE_MENU
         pause_x = (self._screen_width - pause_width) // 2
         pause_y = (self._screen_height - pause_height) // 2
         pause_rect = pygame.Rect(pause_x, pause_y, pause_width, pause_height)
@@ -306,7 +317,7 @@ class OverworldScene(Scene):
     def render(self, surface: pygame.Surface) -> None:
         """Render de overworld."""
         # Clear screen
-        surface.fill((20, 20, 30))  # Dark blue background
+        surface.fill(Colors.BG_DARK)
 
         # Render map
         self._render_map(surface)
@@ -370,7 +381,7 @@ class OverworldScene(Scene):
         tiled_map = self._world.current_map
         if not tiled_map:
             # No map loaded, show placeholder
-            text = self._font_large.render("No map loaded", True, (255, 255, 255))
+            text = self._font_large.render("No map loaded", True, Colors.TEXT_WHITE)
             surface.blit(text, (400, 300))
             return
 
@@ -396,17 +407,17 @@ class OverworldScene(Scene):
 
                 if is_blocked:
                     # Blocked tile: dark gray
-                    color = (60, 60, 60)
+                    color = Colors.TILE_BLOCKED
                 else:
                     # Walkable tile: light green
-                    color = (100, 150, 100)
+                    color = Colors.TILE_WALKABLE
 
                 pygame.draw.rect(surface, color, (screen_x, screen_y, tile_size, tile_size))
 
                 # Draw grid lines
                 pygame.draw.rect(
                     surface,
-                    (40, 40, 40),
+                    Colors.TILE_GRID,
                     (screen_x, screen_y, tile_size, tile_size),
                     1,
                 )
@@ -420,7 +431,7 @@ class OverworldScene(Scene):
             # Draw portal as yellow rectangle
             pygame.draw.rect(
                 surface,
-                (255, 255, 0),
+                Colors.PORTAL,
                 (screen_x, screen_y, tile_size, tile_size),
                 3,
             )
@@ -434,7 +445,7 @@ class OverworldScene(Scene):
             # Draw chest as brown rectangle
             pygame.draw.rect(
                 surface,
-                (150, 100, 50),
+                Colors.CHEST,
                 (screen_x + 4, screen_y + 4, tile_size - 8, tile_size - 8),
             )
 
@@ -482,15 +493,15 @@ class OverworldScene(Scene):
 
             # Color variation for different followers
             if i == 0:
-                color = (150, 255, 150)  # Light green for first follower
+                color = Colors.FOLLOWER  # Light green for first follower
             else:
-                color = (100, 200, 100)  # Darker green for additional followers
+                color = Colors.FOLLOWER_DARK  # Darker green for additional followers
 
             pygame.draw.circle(surface, color, (center_x, center_y), radius)
 
             # Draw small indicator showing this is a follower
             pygame.draw.circle(
-                surface, (255, 255, 200), (center_x, center_y - radius // 2), radius // 4
+                surface, Colors.FOLLOWER_INDICATOR, (center_x, center_y - radius // 2), radius // 4
             )
 
             # Update position for next follower
@@ -513,7 +524,7 @@ class OverworldScene(Scene):
         center_y = screen_y + tile_size // 2
         radius = tile_size // 3
 
-        pygame.draw.circle(surface, (100, 150, 255), (center_x, center_y), radius)
+        pygame.draw.circle(surface, Colors.PLAYER, (center_x, center_y), radius)
 
         # Draw direction indicator
         facing_offset = {
@@ -523,37 +534,37 @@ class OverworldScene(Scene):
             "W": (-radius, 0),
         }
         dx, dy = facing_offset.get(player.facing, (0, 0))
-        pygame.draw.circle(surface, (255, 255, 255), (center_x + dx, center_y + dy), radius // 3)
+        pygame.draw.circle(surface, Colors.TEXT_WHITE, (center_x + dx, center_y + dy), radius // 3)
 
     def _render_hud(self, surface: pygame.Surface) -> None:
         """Render HUD met zone info en tijd."""
         # Draw semi-transparent background for HUD
-        hud_bg = pygame.Surface((self._screen_width, 60), pygame.SRCALPHA)
-        hud_bg.fill((0, 0, 0, 180))
+        hud_bg = pygame.Surface((self._screen_width, Sizes.HUD_HEIGHT), pygame.SRCALPHA)
+        hud_bg.fill(Colors.BG_HUD)
         surface.blit(hud_bg, (0, 0))
 
         # Zone name
         zone_name = self._world.get_zone_name()
-        zone_text = self._font_large.render(zone_name, True, (255, 255, 255))
-        surface.blit(zone_text, (20, 15))
+        zone_text = self._font_large.render(zone_name, True, Colors.TEXT_WHITE)
+        surface.blit(zone_text, (Spacing.LG, Spacing.MD))
 
         # Time display
         time_display = self._time.get_time_display()
-        time_text = self._font.render(time_display, True, (200, 200, 200))
-        surface.blit(time_text, (20, 40))
+        time_text = self._font.render(time_display, True, Colors.TEXT_LIGHT)
+        surface.blit(time_text, (Spacing.LG, Spacing.XXXL))
 
         # === TOP-RIGHT HUD: Party Info ===
         # Clean layout with clear vertical spacing to prevent overlap
-        HUD_RIGHT_X = self._screen_width - 280
-        HUD_PARTY_START_Y = 15
-        PARTY_LINE_HEIGHT = 22  # Increased from 20 for better readability
+        HUD_RIGHT_X = self._screen_width - Sizes.HUD_RIGHT_OFFSET
+        HUD_PARTY_START_Y = Spacing.MD
+        PARTY_LINE_HEIGHT = Spacing.LG + 2  # Increased from 20 for better readability
         HEADER_LINE_HEIGHT = PARTY_LINE_HEIGHT  # Houd spacing consistent met partyregels
 
         active_party = self._party.get_active_party()
 
         # Party header
         party_text = f"Party ({len(active_party)}/{self._party.party_max_size}):"
-        party_label = self._font.render(party_text, True, (200, 200, 200))
+        party_label = self._font.render(party_text, True, Colors.TEXT_LIGHT)
         surface.blit(party_label, (HUD_RIGHT_X, HUD_PARTY_START_Y))
 
         # Position header direct onder Party
@@ -562,7 +573,7 @@ class OverworldScene(Scene):
         pos_display = (
             f"Position: ({player.position.x}, {player.position.y})" if player else "Position: -"
         )
-        pos_text = self._font.render(pos_display, True, (200, 200, 200))
+        pos_text = self._font.render(pos_display, True, Colors.TEXT_LIGHT)
         surface.blit(pos_text, (HUD_RIGHT_X, position_y))
 
         # Party members - each on their own line with runtime levels, onder de headers
@@ -574,14 +585,15 @@ class OverworldScene(Scene):
             if member.is_main_character:
                 member_text += " (MC)"
 
-            text = self._font.render(member_text, True, (150, 200, 150))
+            text = self._font.render(member_text, True, Colors.PARTY_LIGHT)
             surface.blit(text, (HUD_RIGHT_X, y_offset))
             y_offset += PARTY_LINE_HEIGHT
 
         # Controls hint
-        controls_bg = pygame.Surface((300, 100), pygame.SRCALPHA)
-        controls_bg.fill((0, 0, 0, 180))
-        surface.blit(controls_bg, (self._screen_width - 300, self._screen_height - 100))
+        controls_width, controls_height = Sizes.CONTROLS_BOX
+        controls_bg = pygame.Surface((controls_width, controls_height), pygame.SRCALPHA)
+        controls_bg.fill(Colors.BG_HUD)
+        surface.blit(controls_bg, (self._screen_width - controls_width, self._screen_height - controls_height))
 
         controls_lines = [
             "Controls:",
@@ -592,18 +604,18 @@ class OverworldScene(Scene):
             "B: Battle (debug)",
         ]
         for i, line in enumerate(controls_lines):
-            text = self._font.render(line, True, (200, 200, 200))
-            surface.blit(text, (self._screen_width - 290, self._screen_height - 115 + i * 20))
+            text = self._font.render(line, True, Colors.TEXT_LIGHT)
+            surface.blit(text, (self._screen_width - controls_width + Spacing.SM, self._screen_height - controls_height - Spacing.MD + i * Spacing.LG))
 
         # Feedback message (save/load notifications)
         if self._feedback_timer > 0:
-            feedback_text = self._font_large.render(self._feedback_message, True, (255, 255, 100))
+            feedback_text = self._font_large.render(self._feedback_message, True, Colors.HIGHLIGHT)
             text_rect = feedback_text.get_rect(
                 center=(self._screen_width // 2, self._screen_height // 2 - 100)
             )
 
             # Draw semi-transparent background
-            padding = 20
+            padding = Spacing.LG
             bg_rect = pygame.Rect(
                 text_rect.x - padding,
                 text_rect.y - padding,
@@ -611,7 +623,7 @@ class OverworldScene(Scene):
                 text_rect.height + 2 * padding,
             )
             bg = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
-            bg.fill((0, 0, 0, 200))
+            bg.fill(Colors.BG_OVERLAY)
             surface.blit(bg, bg_rect.topleft)
 
             # Draw text
@@ -627,10 +639,10 @@ class OverworldScene(Scene):
 
         if success:
             self._feedback_message = "Game saved!"
-            self._feedback_timer = 2.0
+            self._feedback_timer = Timing.FEEDBACK_DURATION
         else:
             self._feedback_message = "Save failed!"
-            self._feedback_timer = 2.0
+            self._feedback_timer = Timing.FEEDBACK_DURATION
 
     def _quick_load(self) -> None:
         """Quick load from slot 1 (L key)."""
@@ -642,10 +654,10 @@ class OverworldScene(Scene):
 
         if success:
             self._feedback_message = "Game loaded!"
-            self._feedback_timer = 2.0
+            self._feedback_timer = Timing.FEEDBACK_DURATION
         else:
             self._feedback_message = "Load failed - no save found!"
-            self._feedback_timer = 2.0
+            self._feedback_timer = Timing.FEEDBACK_DURATION
 
     def _debug_toggle_rajani(self) -> None:
         """Debug functie: toggle Rajani in/uit active party (Step 4 v0)."""
@@ -834,8 +846,7 @@ class OverworldScene(Scene):
                 return
 
             # Create equipment menu rect (centered, similar to shop menu)
-            menu_width = 800
-            menu_height = 600
+            menu_width, menu_height = Sizes.EQUIPMENT_MENU
             menu_x = (self._screen_width - menu_width) // 2
             menu_y = (self._screen_height - menu_height) // 2
             menu_rect = pygame.Rect(menu_x, menu_y, menu_width, menu_height)
@@ -880,7 +891,7 @@ class OverworldScene(Scene):
 
             # Toon feedback message
             self._feedback_message = f"Quest gestart: {stage_desc}"
-            self._feedback_timer = 3.0
+            self._feedback_timer = Timing.FEEDBACK_LONG
         except ValueError as e:
             logger.warning(f"[DEBUG] Failed to start quest: {e}")
             # Check welke error het is
@@ -890,7 +901,7 @@ class OverworldScene(Scene):
                 self._feedback_message = "Quest al actief! Druk Y om te advancen"
             else:
                 self._feedback_message = f"Error: {e}"
-            self._feedback_timer = 3.0
+            self._feedback_timer = Timing.FEEDBACK_LONG
 
     def _debug_advance_quest(self) -> None:
         """Debug functie: advance een actieve quest (Step 7 Quest v0)."""
@@ -920,11 +931,11 @@ class OverworldScene(Scene):
 
             # Toon feedback message
             self._feedback_message = f"Quest: {stage_desc}"
-            self._feedback_timer = 3.0
+            self._feedback_timer = Timing.FEEDBACK_LONG
         except ValueError as e:
             logger.warning(f"[DEBUG] Failed to advance quest: {e}")
             self._feedback_message = "Kan niet advancen: quest niet actief"
-            self._feedback_timer = 3.0
+            self._feedback_timer = Timing.FEEDBACK_LONG
 
     def _debug_complete_quest(self) -> None:
         """Debug functie: complete een actieve quest (Step 7 Quest v0)."""
@@ -945,11 +956,11 @@ class OverworldScene(Scene):
 
             # Toon feedback message
             self._feedback_message = "Quest voltooid! Beloningen ontvangen"
-            self._feedback_timer = 3.0
+            self._feedback_timer = Timing.FEEDBACK_LONG
         except ValueError as e:
             logger.warning(f"[DEBUG] Failed to complete quest: {e}")
             self._feedback_message = "Kan niet voltooien: quest niet actief"
-            self._feedback_timer = 3.0
+            self._feedback_timer = Timing.FEEDBACK_LONG
 
     def _render_dialogue(self, surface: pygame.Surface) -> None:
         """Render dialogue box."""
@@ -967,7 +978,7 @@ class OverworldScene(Scene):
         if current_zone_id != "z_r1_chandrapur_town":
             logger.info(f"[DEBUG] Shop only available in Chandrapur (current: {current_zone_id})")
             self._feedback_message = "Geen shop hier (debug: gebruik alleen in Chandrapur)"
-            self._feedback_timer = 2.0
+            self._feedback_timer = Timing.FEEDBACK_DURATION
             return
 
         # Shop ID and chapter
@@ -976,8 +987,7 @@ class OverworldScene(Scene):
 
         # Initialize shop menu UI if not done yet
         if not self._shop_menu_ui:
-            shop_width = 900
-            shop_height = 600
+            shop_width, shop_height = Sizes.SHOP_MENU
             shop_x = (self._screen_width - shop_width) // 2
             shop_y = (self._screen_height - shop_height) // 2
             shop_rect = pygame.Rect(shop_x, shop_y, shop_width, shop_height)

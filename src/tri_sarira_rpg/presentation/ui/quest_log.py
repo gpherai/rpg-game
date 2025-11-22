@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pygame
 
+from tri_sarira_rpg.presentation.theme import Colors, FontSizes, Spacing, FONT_FAMILY
+
 from .widgets import Widget
 
 
@@ -17,20 +19,20 @@ class QuestLogUI(Widget):
 
         # Fonts
         pygame.font.init()
-        self._font_title = pygame.font.SysFont("monospace", 20, bold=True)
-        self._font_quest = pygame.font.SysFont("monospace", 16, bold=True)
-        self._font_description = pygame.font.SysFont("monospace", 14)
-        self._font_small = pygame.font.SysFont("monospace", 12)
+        self._font_title = pygame.font.SysFont(FONT_FAMILY, FontSizes.LARGE, bold=True)
+        self._font_quest = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL, bold=True)
+        self._font_description = pygame.font.SysFont(FONT_FAMILY, FontSizes.SMALL)
+        self._font_small = pygame.font.SysFont(FONT_FAMILY, FontSizes.TINY)
 
         # Colors
-        self._bg_color = (20, 20, 30, 240)  # Dark with alpha
-        self._border_color = (100, 150, 200)
-        self._title_color = (255, 220, 100)
-        self._quest_active_color = (100, 255, 100)
-        self._quest_completed_color = (150, 150, 150)
-        self._quest_selected_color = (255, 255, 100)
-        self._text_color = (255, 255, 255)
-        self._stage_color = (200, 200, 255)
+        self._bg_color = Colors.BG_OVERLAY
+        self._border_color = Colors.BORDER
+        self._title_color = Colors.HIGHLIGHT
+        self._quest_active_color = Colors.QUEST_ACTIVE
+        self._quest_completed_color = Colors.QUEST_COMPLETED
+        self._quest_selected_color = Colors.QUEST_SELECTED
+        self._text_color = Colors.TEXT_WHITE
+        self._stage_color = Colors.STAGE
 
     def set_quests(self, quest_entries: list[dict]) -> None:
         """Update quest lijst.
@@ -81,17 +83,17 @@ class QuestLogUI(Widget):
         surface.blit(log_surface, self.rect.topleft)
 
         # Draw title
-        y_offset = self.rect.top + 15
+        y_offset = self.rect.top + Spacing.MD
         title_surf = self._font_title.render("QUEST LOG", True, self._title_color)
         title_x = self.rect.left + (self.rect.width - title_surf.get_width()) // 2
         surface.blit(title_surf, (title_x, y_offset))
-        y_offset += 40
+        y_offset += Spacing.XXXL
 
         # Draw quests
         if not self._quest_entries:
             # No quests at all
             no_quests_surf = self._font_description.render("Geen quests", True, self._text_color)
-            surface.blit(no_quests_surf, (self.rect.left + 20, y_offset))
+            surface.blit(no_quests_surf, (self.rect.left + Spacing.LG, y_offset))
         else:
             for i, entry in enumerate(self._quest_entries):
                 # Determine if this quest is selected
@@ -111,7 +113,7 @@ class QuestLogUI(Widget):
                 prefix = "> " if is_selected else "  "
                 title_text = f"{prefix}{title}"
                 title_surf = self._font_quest.render(title_text, True, quest_color)
-                title_x = self.rect.left + 20
+                title_x = self.rect.left + Spacing.LG
                 title_y = y_offset
                 surface.blit(title_surf, (title_x, title_y))
 
@@ -128,7 +130,7 @@ class QuestLogUI(Widget):
                         2,  # Line thickness
                     )
 
-                y_offset += 25
+                y_offset += Spacing.XL
 
                 # Draw current stage description (only for selected quest)
                 if is_selected:
@@ -141,12 +143,12 @@ class QuestLogUI(Widget):
                             stage_surf = self._font_description.render(
                                 line, True, self._stage_color
                             )
-                            surface.blit(stage_surf, (self.rect.left + 40, y_offset))
-                            y_offset += 20
-                    y_offset += 10  # Extra spacing after selected quest
+                            surface.blit(stage_surf, (self.rect.left + Spacing.XXXL, y_offset))
+                            y_offset += Spacing.LG
+                    y_offset += Spacing.SM  # Extra spacing after selected quest
 
         # Draw help text at bottom
-        y_offset = self.rect.bottom - 40
+        y_offset = self.rect.bottom - Spacing.XXXL
         help_text = "W/S: Navigate | Q: Close"
         help_surf = self._font_small.render(help_text, True, self._text_color)
         help_x = self.rect.left + (self.rect.width - help_surf.get_width()) // 2

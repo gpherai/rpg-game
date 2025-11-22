@@ -11,6 +11,14 @@ import pygame
 
 from tri_sarira_rpg.core.scene import Scene, SceneManager
 from tri_sarira_rpg.data_access.repository import DataRepository
+from tri_sarira_rpg.presentation.theme import (
+    Colors,
+    FontSizes,
+    Sizes,
+    Spacing,
+    Timing,
+    FONT_FAMILY,
+)
 from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
 from tri_sarira_rpg.systems.combat import (
     ActionType,
@@ -74,31 +82,30 @@ class BattleScene(Scene):
 
         # Fonts
         pygame.font.init()
-        self._font = pygame.font.SysFont("monospace", 16)
-        self._font_large = pygame.font.SysFont("monospace", 24)
-        self._font_small = pygame.font.SysFont("monospace", 14)
+        self._font = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL)
+        self._font_large = pygame.font.SysFont(FONT_FAMILY, FontSizes.XLARGE)
+        self._font_small = pygame.font.SysFont(FONT_FAMILY, FontSizes.SMALL)
 
         # Colors
-        self._color_bg = (20, 20, 30)
-        self._color_text = (220, 220, 220)
-        self._color_highlight = (255, 220, 100)
-        self._color_hp = (100, 255, 100)
-        self._color_hp_low = (255, 100, 100)
-        self._color_enemy = (255, 150, 150)
-        self._color_party = (150, 200, 255)
+        self._color_bg = Colors.BG_DARK
+        self._color_text = Colors.TEXT
+        self._color_highlight = Colors.HIGHLIGHT
+        self._color_hp = Colors.HP
+        self._color_hp_low = Colors.HP_LOW
+        self._color_enemy = Colors.ENEMY
+        self._color_party = Colors.PARTY
 
         # Screen size
         screen = pygame.display.get_surface()
         if screen:
             self._screen_width, self._screen_height = screen.get_size()
         else:
-            self._screen_width, self._screen_height = 1280, 720
+            self._screen_width, self._screen_height = Sizes.SCREEN_DEFAULT
 
         # Initialize PauseMenu (centered on screen)
         # Note: Load is disabled during battle
         self._paused: bool = False
-        pause_width = 500
-        pause_height = 400
+        pause_width, pause_height = Sizes.PAUSE_MENU
         pause_x = (self._screen_width - pause_width) // 2
         pause_y = (self._screen_height - pause_height) // 2
         pause_rect = pygame.Rect(pause_x, pause_y, pause_width, pause_height)
@@ -369,7 +376,7 @@ class BattleScene(Scene):
         # Keep only last 10 messages
         if len(self._action_log) > 10:
             self._action_log = self._action_log[-10:]
-        self._log_display_time = 2.0  # Display for 2 seconds
+        self._log_display_time = Timing.LOG_DISPLAY
 
     def _exit_battle(self) -> None:
         """Exit battle and return to overworld."""
@@ -438,8 +445,7 @@ class BattleScene(Scene):
             surface.blit(hp_text, (x, y + 30))
 
             # HP bar visual
-            bar_width = 200
-            bar_height = 10
+            bar_width, bar_height = Sizes.HP_BAR
             hp_ratio = member.current_hp / member.max_hp if member.max_hp > 0 else 0
             bar_color = self._color_hp if hp_ratio > 0.3 else self._color_hp_low
 
@@ -499,8 +505,7 @@ class BattleScene(Scene):
             surface.blit(hp_text, (x, y + 30))
 
             # HP bar
-            bar_width = 200
-            bar_height = 10
+            bar_width, bar_height = Sizes.HP_BAR
             hp_ratio = enemy.current_hp / enemy.max_hp if enemy.max_hp > 0 else 0
 
             pygame.draw.rect(surface, (50, 50, 50), (x, y + 50, bar_width, bar_height))
@@ -626,7 +631,7 @@ class BattleScene(Scene):
 
         result = self._combat.battle_state.result
         outcome_text = "VICTORY!" if result.outcome == BattleOutcome.WIN else "DEFEAT..."
-        outcome_color = (100, 255, 100) if result.outcome == BattleOutcome.WIN else (255, 100, 100)
+        outcome_color = Colors.SUCCESS if result.outcome == BattleOutcome.WIN else Colors.ERROR
 
         # === BLOCK 1: Outcome Header ===
         text = self._font_large.render(outcome_text, True, outcome_color)
@@ -676,7 +681,7 @@ class BattleScene(Scene):
                 y_offset += 20  # Extra spacing before level-up block
 
                 # Level-up header
-                level_up_header = self._font.render("LEVEL UP!", True, (255, 215, 0))
+                level_up_header = self._font.render("LEVEL UP!", True, Colors.GOLD)
                 level_up_header_rect = level_up_header.get_rect(
                     center=(self._screen_width // 2, y_offset)
                 )
@@ -689,7 +694,7 @@ class BattleScene(Scene):
                     level_up_text = self._font_small.render(
                         f"{level_up.actor_name}: Lv {level_up.old_level} → Lv {level_up.new_level}",
                         True,
-                        (255, 215, 0),  # Gold
+                        Colors.GOLD,
                     )
                     level_up_rect = level_up_text.get_rect(
                         center=(self._screen_width // 2, y_offset)
@@ -729,20 +734,20 @@ class BattleScene(Scene):
                     # Render line 1
                     if line1_parts:
                         line1_text = self._font_small.render(
-                            ", ".join(line1_parts), True, (180, 180, 180)
+                            ", ".join(line1_parts), True, Colors.STAT_GAIN
                         )
                         line1_rect = line1_text.get_rect(center=(self._screen_width // 2, y_offset))
                         surface.blit(line1_text, line1_rect)
-                        y_offset += 20
+                        y_offset += Spacing.LG
 
                     # Render line 2
                     if line2_parts:
                         line2_text = self._font_small.render(
-                            ", ".join(line2_parts), True, (180, 180, 180)
+                            ", ".join(line2_parts), True, Colors.STAT_GAIN
                         )
                         line2_rect = line2_text.get_rect(center=(self._screen_width // 2, y_offset))
                         surface.blit(line2_text, line2_rect)
-                        y_offset += 20
+                        y_offset += Spacing.LG
 
                     y_offset += 10  # Extra spacing between characters
 

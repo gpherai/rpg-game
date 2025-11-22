@@ -9,6 +9,14 @@ from typing import TYPE_CHECKING, Any
 import pygame
 
 from tri_sarira_rpg.core.scene import Scene, SceneManager
+from tri_sarira_rpg.presentation.theme import (
+    Colors,
+    FontSizes,
+    Sizes,
+    Spacing,
+    Timing,
+    FONT_FAMILY,
+)
 
 if TYPE_CHECKING:
     from tri_sarira_rpg.systems.save import SaveSystem
@@ -70,19 +78,19 @@ class MainMenuScene(Scene):
         if screen:
             self._screen_width, self._screen_height = screen.get_size()
         else:
-            self._screen_width, self._screen_height = 1280, 720
+            self._screen_width, self._screen_height = Sizes.SCREEN_DEFAULT
 
         # Fonts
         pygame.font.init()
-        self._font_title = pygame.font.SysFont("monospace", 48, bold=True)
-        self._font_menu = pygame.font.SysFont("monospace", 24)
-        self._font_info = pygame.font.SysFont("monospace", 16)
+        self._font_title = pygame.font.SysFont(FONT_FAMILY, FontSizes.HERO, bold=True)
+        self._font_menu = pygame.font.SysFont(FONT_FAMILY, FontSizes.XLARGE)
+        self._font_info = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL)
 
         # Colors
-        self._bg_color = (15, 15, 25)
-        self._text_color = (220, 220, 220)
-        self._highlight_color = (255, 220, 100)
-        self._title_color = (255, 200, 150)
+        self._bg_color = Colors.BG_DARK
+        self._text_color = Colors.TEXT
+        self._highlight_color = Colors.HIGHLIGHT
+        self._title_color = Colors.TITLE
 
         # Main menu options
         self._main_options = [
@@ -153,7 +161,7 @@ class MainMenuScene(Scene):
 
         if not self._game:
             logger.error("No game instance available")
-            self._show_feedback("Error: Game niet beschikbaar", 3.0)
+            self._show_feedback("Error: Game niet beschikbaar", Timing.FEEDBACK_LONG)
             return
 
         # Initialize fresh game state via game instance
@@ -172,7 +180,7 @@ class MainMenuScene(Scene):
 
         if not self._game:
             logger.error("No game instance available")
-            self._show_feedback("Error: Game niet beschikbaar", 3.0)
+            self._show_feedback("Error: Game niet beschikbaar", Timing.FEEDBACK_LONG)
             return
 
         # Try to load slot 1
@@ -185,7 +193,7 @@ class MainMenuScene(Scene):
             self._game.start_overworld()
         else:
             logger.warning(f"No save found in slot {slot_id}")
-            self._show_feedback("Geen save gevonden", 2.0)
+            self._show_feedback("Geen save gevonden", Timing.FEEDBACK_DURATION)
 
     def _handle_load_select_input(self, key: int) -> None:
         """Handle load slot selection.
@@ -219,7 +227,7 @@ class MainMenuScene(Scene):
         """
         if not self._game:
             logger.error("No game instance available")
-            self._show_feedback("Error: Game niet beschikbaar", 3.0)
+            self._show_feedback("Error: Game niet beschikbaar", Timing.FEEDBACK_LONG)
             return
 
         logger.info(f"Loading from slot {slot_id}...")
@@ -231,7 +239,7 @@ class MainMenuScene(Scene):
             self._game.start_overworld()
         else:
             logger.warning(f"Failed to load from slot {slot_id}")
-            self._show_feedback(f"Slot {slot_id}: Load mislukt", 2.0)
+            self._show_feedback(f"Slot {slot_id}: Load mislukt", Timing.FEEDBACK_DURATION)
 
     def _handle_options_input(self, key: int) -> None:
         """Handle options menu input.
@@ -451,7 +459,7 @@ class MainMenuScene(Scene):
         if not self._feedback_message:
             return
 
-        feedback_text = self._font_info.render(self._feedback_message, True, (255, 100, 100))
+        feedback_text = self._font_info.render(self._feedback_message, True, Colors.ERROR)
         feedback_rect = feedback_text.get_rect(
             center=(self._screen_width // 2, self._screen_height - 50)
         )
