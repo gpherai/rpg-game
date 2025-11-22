@@ -6,9 +6,17 @@ import logging
 import random
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .progression import LevelUpResult, ProgressionSystem, TriProfile
+
+if TYPE_CHECKING:
+    from tri_sarira_rpg.core.protocols import (
+        DataRepositoryProtocol,
+        EquipmentSystemProtocol,
+        InventorySystemProtocol,
+        PartySystemProtocol,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -203,10 +211,10 @@ class CombatSystem:
 
     def __init__(
         self,
-        party_system: Any,
-        data_repository: Any,
-        items_system: Any | None = None,
-        equipment_system: Any | None = None,
+        party_system: PartySystemProtocol,
+        data_repository: DataRepositoryProtocol,
+        items_system: InventorySystemProtocol | None = None,
+        equipment_system: EquipmentSystemProtocol | None = None,
     ) -> None:
         self._party = party_system
         self._data_repository = data_repository

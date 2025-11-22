@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from tri_sarira_rpg.core.protocols import DataRepositoryProtocol
+    from tri_sarira_rpg.systems.progression import StatGains
 
 logger = logging.getLogger(__name__)
 
@@ -50,13 +54,13 @@ class PartySystem:
     """
 
     def __init__(
-        self, data_repository: Any | None = None, npc_meta: dict[str, Any] | None = None
+        self, data_repository: DataRepositoryProtocol | None = None, npc_meta: dict[str, Any] | None = None
     ) -> None:
         """Initialize PartySystem op basis van npc_meta data.
 
         Parameters
         ----------
-        data_repository : Any | None
+        data_repository : DataRepositoryProtocol | None
             Data repository voor actors/enemies (optional voor nu)
         npc_meta : dict[str, Any] | None
             NPC metadata (npc_meta.json). Als None, gebruik defaults.
@@ -324,7 +328,7 @@ class PartySystem:
         else:
             logger.warning(f"Cannot update level for {actor_id}: not in party/reserve")
 
-    def apply_stat_gains(self, actor_id: str, stat_gains: Any) -> None:
+    def apply_stat_gains(self, actor_id: str, stat_gains: StatGains) -> None:
         """Apply stat gains from level-up to member's base_stats.
 
         Parameters

@@ -5,7 +5,17 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from tri_sarira_rpg.core.protocols import (
+        DataRepositoryProtocol,
+        EconomySystemProtocol,
+        FlagsSystemProtocol,
+        InventorySystemProtocol,
+        PartySystemProtocol,
+        QuestSystemProtocol,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +105,11 @@ class DialogueGraph:
 class DialogueContext:
     """Context voor dialogue evaluatie (referenties naar andere systems)."""
 
-    flags_system: Any | None = None
-    party_system: Any | None = None
-    inventory_system: Any | None = None
-    economy_system: Any | None = None
-    quest_system: Any | None = None
+    flags_system: FlagsSystemProtocol | None = None
+    party_system: PartySystemProtocol | None = None
+    inventory_system: InventorySystemProtocol | None = None
+    economy_system: EconomySystemProtocol | None = None
+    quest_system: QuestSystemProtocol | None = None
 
 
 @dataclass
@@ -154,7 +164,7 @@ class DialogueSession:
 class DialogueSystem:
     """Beheert dialoogstate en levert nodes aan UI."""
 
-    def __init__(self, data_repository: Any | None = None) -> None:
+    def __init__(self, data_repository: DataRepositoryProtocol | None = None) -> None:
         self._data_repository = data_repository
         self._active_session: DialogueSession | None = None
 

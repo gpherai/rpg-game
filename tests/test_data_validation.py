@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from tri_sarira_rpg.data_access.exceptions import DataFileNotFoundError, DataParseError
 from tri_sarira_rpg.data_access.loader import DataLoader
 from tri_sarira_rpg.data_access.repository import DataRepository
 
@@ -310,21 +311,21 @@ def test_repository_get_nonexistent_enemy(data_repository: DataRepository) -> No
 
 
 def test_dataloader_raises_on_missing_file(tmp_path: Path) -> None:
-    """Test dat DataLoader FileNotFoundError raised bij missing file."""
+    """Test dat DataLoader DataFileNotFoundError raised bij missing file."""
     loader = DataLoader(data_dir=tmp_path)
 
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(DataFileNotFoundError):
         loader.load_json("nonexistent.json")
 
 
 def test_dataloader_raises_on_invalid_json(tmp_path: Path) -> None:
-    """Test dat DataLoader ValueError raised bij invalid JSON."""
+    """Test dat DataLoader DataParseError raised bij invalid JSON."""
     invalid_file = tmp_path / "invalid.json"
     invalid_file.write_text("{ invalid json }")
 
     loader = DataLoader(data_dir=tmp_path)
 
-    with pytest.raises(ValueError, match="Invalid JSON"):
+    with pytest.raises(DataParseError):
         loader.load_json("invalid.json")
 
 
