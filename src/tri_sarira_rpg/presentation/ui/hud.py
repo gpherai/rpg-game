@@ -13,10 +13,10 @@ import pygame
 
 from tri_sarira_rpg.presentation.theme import (
     Colors,
+    FontCache,
     FontSizes,
     Sizes,
     Spacing,
-    FONT_FAMILY,
 )
 
 from .widgets import Widget
@@ -83,10 +83,9 @@ class HUD(Widget):
         super().__init__(rect)
         self._data: HUDData = HUDData()
 
-        # Fonts
-        pygame.font.init()
-        self._font = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL)
-        self._font_large = pygame.font.SysFont(FONT_FAMILY, FontSizes.XLARGE)
+        # Fonts (via FontCache)
+        self._font = FontCache.get(FontSizes.NORMAL)
+        self._font_large = FontCache.get(FontSizes.XLARGE)
 
     def update_stats(self, data: HUDData) -> None:
         """Ontvang data van scene en sla op voor rendering.

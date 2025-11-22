@@ -27,11 +27,11 @@ if TYPE_CHECKING:
 
 from tri_sarira_rpg.presentation.theme import (
     Colors,
+    FontCache,
     FontSizes,
     Sizes,
     Spacing,
     Timing,
-    FONT_FAMILY,
 )
 from tri_sarira_rpg.presentation.ui.dialogue_box import DialogueBox
 from tri_sarira_rpg.presentation.ui.equipment_menu import EquipmentMenuUI
@@ -119,10 +119,9 @@ class OverworldScene(Scene):
         self._camera_x: int = 0
         self._camera_y: int = 0
 
-        # Fonts for HUD
-        pygame.font.init()
-        self._font = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL)
-        self._font_large = pygame.font.SysFont(FONT_FAMILY, FontSizes.XLARGE)
+        # Fonts for HUD (via FontCache)
+        self._font = FontCache.get(FontSizes.NORMAL)
+        self._font_large = FontCache.get(FontSizes.XLARGE)
 
         # Initialize DialogueBox (at bottom of screen)
         dialogue_height = Sizes.DIALOGUE_HEIGHT
