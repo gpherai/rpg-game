@@ -18,7 +18,7 @@ from tri_sarira_rpg.presentation.theme import (
 from .widgets import Widget
 
 if TYPE_CHECKING:
-    from tri_sarira_rpg.data_access.repository import DataRepository
+    from tri_sarira_rpg.services.game_data import GameDataService
     from tri_sarira_rpg.systems.inventory import InventorySystem
     from tri_sarira_rpg.systems.shop import ShopSystem
 
@@ -33,7 +33,7 @@ class ShopMenuUI(Widget):
         rect: pygame.Rect,
         shop_system: ShopSystem,
         inventory_system: InventorySystem,
-        data_repository: DataRepository,
+        data_service: GameDataService,
         shop_id: str,
         chapter_id: int = 1,
     ) -> None:
@@ -47,8 +47,8 @@ class ShopMenuUI(Widget):
             Shop system reference for transactions
         inventory_system : InventorySystem
             Inventory system reference
-        data_repository : DataRepository
-            Data repository for item info
+        data_service : GameDataService
+            Data service for item display info
         shop_id : str
             Shop ID to display (e.g., "shop_r1_town_general")
         chapter_id : int
@@ -57,7 +57,7 @@ class ShopMenuUI(Widget):
         super().__init__(rect)
         self._shop = shop_system
         self._inventory = inventory_system
-        self._repository = data_repository
+        self._data_service = data_service
         self._shop_id = shop_id
         self._chapter_id = chapter_id
 
@@ -215,17 +215,16 @@ class ShopMenuUI(Widget):
             surface.blit(name_surf, (details_x, details_y))
             details_y += Spacing.XXL
 
-            # Get item data from repository
-            item_data = self._repository.get_item(selected_entry.item_id)
-            if item_data:
+            # Get item data via service
+            item_info = self._data_service.get_item_info(selected_entry.item_id)
+            if item_info:
                 # Type
-                item_type = item_data.get("type", "unknown")
-                type_surf = self._font_desc.render(f"Type: {item_type}", True, self._text_color)
+                type_surf = self._font_desc.render(f"Type: {item_info.item_type}", True, self._text_color)
                 surface.blit(type_surf, (details_x, details_y))
                 details_y += Spacing.LG
 
                 # Description (wrapped)
-                desc = item_data.get("description", "Geen beschrijving")
+                desc = item_info.description or "Geen beschrijving"
                 wrapped_lines = self._wrap_text(desc, details_width)
                 for line in wrapped_lines:
                     line_surf = self._font_desc.render(line, True, self._text_color)

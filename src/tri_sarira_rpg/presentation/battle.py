@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import random
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pygame
 
@@ -30,7 +30,7 @@ from tri_sarira_rpg.systems.combat import (
 from tri_sarira_rpg.systems.inventory import InventorySystem
 
 if TYPE_CHECKING:
-    from tri_sarira_rpg.core.protocols import DataRepositoryProtocol
+    from tri_sarira_rpg.core.protocols import DataRepositoryProtocol, GameProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class BattleScene(Scene):
         combat_system: CombatSystem,
         inventory_system: InventorySystem,
         data_repository: DataRepositoryProtocol,
-        game_instance: Any = None,
+        game_instance: GameProtocol | None = None,
     ) -> None:
         super().__init__(manager)
         self._combat = combat_system

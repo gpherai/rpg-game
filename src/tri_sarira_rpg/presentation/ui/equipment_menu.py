@@ -18,7 +18,7 @@ from tri_sarira_rpg.presentation.theme import (
 from .widgets import Widget
 
 if TYPE_CHECKING:
-    from tri_sarira_rpg.data_access.repository import DataRepository
+    from tri_sarira_rpg.services.game_data import GameDataService
     from tri_sarira_rpg.systems.equipment import EquipmentSystem
     from tri_sarira_rpg.systems.party import PartyMember
 
@@ -32,7 +32,7 @@ class EquipmentMenuUI(Widget):
         self,
         rect: pygame.Rect,
         equipment_system: EquipmentSystem,
-        data_repository: DataRepository,
+        data_service: GameDataService,
         actor_id: str,
         party_member: PartyMember,
     ) -> None:
@@ -44,8 +44,8 @@ class EquipmentMenuUI(Widget):
             Menu rectangle (position and size)
         equipment_system : EquipmentSystem
             Equipment system reference
-        data_repository : DataRepository
-            Data repository for item info
+        data_service : GameDataService
+            Data service for item display info
         actor_id : str
             Actor ID to manage equipment for
         party_member : PartyMember
@@ -53,7 +53,7 @@ class EquipmentMenuUI(Widget):
         """
         super().__init__(rect)
         self._equipment = equipment_system
-        self._repository = data_repository
+        self._data_service = data_service
         self._actor_id = actor_id
         self._member = party_member
 
@@ -280,10 +280,11 @@ class EquipmentMenuUI(Widget):
             # Get equipped item
             equipped_id = equipped_gear.get(slot)
             equipped_name = "< Empty >"
+            item_info = None
             if equipped_id:
-                item_data = self._repository.get_item(equipped_id)
-                if item_data:
-                    equipped_name = item_data.get("name", equipped_id)
+                item_info = self._data_service.get_item_info(equipped_id)
+                if item_info:
+                    equipped_name = item_info.name
 
             # Highlight selected
             is_selected = (i == self._selected_slot_index)
@@ -296,14 +297,10 @@ class EquipmentMenuUI(Widget):
             surface.blit(slot_surf, (x_pos, y_offset))
 
             # Show stat mods if equipped
-            if equipped_id and is_selected:
-                item_data = self._repository.get_item(equipped_id)
-                if item_data and "stat_mods" in item_data:
-                    stat_mods = item_data["stat_mods"]
-                    stats_text = ", ".join(f"+{v} {k}" for k, v in stat_mods.items())
-                    stats_surf = self._font_desc.render(f"  [{stats_text}]", True, self._stat_color)
-                    surface.blit(stats_surf, (self.rect.x + 60, y_offset + Spacing.LG))
-                    y_offset += Spacing.LG
+            if item_info and is_selected and item_info.stat_summary:
+                stats_surf = self._font_desc.render(f"  [{item_info.stat_summary}]", True, self._stat_color)
+                surface.blit(stats_surf, (self.rect.x + 60, y_offset + Spacing.LG))
+                y_offset += Spacing.LG
 
             y_offset += Spacing.XXXL
 
@@ -338,9 +335,10 @@ class EquipmentMenuUI(Widget):
                 # Get item name
                 if item_id == "<UNEQUIP>":
                     item_name = "< Unequip Current >"
+                    item_info = None
                 else:
-                    item_data = self._repository.get_item(item_id)
-                    item_name = item_data.get("name", item_id) if item_data else item_id
+                    item_info = self._data_service.get_item_info(item_id)
+                    item_name = item_info.name if item_info else item_id
 
                 # Render item
                 item_surf = self._font_item.render(item_name, True, color)
@@ -348,16 +346,12 @@ class EquipmentMenuUI(Widget):
                 surface.blit(item_surf, (x_pos, y_offset))
 
                 # Show stat mods for selected item
-                if is_selected and item_id != "<UNEQUIP>":
-                    item_data = self._repository.get_item(item_id)
-                    if item_data and "stat_mods" in item_data:
-                        stat_mods = item_data["stat_mods"]
-                        stats_text = ", ".join(f"+{v} {k}" for k, v in stat_mods.items())
-                        stats_surf = self._font_desc.render(
-                            f"  [{stats_text}]", True, self._stat_color
-                        )
-                        surface.blit(stats_surf, (self.rect.x + 60, y_offset + Spacing.LG))
-                        y_offset += Spacing.LG
+                if is_selected and item_info and item_info.stat_summary:
+                    stats_surf = self._font_desc.render(
+                        f"  [{item_info.stat_summary}]", True, self._stat_color
+                    )
+                    surface.blit(stats_surf, (self.rect.x + 60, y_offset + Spacing.LG))
+                    y_offset += Spacing.LG
 
                 y_offset += Spacing.XXXL
 
