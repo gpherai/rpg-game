@@ -27,6 +27,7 @@ from tri_sarira_rpg.presentation.ui.hud import HUD, HUDData, PartyMemberInfo
 from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
 from tri_sarira_rpg.presentation.ui.quest_log import QuestLogUI
 from tri_sarira_rpg.presentation.ui.shop_menu import ShopMenuUI
+from tri_sarira_rpg.services.game_data import GameDataService
 from tri_sarira_rpg.systems.combat import CombatSystem
 from tri_sarira_rpg.systems.dialogue import (
     DialogueContext,
@@ -70,6 +71,7 @@ class OverworldScene(Scene):
         self._combat = combat_system
         self._inventory = inventory_system
         self._data_repository = data_repository
+        self._data_service = GameDataService(data_repository)
         self._flags = flags_system or GameStateFlags()
         self._quest = quest_system
         self._shop = shop_system
@@ -816,7 +818,7 @@ class OverworldScene(Scene):
             self._equipment_menu_ui = EquipmentMenuUI(
                 rect=menu_rect,
                 equipment_system=self._equipment,
-                data_repository=self._data_repository,
+                data_service=self._data_service,
                 actor_id=main_char.actor_id,
                 party_member=main_char,
             )
@@ -958,7 +960,7 @@ class OverworldScene(Scene):
                 rect=shop_rect,
                 shop_system=self._shop,
                 inventory_system=self._inventory,
-                data_repository=self._data_repository,
+                data_service=self._data_service,
                 shop_id=shop_id,
                 chapter_id=chapter_id,
             )
