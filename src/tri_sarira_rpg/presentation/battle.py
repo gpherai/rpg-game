@@ -5,12 +5,11 @@ from __future__ import annotations
 import logging
 import random
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING
 
 import pygame
 
 from tri_sarira_rpg.core.scene import Scene, SceneManager
-from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.presentation.theme import (
     Colors,
     FontSizes,
@@ -20,14 +19,23 @@ from tri_sarira_rpg.presentation.theme import (
     FONT_FAMILY,
 )
 from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
-from tri_sarira_rpg.systems.combat import (
+from tri_sarira_rpg.systems.combat import BattleResult
+from tri_sarira_rpg.systems.combat_viewmodels import (
     ActionType,
     BattleAction,
     BattleOutcome,
-    Combatant,
-    CombatSystem,
+    BattleStateView,
+    CombatantView,
 )
 from tri_sarira_rpg.systems.inventory import InventorySystem
+
+if TYPE_CHECKING:
+    from tri_sarira_rpg.core.protocols import (
+        CombatSystemProtocol,
+        DataRepositoryProtocol,
+        GameProtocol,
+        PartySystemProtocol,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -57,18 +65,21 @@ class BattleScene(Scene):
     def __init__(
         self,
         manager: SceneManager,
-        combat_system: CombatSystem,
+        combat_system: CombatSystemProtocol,
         inventory_system: InventorySystem,
-        data_repository: DataRepository,
-        game_instance: Any = None,
+        data_repository: DataRepositoryProtocol,
+        party_system: PartySystemProtocol,
+        game_instance: GameProtocol | None = None,
     ) -> None:
         super().__init__(manager)
         self._combat = combat_system
         self._inventory = inventory_system
         self._data_repository = data_repository
+        self._party = party_system
         self._game = game_instance
         self._phase = BattlePhase.START
         self._menu_state = MenuState.MAIN_MENU
+        self._battle_result: BattleResult | None = None  # Stored for rendering
 
         # UI state
         self._selected_menu_index = 0
@@ -175,10 +186,11 @@ class BattleScene(Scene):
                 self._menu_state = MenuState.MAIN_MENU
 
         elif self._menu_state == MenuState.TARGET_SELECT:
-            if not self._combat.battle_state:
+            state = self._combat.get_battle_state_view()
+            if not state:
                 return
 
-            max_index = len(self._combat.battle_state.enemies) - 1
+            max_index = len(state.enemies) - 1
             if key == pygame.K_LEFT or key == pygame.K_a:
                 self._selected_target_index = max(0, self._selected_target_index - 1)
             elif key == pygame.K_RIGHT or key == pygame.K_d:
@@ -231,15 +243,16 @@ class BattleScene(Scene):
 
     def _confirm_target_selection(self) -> None:
         """Confirm target and execute action."""
-        if not self._combat.battle_state:
+        state = self._combat.get_battle_state_view()
+        if not state:
             return
 
         current_actor = self._combat.get_current_actor()
         if not current_actor:
             return
 
-        # Get alive enemies
-        alive_enemies = [e for e in self._combat.battle_state.enemies if e.is_alive()]
+        # Get alive enemies (is_alive is a property on CombatantView)
+        alive_enemies = [e for e in state.enemies if e.is_alive]
         if not alive_enemies or self._selected_target_index >= len(alive_enemies):
             return
 
@@ -267,17 +280,24 @@ class BattleScene(Scene):
         # For v0: items always target self
         self._execute_item_action(current_actor, current_actor, item_id)
 
-    def _execute_attack_action(self, actor: Combatant, target: Combatant) -> None:
+    def _execute_attack_action(self, actor: CombatantView, target: CombatantView) -> None:
         """Execute basic attack."""
-        action = BattleAction(actor=actor, action_type=ActionType.ATTACK, target=target)
+        action = BattleAction(
+            actor_id=actor.actor_id, action_type=ActionType.ATTACK, target_id=target.actor_id
+        )
         messages = self._combat.execute_action(action)
         self._add_to_log(messages)
         self._advance_turn()
 
-    def _execute_skill_action(self, actor: Combatant, target: Combatant, skill_id: str) -> None:
+    def _execute_skill_action(
+        self, actor: CombatantView, target: CombatantView, skill_id: str
+    ) -> None:
         """Execute skill."""
         action = BattleAction(
-            actor=actor, action_type=ActionType.SKILL, target=target, skill_id=skill_id
+            actor_id=actor.actor_id,
+            action_type=ActionType.SKILL,
+            target_id=target.actor_id,
+            skill_id=skill_id,
         )
         messages = self._combat.execute_action(action)
         self._add_to_log(messages)
@@ -289,12 +309,14 @@ class BattleScene(Scene):
         if not current_actor:
             return
 
-        action = BattleAction(actor=current_actor, action_type=ActionType.DEFEND)
+        action = BattleAction(actor_id=current_actor.actor_id, action_type=ActionType.DEFEND)
         messages = self._combat.execute_action(action)
         self._add_to_log(messages)
         self._advance_turn()
 
-    def _execute_item_action(self, actor: Combatant, target: Combatant, item_id: str) -> None:
+    def _execute_item_action(
+        self, actor: CombatantView, target: CombatantView, item_id: str
+    ) -> None:
         """Execute item use."""
         # Consume item from inventory
         if self._inventory.has_item(item_id):
@@ -304,7 +326,10 @@ class BattleScene(Scene):
             return
 
         action = BattleAction(
-            actor=actor, action_type=ActionType.ITEM, target=target, item_id=item_id
+            actor_id=actor.actor_id,
+            action_type=ActionType.ITEM,
+            target_id=target.actor_id,
+            item_id=item_id,
         )
         messages = self._combat.execute_action(action)
         self._add_to_log(messages)
@@ -321,6 +346,7 @@ class BattleScene(Scene):
         if outcome != BattleOutcome.ONGOING:
             self._phase = BattlePhase.BATTLE_END
             result = self._combat.get_battle_result(outcome)
+            self._battle_result = result  # Store for rendering
             if outcome == BattleOutcome.WIN:
                 self._add_to_log([f"Victory! Earned {result.earned_money} money"])
                 for actor_id, xp in result.earned_xp.items():
@@ -342,11 +368,12 @@ class BattleScene(Scene):
         if not current_enemy or not current_enemy.is_enemy:
             return
 
-        if not self._combat.battle_state:
+        state = self._combat.get_battle_state_view()
+        if not state:
             return
 
-        # Pick a random alive party member as target
-        alive_party = [p for p in self._combat.battle_state.party if p.is_alive()]
+        # Pick a random alive party member as target (is_alive is property)
+        alive_party = [p for p in state.party if p.is_alive]
         if not alive_party:
             return
 
@@ -357,14 +384,18 @@ class BattleScene(Scene):
             # Use first skill
             skill_id = current_enemy.skills[0]
             action = BattleAction(
-                actor=current_enemy,
+                actor_id=current_enemy.actor_id,
                 action_type=ActionType.SKILL,
-                target=target,
+                target_id=target.actor_id,
                 skill_id=skill_id,
             )
         else:
             # Basic attack
-            action = BattleAction(actor=current_enemy, action_type=ActionType.ATTACK, target=target)
+            action = BattleAction(
+                actor_id=current_enemy.actor_id,
+                action_type=ActionType.ATTACK,
+                target_id=target.actor_id,
+            )
 
         messages = self._combat.execute_action(action)
         self._add_to_log(messages)
@@ -410,9 +441,10 @@ class BattleScene(Scene):
         surface.fill(self._color_bg)
 
         # Render battle state
-        if self._combat.battle_state:
-            self._render_party(surface)
-            self._render_enemies(surface)
+        state = self._combat.get_battle_state_view()
+        if state:
+            self._render_party(surface, state)
+            self._render_enemies(surface, state)
             self._render_action_log(surface)
 
             if self._phase == BattlePhase.PLAYER_TURN:
@@ -424,13 +456,10 @@ class BattleScene(Scene):
         if self._paused:
             self._pause_menu.render(surface)
 
-    def _render_party(self, surface: pygame.Surface) -> None:
+    def _render_party(self, surface: pygame.Surface, state: BattleStateView) -> None:
         """Render party members."""
-        if not self._combat.battle_state:
-            return
-
         y_offset = 100
-        for i, member in enumerate(self._combat.battle_state.party):
+        for i, member in enumerate(state.party):
             x = 50
             y = y_offset + i * 120
 
@@ -468,24 +497,21 @@ class BattleScene(Scene):
             surface.blit(focus_text, (x, y + 80))
             surface.blit(prana_text, (x, y + 95))
 
-    def _render_enemies(self, surface: pygame.Surface) -> None:
+    def _render_enemies(self, surface: pygame.Surface, state: BattleStateView) -> None:
         """Render enemies."""
-        if not self._combat.battle_state:
-            return
-
         x_start = self._screen_width - 350
         y_offset = 100
 
-        for i, enemy in enumerate(self._combat.battle_state.enemies):
-            if not enemy.is_alive():
-                continue  # Skip dead enemies
+        for i, enemy in enumerate(state.enemies):
+            if not enemy.is_alive:
+                continue  # Skip dead enemies (is_alive is property)
 
             x = x_start
             y = y_offset + i * 100
 
             # Highlight if selected as target
             if self._menu_state == MenuState.TARGET_SELECT:
-                alive_enemies = [e for e in self._combat.battle_state.enemies if e.is_alive()]
+                alive_enemies = [e for e in state.enemies if e.is_alive]
                 if i < len(alive_enemies) and i == self._selected_target_index:
                     pygame.draw.rect(
                         surface,
@@ -626,10 +652,10 @@ class BattleScene(Scene):
 
     def _render_battle_end(self, surface: pygame.Surface) -> None:
         """Render battle end screen with clear visual blocks."""
-        if not self._combat.battle_state or not self._combat.battle_state.result:
+        if not self._battle_result:
             return
 
-        result = self._combat.battle_state.result
+        result = self._battle_result
         outcome_text = "VICTORY!" if result.outcome == BattleOutcome.WIN else "DEFEAT..."
         outcome_color = Colors.SUCCESS if result.outcome == BattleOutcome.WIN else Colors.ERROR
 
@@ -654,7 +680,7 @@ class BattleScene(Scene):
             if result.earned_xp:
                 for actor_id, xp in result.earned_xp.items():
                     # Get current runtime state from PartySystem (AFTER level-ups)
-                    pm_state = self._combat._party.get_member_by_actor_id(actor_id)
+                    pm_state = self._party.get_member_by_actor_id(actor_id)
 
                     if pm_state:
                         # Use runtime level and name from PartySystem

@@ -705,6 +705,7 @@ class OverworldScene(Scene):
             self._combat,
             self._inventory,
             self._data_repository,
+            self._party,
             game_instance=self._game,
         )
         self.manager.push_scene(battle_scene)
