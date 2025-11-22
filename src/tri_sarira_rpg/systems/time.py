@@ -12,10 +12,10 @@ logger = logging.getLogger(__name__)
 class TimeBand(Enum):
     """Tijd van de dag volgens 2.2 Kalender & Festivals Spec."""
 
-    DAWN = "DAWN"  # ~5:00-7:00
-    DAY = "DAY"  # ~7:00-17:00
-    DUSK = "DUSK"  # ~17:00-19:00
-    NIGHT = "NIGHT"  # ~19:00-5:00
+    DAWN = "dawn"  # ~5:00-7:00
+    DAY = "day"  # ~7:00-17:00
+    DUSK = "dusk"  # ~17:00-19:00
+    NIGHT = "night"  # ~19:00-5:00
 
 
 @dataclass
