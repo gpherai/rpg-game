@@ -10,7 +10,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
+    from tri_sarira_rpg.systems.equipment import EquipResult
     from tri_sarira_rpg.systems.progression import StatGains
+    from tri_sarira_rpg.systems.quest import QuestDefinition, QuestLogEntry, QuestState
+    from tri_sarira_rpg.systems.shop import BuyResult, ShopDefinition, ShopInventoryEntry
 
 
 # =============================================================================
@@ -262,23 +265,23 @@ class FlagsSystemProtocol(SaveableSystem, Protocol):
 class QuestSystemProtocol(SaveableSystem, Protocol):
     """Protocol voor QuestSystem interface."""
 
-    def start_quest(self, quest_id: str) -> Any:
+    def start_quest(self, quest_id: str) -> QuestState:
         """Start een quest."""
         ...
 
-    def advance_quest(self, quest_id: str, next_stage_id: str | None = None) -> Any:
+    def advance_quest(self, quest_id: str, next_stage_id: str | None = None) -> QuestState:
         """Advance quest naar volgende stage."""
         ...
 
-    def complete_quest(self, quest_id: str) -> Any:
+    def complete_quest(self, quest_id: str) -> QuestState:
         """Markeer quest als voltooid."""
         ...
 
-    def get_definition(self, quest_id: str) -> Any:
+    def get_definition(self, quest_id: str) -> QuestDefinition | None:
         """Haal quest definitie op."""
         ...
 
-    def build_quest_log_view(self) -> list[Any]:
+    def build_quest_log_view(self) -> list[QuestLogEntry]:
         """Bouw quest log view voor UI."""
         ...
 
@@ -296,15 +299,15 @@ class ShopSystemProtocol(SaveableSystem, Protocol):
         """Haal huidige currency op."""
         ...
 
-    def get_shop_definition(self, shop_id: str) -> Any:
+    def get_shop_definition(self, shop_id: str) -> ShopDefinition | None:
         """Haal shop definitie op."""
         ...
 
-    def get_available_items(self, shop_id: str, chapter_id: int = 1) -> list[Any]:
+    def get_available_items(self, shop_id: str, chapter_id: int = 1) -> list[ShopInventoryEntry]:
         """Haal beschikbare items voor shop op."""
         ...
 
-    def buy_item(self, shop_id: str, item_id: str, quantity: int = 1) -> Any:
+    def buy_item(self, shop_id: str, item_id: str, quantity: int = 1) -> BuyResult:
         """Koop item uit shop."""
         ...
 
@@ -330,11 +333,11 @@ class EquipmentSystemProtocol(Protocol):
         """Haal beschikbare gear voor slot op."""
         ...
 
-    def equip_gear(self, actor_id: str, item_id: str, slot: str) -> Any:
+    def equip_gear(self, actor_id: str, item_id: str, slot: str) -> EquipResult:
         """Equip gear in slot."""
         ...
 
-    def unequip_gear(self, actor_id: str, slot: str) -> Any:
+    def unequip_gear(self, actor_id: str, slot: str) -> EquipResult:
         """Unequip gear uit slot."""
         ...
 
