@@ -9,7 +9,7 @@ import pygame
 
 from tri_sarira_rpg.core.config import Config
 from tri_sarira_rpg.core.logging_setup import configure_logging
-from tri_sarira_rpg.core.scene import SceneManager
+from tri_sarira_rpg.core.scene import SceneStackManager
 from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.presentation.main_menu import MainMenuScene
 from tri_sarira_rpg.presentation.overworld import OverworldScene
@@ -129,9 +129,9 @@ class Game:
         # Play time tracking
         self._play_time: float = 0.0  # Total play time in seconds
 
-        # Scene manager
+        # Scene manager (stack-based implementation)
         self._running = True
-        self._scene_manager = SceneManager()
+        self._scene_manager = SceneStackManager()
 
         # Start with main menu (F11 requirement)
         main_menu = MainMenuScene(self._scene_manager, game_instance=self)
@@ -335,12 +335,7 @@ class Game:
         """
         logger.info("Starting overworld scene...")
 
-        # Clear scene stack and push overworld
-        # (Keep only the current scene if it's main menu)
-        while len(list(self._scene_manager.iter_scenes())) > 0:
-            self._scene_manager.pop_scene()
-
-        # Create and push overworld scene
+        # Create overworld scene and use clear_and_set to replace entire stack
         overworld_scene = OverworldScene(
             self._scene_manager,
             self._world_system,
@@ -356,24 +351,20 @@ class Game:
             equipment_system=self._equipment_system,
             game_instance=self,
         )
-        self._scene_manager.push_scene(overworld_scene)
+        self._scene_manager.clear_and_set(overworld_scene)
 
         logger.info("✓ Overworld scene started")
 
     def return_to_main_menu(self) -> None:
         """Return to main menu from gameplay.
 
-        Clears all scenes and pushes a fresh main menu.
+        Clears all scenes and sets a fresh main menu.
         """
         logger.info("Returning to main menu...")
 
-        # Clear all scenes
-        while len(list(self._scene_manager.iter_scenes())) > 0:
-            self._scene_manager.pop_scene()
-
-        # Push fresh main menu
+        # Use clear_and_set to replace entire stack with main menu
         main_menu = MainMenuScene(self._scene_manager, game_instance=self)
-        self._scene_manager.push_scene(main_menu)
+        self._scene_manager.clear_and_set(main_menu)
 
         logger.info("✓ Returned to main menu")
 
