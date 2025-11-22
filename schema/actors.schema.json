@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "actors.schema.json",
+  "title": "Actors Schema",
+  "description": "Schema for playable characters and companions",
+  "type": "object",
+  "properties": {
+    "actors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "base_stats", "growth_weights"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique actor identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Actor type (playable, npc, etc.)"
+          },
+          "level": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "base_stats": {
+            "type": "object",
+            "description": "Base stat values (STR, END, DEF, etc.)"
+          },
+          "growth_weights": {
+            "type": "object",
+            "description": "Level-up stat distribution weights",
+            "properties": {
+              "phys_weight": { "type": "number" },
+              "ment_weight": { "type": "number" },
+              "spir_weight": { "type": "number" }
+            },
+            "required": ["phys_weight", "ment_weight", "spir_weight"]
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "starting_skills": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "archetype": {
+            "type": "string"
+          },
+          "tri_affinity": {
+            "type": "object",
+            "description": "Thematic Body/Mind/Spirit scores"
+          },
+          "traits": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": ["actors"],
+  "additionalProperties": true
+}

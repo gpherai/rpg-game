@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "skills.schema.json",
+  "title": "Skills Schema",
+  "description": "Schema for combat skills",
+  "type": "object",
+  "properties": {
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "resource_cost"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique skill identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "description": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string",
+            "description": "Skill domain (Physical, Mental, Spiritual)"
+          },
+          "type": {
+            "type": "string",
+            "description": "Skill type (attack, buff, debuff, etc.)"
+          },
+          "target": {
+            "type": "string",
+            "description": "Target type (single_enemy, self, etc.)"
+          },
+          "power": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "accuracy_bonus": {
+            "type": "integer"
+          },
+          "resource_cost": {
+            "type": "object",
+            "description": "Resource cost for using the skill",
+            "properties": {
+              "type": { "type": "string" },
+              "amount": { "type": "integer" }
+            }
+          },
+          "effects": {
+            "type": "array",
+            "items": { "type": "object" }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": ["skills"],
+  "additionalProperties": true
+}
