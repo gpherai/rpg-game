@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from tri_sarira_rpg.data_access.repository import DataRepository
-from tri_sarira_rpg.systems.inventory import InventorySystem
+if TYPE_CHECKING:
+    from tri_sarira_rpg.core.protocols import (
+        DataRepositoryProtocol,
+        InventorySystemProtocol,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -68,17 +71,17 @@ class ShopSystem:
 
     def __init__(
         self,
-        data_repository: DataRepository,
-        inventory_system: InventorySystem,
+        data_repository: DataRepositoryProtocol,
+        inventory_system: InventorySystemProtocol,
         economy_state: dict[str, Any] | None = None,
     ) -> None:
         """Initialize ShopSystem.
 
         Parameters
         ----------
-        data_repository : DataRepository
+        data_repository : DataRepositoryProtocol
             Repository voor data access (shops.json)
-        inventory_system : InventorySystem
+        inventory_system : InventorySystemProtocol
             Inventory system voor item management
         economy_state : dict[str, Any] | None
             Economy state dict met currency_amount en shop_states
