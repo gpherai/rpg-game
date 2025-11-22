@@ -36,8 +36,8 @@ XP_CURVE_V0 = {
 
 
 @dataclass
-class TriProfile:
-    """Tri-Śarīra profile defining Body/Mind/Spirit weights."""
+class GrowthWeights:
+    """Growth weights defining Body/Mind/Spirit stat gain distribution."""
 
     phys_weight: float  # Physical (Body) weight
     ment_weight: float  # Mental (Mind) weight
@@ -47,7 +47,7 @@ class TriProfile:
         """Validate that weights sum to approximately 1.0."""
         total = self.phys_weight + self.ment_weight + self.spir_weight
         if not (0.95 <= total <= 1.05):
-            logger.warning(f"TriProfile weights sum to {total:.2f}, expected ~1.0")
+            logger.warning(f"GrowthWeights sum to {total:.2f}, expected ~1.0")
 
 
 @dataclass
@@ -143,7 +143,7 @@ class ProgressionSystem:
         self,
         current_level: int,
         new_level: int,
-        tri_profile: TriProfile,
+        growth_weights: GrowthWeights,
         base_stats: dict[str, int],
     ) -> StatGains:
         """Calculate stat gains for level-up(s).
@@ -169,7 +169,7 @@ class ProgressionSystem:
             Starting level
         new_level : int
             Ending level (can be multiple levels at once)
-        tri_profile : TriProfile
+        growth_weights : GrowthWeights
             Character's Tri-Śarīra profile
         base_stats : dict[str, int]
             Current base stats (for resource calculation)
@@ -190,9 +190,9 @@ class ProgressionSystem:
         spirit_base_growth = 10.0
 
         # Total growth across all levels
-        total_body_gain = body_base_growth * levels_gained * tri_profile.phys_weight
-        total_mind_gain = mind_base_growth * levels_gained * tri_profile.ment_weight
-        total_spirit_gain = spirit_base_growth * levels_gained * tri_profile.spir_weight
+        total_body_gain = body_base_growth * levels_gained * growth_weights.phys_weight
+        total_mind_gain = mind_base_growth * levels_gained * growth_weights.ment_weight
+        total_spirit_gain = spirit_base_growth * levels_gained * growth_weights.spir_weight
 
         # Distribute to individual stats (use round() for better rounding)
         gains = StatGains(
@@ -250,7 +250,7 @@ class ProgressionSystem:
         current_level: int,
         current_xp: int,
         earned_xp: int,
-        tri_profile: TriProfile,
+        growth_weights: GrowthWeights,
         base_stats: dict[str, int],
     ) -> tuple[int, int, list[LevelUpResult]]:
         """Apply earned XP and process any level-ups.
@@ -267,7 +267,7 @@ class ProgressionSystem:
             Current XP towards next level
         earned_xp : int
             XP earned from battle
-        tri_profile : TriProfile
+        growth_weights : GrowthWeights
             Character's Tri-Śarīra profile
         base_stats : dict[str, int]
             Current base stats
@@ -296,7 +296,7 @@ class ProgressionSystem:
 
                 # Calculate stat gains
                 stat_gains = self.calculate_stat_gains(
-                    old_level, new_level, tri_profile, base_stats
+                    old_level, new_level, growth_weights, base_stats
                 )
 
                 # Update base_stats for next level calculation
@@ -333,4 +333,4 @@ class ProgressionSystem:
         return (new_level, new_xp, level_ups)
 
 
-__all__ = ["ProgressionSystem", "TriProfile", "StatGains", "LevelUpResult", "XP_CURVE_V0"]
+__all__ = ["ProgressionSystem", "GrowthWeights", "StatGains", "LevelUpResult", "XP_CURVE_V0"]

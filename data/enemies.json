@@ -31,7 +31,7 @@
       "money_min": 2,
       "money_max": 5,
       "archetype": "lesser_spirit",
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 3,
         "mind": 2,
         "spirit": 5
@@ -74,7 +74,7 @@
       "money_min": 20,
       "money_max": 30,
       "archetype": "guardian",
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 7,
         "mind": 5,
         "spirit": 9
@@ -114,7 +114,7 @@
       "money_min": 3,
       "money_max": 7,
       "archetype": "lesser_spirit",
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 2,
         "mind": 5,
         "spirit": 8
@@ -154,7 +154,7 @@
       "money_min": 4,
       "money_max": 9,
       "archetype": "tank",
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 7,
         "mind": 3,
         "spirit": 5
@@ -194,7 +194,7 @@
       "money_min": 3,
       "money_max": 8,
       "archetype": "trickster",
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 3,
         "mind": 7,
         "spirit": 6
