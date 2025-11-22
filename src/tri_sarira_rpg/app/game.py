@@ -14,6 +14,7 @@ from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.presentation.main_menu import MainMenuScene
 from tri_sarira_rpg.presentation.overworld import OverworldScene
 from tri_sarira_rpg.systems.combat import CombatSystem
+from tri_sarira_rpg.systems.dialogue import DialogueSystem
 from tri_sarira_rpg.systems.equipment import EquipmentSystem
 from tri_sarira_rpg.systems.inventory import InventorySystem
 from tri_sarira_rpg.systems.party import PartySystem
@@ -58,6 +59,9 @@ class Game:
         self._data_repository = DataRepository(data_dir=data_dir)
         self._world_system = WorldSystem(data_repository=self._data_repository, maps_dir=maps_dir)
         self._time_system = TimeSystem()
+
+        # Dialogue system
+        self._dialogue_system = DialogueSystem(self._data_repository)
 
         # Party system (Step 4: NPC & Party)
         npc_meta = self._data_repository.get_npc_meta()
@@ -345,6 +349,7 @@ class Game:
             self._combat_system,
             self._inventory_system,
             self._data_repository,
+            self._dialogue_system,
             flags_system=self._flags_system,
             quest_system=self._quest_system,
             shop_system=self._shop_system,
