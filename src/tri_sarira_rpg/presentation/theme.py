@@ -1,4 +1,4 @@
-"""Centrale UI theme constanten.
+"""Centrale UI theme constanten en ThemeProvider.
 
 Dit bestand bevat alle visuele constanten voor de game UI:
 - Kleuren
@@ -7,16 +7,18 @@ Dit bestand bevat alle visuele constanten voor de game UI:
 - Component afmetingen
 - Menu color schemes (frozen dataclasses)
 - Font caching
+- ThemeProvider voor dependency injection
 
 Gebruik:
     from tri_sarira_rpg.presentation.theme import Colors, FontSizes, Spacing, Sizes
     from tri_sarira_rpg.presentation.theme import MenuColors, DialogueColors, FontCache
+    from tri_sarira_rpg.presentation.theme import UITheme, ThemeProviderProtocol, DefaultThemeProvider
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     import pygame
@@ -269,6 +271,97 @@ class FontCache:
         cls._initialized = False
 
 
+# =============================================================================
+# UITheme - composable theme object
+# =============================================================================
+
+
+@dataclass(frozen=True)
+class UITheme:
+    """Volledig UI theme met alle color schemes.
+
+    Bundelt alle color schemes in één object dat kan worden
+    doorgegeven aan UI componenten via ThemeProvider.
+
+    Gebruik:
+        theme = UITheme()  # Default theme
+        theme = UITheme(name="night", menu=DarkMenuColors())  # Custom theme
+    """
+
+    name: str = "default"
+    menu: MenuColors = field(default_factory=MenuColors)
+    dialogue: DialogueColors = field(default_factory=DialogueColors)
+
+
+# =============================================================================
+# ThemeProviderProtocol - interface voor theme providers
+# =============================================================================
+
+
+@runtime_checkable
+class ThemeProviderProtocol(Protocol):
+    """Protocol voor theme providers.
+
+    Definieert de interface die alle theme providers moeten implementeren.
+    Gebruik dit type in UI componenten voor loose coupling.
+
+    Gebruik:
+        def __init__(self, theme_provider: ThemeProviderProtocol) -> None:
+            self._theme = theme_provider.current_theme
+            self._font = theme_provider.get_font(FontSizes.NORMAL)
+    """
+
+    @property
+    def current_theme(self) -> UITheme:
+        """Get the current theme."""
+        ...
+
+    def get_font(self, size: int, bold: bool = False) -> pygame.Font:
+        """Get a cached font."""
+        ...
+
+
+# =============================================================================
+# DefaultThemeProvider - concrete implementatie
+# =============================================================================
+
+
+class DefaultThemeProvider:
+    """Standaard theme provider met font caching.
+
+    Combineert UITheme met FontCache voor een complete theming oplossing.
+    Kan worden geïnjecteerd in UI componenten voor loose coupling.
+
+    Gebruik:
+        provider = DefaultThemeProvider()
+        theme = provider.current_theme
+        font = provider.get_font(FontSizes.NORMAL)
+    """
+
+    def __init__(self, theme: UITheme | None = None) -> None:
+        """Initialize theme provider.
+
+        Parameters
+        ----------
+        theme : UITheme | None
+            Custom theme to use, defaults to UITheme()
+        """
+        self._theme = theme or UITheme()
+
+    @property
+    def current_theme(self) -> UITheme:
+        """Get the current theme."""
+        return self._theme
+
+    def set_theme(self, theme: UITheme) -> None:
+        """Set a new theme."""
+        self._theme = theme
+
+    def get_font(self, size: int, bold: bool = False) -> pygame.Font:
+        """Get a cached font."""
+        return FontCache.get(size, bold)
+
+
 __all__ = [
     "Colors",
     "FontSizes",
@@ -279,4 +372,7 @@ __all__ = [
     "MenuColors",
     "DialogueColors",
     "FontCache",
+    "UITheme",
+    "ThemeProviderProtocol",
+    "DefaultThemeProvider",
 ]

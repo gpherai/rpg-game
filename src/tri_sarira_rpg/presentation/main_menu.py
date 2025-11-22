@@ -11,11 +11,11 @@ import pygame
 from tri_sarira_rpg.core.scene import Scene, SceneManager
 from tri_sarira_rpg.presentation.theme import (
     Colors,
+    FontCache,
     FontSizes,
     Sizes,
     Spacing,
     Timing,
-    FONT_FAMILY,
 )
 
 if TYPE_CHECKING:
@@ -81,11 +81,10 @@ class MainMenuScene(Scene):
         else:
             self._screen_width, self._screen_height = Sizes.SCREEN_DEFAULT
 
-        # Fonts
-        pygame.font.init()
-        self._font_title = pygame.font.SysFont(FONT_FAMILY, FontSizes.HERO, bold=True)
-        self._font_menu = pygame.font.SysFont(FONT_FAMILY, FontSizes.XLARGE)
-        self._font_info = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL)
+        # Fonts (via FontCache)
+        self._font_title = FontCache.get(FontSizes.HERO, bold=True)
+        self._font_menu = FontCache.get(FontSizes.XLARGE)
+        self._font_info = FontCache.get(FontSizes.NORMAL)
 
         # Colors
         self._bg_color = Colors.BG_DARK

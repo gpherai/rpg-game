@@ -12,11 +12,11 @@ import pygame
 from tri_sarira_rpg.core.scene import Scene, SceneManager
 from tri_sarira_rpg.presentation.theme import (
     Colors,
+    FontCache,
     FontSizes,
     Sizes,
     Spacing,
     Timing,
-    FONT_FAMILY,
 )
 from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
 from tri_sarira_rpg.systems.combat import BattleResult
@@ -91,11 +91,10 @@ class BattleScene(Scene):
         self._action_log: list[str] = []
         self._log_display_time = 0.0
 
-        # Fonts
-        pygame.font.init()
-        self._font = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL)
-        self._font_large = pygame.font.SysFont(FONT_FAMILY, FontSizes.XLARGE)
-        self._font_small = pygame.font.SysFont(FONT_FAMILY, FontSizes.SMALL)
+        # Fonts (via FontCache)
+        self._font = FontCache.get(FontSizes.NORMAL)
+        self._font_large = FontCache.get(FontSizes.XLARGE)
+        self._font_small = FontCache.get(FontSizes.SMALL)
 
         # Colors
         self._color_bg = Colors.BG_DARK
