@@ -7,6 +7,13 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from .exceptions import (
+    DataEncodingError,
+    DataFileNotFoundError,
+    DataParseError,
+    DataPermissionError,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,10 +39,14 @@ class DataLoader:
 
         Raises
         ------
-        FileNotFoundError
+        DataFileNotFoundError
             Als het bestand niet bestaat
-        ValueError
+        DataParseError
             Als JSON parsing faalt
+        DataPermissionError
+            Als het bestand niet gelezen kan worden door permissions
+        DataEncodingError
+            Als het bestand encoding problemen heeft
         """
         if filename in self._cache:
             return self._cache[filename]
@@ -44,7 +55,7 @@ class DataLoader:
 
         if not filepath.exists():
             logger.error(f"Data file not found: {filepath}")
-            raise FileNotFoundError(f"Required data file not found: {filepath}")
+            raise DataFileNotFoundError(filepath)
 
         logger.info(f"Loading JSON from: {filepath}")
 
@@ -53,10 +64,21 @@ class DataLoader:
                 data = json.load(fh)
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON in {filepath}: {e}")
-            raise ValueError(f"Invalid JSON in {filepath}: {e}") from e
-        except Exception as e:
-            logger.error(f"Unexpected error loading {filepath}: {e}")
-            raise
+            raise DataParseError(
+                filepath=filepath,
+                original_error=e,
+                line=e.lineno,
+                column=e.colno,
+            ) from e
+        except PermissionError as e:
+            logger.error(f"Permission denied reading {filepath}: {e}")
+            raise DataPermissionError(filepath) from e
+        except UnicodeDecodeError as e:
+            logger.error(f"Encoding error reading {filepath}: {e}")
+            raise DataEncodingError(filepath) from e
+        except OSError as e:
+            logger.error(f"OS error loading {filepath}: {e}")
+            raise DataFileNotFoundError(filepath, f"OS error: {e}") from e
 
         self._cache[filename] = data
         return data

@@ -4,7 +4,15 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tri_sarira_rpg.core.protocols import (
+        DataRepositoryProtocol,
+        InventorySystemProtocol,
+        PartySystemProtocol,
+    )
+    from tri_sarira_rpg.systems.party import PartyMember
 
 logger = logging.getLogger(__name__)
 
@@ -29,19 +37,19 @@ class EquipmentSystem:
 
     def __init__(
         self,
-        party_system: Any,
-        inventory_system: Any,
-        data_repository: Any,
+        party_system: PartySystemProtocol,
+        inventory_system: InventorySystemProtocol,
+        data_repository: DataRepositoryProtocol,
     ) -> None:
         """Initialize EquipmentSystem.
 
         Parameters
         ----------
-        party_system : PartySystem
+        party_system : PartySystemProtocol
             Party system reference
-        inventory_system : InventorySystem
+        inventory_system : InventorySystemProtocol
             Inventory system reference
-        data_repository : DataRepository
+        data_repository : DataRepositoryProtocol
             Data repository for item info
         """
         self._party = party_system
@@ -308,7 +316,7 @@ class EquipmentSystem:
 
         return available_gear
 
-    def _get_gear_in_slot(self, member: Any, slot: str) -> str | None:
+    def _get_gear_in_slot(self, member: PartyMember, slot: str) -> str | None:
         """Helper: get gear ID in een slot."""
         if slot == "weapon":
             return member.weapon_id
@@ -319,7 +327,7 @@ class EquipmentSystem:
         else:
             return None
 
-    def _set_gear_in_slot(self, member: Any, slot: str, item_id: str | None) -> None:
+    def _set_gear_in_slot(self, member: PartyMember, slot: str, item_id: str | None) -> None:
         """Helper: set gear ID in een slot."""
         if slot == "weapon":
             member.weapon_id = item_id

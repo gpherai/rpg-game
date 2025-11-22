@@ -5,12 +5,11 @@ from __future__ import annotations
 import logging
 import random
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pygame
 
 from tri_sarira_rpg.core.scene import Scene, SceneManager
-from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.presentation.theme import (
     Colors,
     FontSizes,
@@ -20,6 +19,7 @@ from tri_sarira_rpg.presentation.theme import (
     FONT_FAMILY,
 )
 from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
+from tri_sarira_rpg.services.game_data import GameDataService
 from tri_sarira_rpg.systems.combat import (
     ActionType,
     BattleAction,
@@ -28,6 +28,9 @@ from tri_sarira_rpg.systems.combat import (
     CombatSystem,
 )
 from tri_sarira_rpg.systems.inventory import InventorySystem
+
+if TYPE_CHECKING:
+    from tri_sarira_rpg.core.protocols import DataRepositoryProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -59,13 +62,13 @@ class BattleScene(Scene):
         manager: SceneManager,
         combat_system: CombatSystem,
         inventory_system: InventorySystem,
-        data_repository: DataRepository,
+        data_repository: DataRepositoryProtocol,
         game_instance: Any = None,
     ) -> None:
         super().__init__(manager)
         self._combat = combat_system
         self._inventory = inventory_system
-        self._data_repository = data_repository
+        self._data_service = GameDataService(data_repository)
         self._game = game_instance
         self._phase = BattlePhase.START
         self._menu_state = MenuState.MAIN_MENU
@@ -572,16 +575,10 @@ class BattleScene(Scene):
                 color = (
                     self._color_highlight if i == self._selected_skill_index else self._color_text
                 )
-                # Get skill name from data
-                skill_data = self._data_repository.get_skill(skill_id)
-                skill_name = skill_data.get("name", skill_id) if skill_data else skill_id
-
-                # Get resource cost
-                cost_text = ""
-                if skill_data and "resource_cost" in skill_data:
-                    cost_type = skill_data["resource_cost"].get("type", "")
-                    cost_amount = skill_data["resource_cost"].get("amount", 0)
-                    cost_text = f" ({cost_amount} {cost_type.capitalize()})"
+                # Get skill info from data service
+                skill_info = self._data_service.get_skill_info(skill_id)
+                skill_name = skill_info.name if skill_info else skill_id
+                cost_text = f" ({skill_info.cost_text})" if skill_info and skill_info.cost_text else ""
 
                 display_text = (
                     f"> {skill_name}{cost_text}"
@@ -612,9 +609,8 @@ class BattleScene(Scene):
                         else self._color_text
                     )
 
-                    # Get item name from data
-                    item_data = self._data_repository.get_item(item_id)
-                    item_name = item_data.get("name", item_id) if item_data else item_id
+                    # Get item name from data service
+                    item_name = self._data_service.get_item_name(item_id)
 
                     display_text = (
                         f"> {item_name} ({qty})"

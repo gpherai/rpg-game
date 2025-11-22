@@ -9,7 +9,14 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from tri_sarira_rpg.core.protocols import (
+        DataRepositoryProtocol,
+        InventorySystemProtocol,
+        PartySystemProtocol,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -78,16 +85,16 @@ class QuestSystem:
 
     def __init__(
         self,
-        party_system: Any | None = None,
-        inventory_system: Any | None = None,
+        party_system: PartySystemProtocol | None = None,
+        inventory_system: InventorySystemProtocol | None = None,
     ) -> None:
         """Initialize QuestSystem.
 
         Parameters
         ----------
-        party_system : Any | None
+        party_system : PartySystemProtocol | None
             PartySystem for XP rewards
-        inventory_system : Any | None
+        inventory_system : InventorySystemProtocol | None
             InventorySystem for item and money rewards
         """
         self._definitions: dict[str, QuestDefinition] = {}
@@ -95,12 +102,12 @@ class QuestSystem:
         self._party_system = party_system
         self._inventory_system = inventory_system
 
-    def load_definitions(self, data_repository: Any) -> None:
+    def load_definitions(self, data_repository: DataRepositoryProtocol) -> None:
         """Load quest definitions from data repository.
 
         Parameters
         ----------
-        data_repository : DataRepository
+        data_repository : DataRepositoryProtocol
             Repository to load quest data from
         """
         quest_data_list = data_repository.get_all_quests()

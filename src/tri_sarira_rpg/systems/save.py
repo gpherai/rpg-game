@@ -6,7 +6,18 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from tri_sarira_rpg.core.protocols import (
+        FlagsSystemProtocol,
+        InventorySystemProtocol,
+        PartySystemProtocol,
+        QuestSystemProtocol,
+        ShopSystemProtocol,
+        TimeSystemProtocol,
+        WorldSystemProtocol,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -16,32 +27,32 @@ class SaveSystem:
 
     def __init__(
         self,
-        party_system: Any | None = None,
-        world_system: Any | None = None,
-        time_system: Any | None = None,
-        inventory_system: Any | None = None,
-        flags_system: Any | None = None,
-        quest_system: Any | None = None,
-        shop_system: Any | None = None,
+        party_system: PartySystemProtocol | None = None,
+        world_system: WorldSystemProtocol | None = None,
+        time_system: TimeSystemProtocol | None = None,
+        inventory_system: InventorySystemProtocol | None = None,
+        flags_system: FlagsSystemProtocol | None = None,
+        quest_system: QuestSystemProtocol | None = None,
+        shop_system: ShopSystemProtocol | None = None,
     ) -> None:
         """Initialize SaveSystem with references to game systems.
 
         Parameters
         ----------
-        party_system : Any | None
+        party_system : PartySystemProtocol | None
             PartySystem reference
-        world_system : Any | None
+        world_system : WorldSystemProtocol | None
             WorldSystem reference
-        time_system : Any | None
+        time_system : TimeSystemProtocol | None
             TimeSystem reference
-        inventory_system : Any | None
+        inventory_system : InventorySystemProtocol | None
             InventorySystem reference
-        flags_system : Any | None
+        flags_system : FlagsSystemProtocol | None
             GameStateFlags reference
-        quest_system : Any | None
+        quest_system : QuestSystemProtocol | None
             QuestSystem reference
-        shop_system : Any | None
-            ShopSystem reference (Step 8: Shop System v0)
+        shop_system : ShopSystemProtocol | None
+            ShopSystem reference
         """
         self._party = party_system
         self._world = world_system
