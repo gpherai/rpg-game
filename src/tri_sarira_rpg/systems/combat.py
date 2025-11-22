@@ -5,7 +5,8 @@ from __future__ import annotations
 import logging
 import random
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from enum import Enum
+from typing import Any
 
 from .combat_viewmodels import (
     ActionType,
@@ -17,15 +18,11 @@ from .combat_viewmodels import (
 )
 from .progression import LevelUpResult, ProgressionSystem, TriProfile
 
-if TYPE_CHECKING:
-    from tri_sarira_rpg.core.protocols import (
-        DataRepositoryProtocol,
-        EquipmentSystemProtocol,
-        InventorySystemProtocol,
-        PartySystemProtocol,
-    )
-
 logger = logging.getLogger(__name__)
+
+
+# Re-export viewmodel types for backwards compatibility
+BattleAction = BattleActionView
 
 
 @dataclass
@@ -149,10 +146,6 @@ class Combatant:
         return False
 
 
-# BattleAction is now imported from combat_viewmodels (uses string IDs)
-BattleAction = BattleActionView
-
-
 @dataclass
 class BattleResult:
     """Resultaat van een battle."""
@@ -193,10 +186,10 @@ class CombatSystem:
 
     def __init__(
         self,
-        party_system: PartySystemProtocol,
-        data_repository: DataRepositoryProtocol,
-        items_system: InventorySystemProtocol | None = None,
-        equipment_system: EquipmentSystemProtocol | None = None,
+        party_system: Any,
+        data_repository: Any,
+        items_system: Any | None = None,
+        equipment_system: Any | None = None,
     ) -> None:
         self._party = party_system
         self._data_repository = data_repository
@@ -205,7 +198,7 @@ class CombatSystem:
         self._battle_state: BattleState | None = None
         self._progression = ProgressionSystem(data_repository=data_repository)
 
-    def start_battle(self, enemy_ids: list[str]) -> BattleStateView:
+    def start_battle(self, enemy_ids: list[str]) -> BattleState:
         """Initialiseer een battlecontext voor de gegeven enemies."""
         logger.info(f"Starting battle with enemies: {enemy_ids}")
 
@@ -255,11 +248,7 @@ class CombatSystem:
         )
 
         logger.info(f"Battle initialized: {len(party_combatants)} vs {len(enemy_combatants)}")
-
-        # Return viewmodel instead of internal state
-        view = self.get_battle_state_view()
-        assert view is not None  # We just created battle_state
-        return view
+        return self._battle_state
 
     def _create_combatant_from_actor(
         self,
@@ -326,7 +315,7 @@ class CombatSystem:
         )
 
     def _get_current_combatant(self) -> Combatant | None:
-        """Interne helper: haal huidige combatant op (met side effects voor skip dead)."""
+        """Internal: haal de huidige combatant op (voor interne logica)."""
         if not self._battle_state:
             return None
 
@@ -346,14 +335,60 @@ class CombatSystem:
         return None
 
     def get_current_actor(self) -> CombatantView | None:
-        """Haal de huidige actor op (wiens beurt het is) als viewmodel."""
+        """Haal de huidige actor op als CombatantView (voor UI)."""
         combatant = self._get_current_combatant()
         if combatant is None:
             return None
         return self._combatant_to_view(combatant)
 
+    def _combatant_to_view(self, combatant: Combatant) -> CombatantView:
+        """Convert internal Combatant to immutable CombatantView for UI."""
+        return CombatantView(
+            actor_id=combatant.actor_id,
+            name=combatant.name,
+            level=combatant.level,
+            is_enemy=combatant.is_enemy,
+            is_alive=combatant.is_alive(),  # Call method, store as property
+            is_defending=combatant.is_defending,
+            current_hp=combatant.current_hp,
+            max_hp=combatant.max_hp,
+            current_stamina=combatant.current_stamina,
+            max_stamina=combatant.max_stamina,
+            current_focus=combatant.current_focus,
+            max_focus=combatant.max_focus,
+            current_prana=combatant.current_prana,
+            max_prana=combatant.max_prana,
+            skills=tuple(combatant.skills),
+        )
+
+    def get_battle_state_view(self) -> BattleStateView | None:
+        """Get immutable view of current battle state for UI."""
+        if not self._battle_state:
+            return None
+
+        party_views = tuple(self._combatant_to_view(c) for c in self._battle_state.party)
+        enemy_views = tuple(self._combatant_to_view(c) for c in self._battle_state.enemies)
+
+        turn_order_entries = tuple(
+            TurnOrderEntry(
+                actor_id=c.actor_id,
+                name=c.name,
+                is_enemy=c.is_enemy,
+                is_current=(i == self._battle_state.current_turn_index),
+            )
+            for i, c in enumerate(self._battle_state.turn_order)
+        )
+
+        return BattleStateView(
+            party=party_views,
+            enemies=enemy_views,
+            turn_order=turn_order_entries,
+            current_turn_index=self._battle_state.current_turn_index,
+            is_battle_active=self._battle_state.result is None,
+        )
+
     def _get_combatant_by_id(self, actor_id: str) -> Combatant | None:
-        """Zoek een combatant op basis van actor_id."""
+        """Look up a combatant by their actor_id string."""
         if not self._battle_state:
             return None
         for combatant in self._battle_state.party + self._battle_state.enemies:
@@ -364,19 +399,20 @@ class CombatSystem:
     def execute_action(self, action: BattleAction) -> list[str]:
         """Voer een actie uit en retourneer feedback messages.
 
-        BattleAction bevat actor_id en target_id (strings).
-        Deze method zoekt de daadwerkelijke Combatant objecten op.
+        BattleAction uses string IDs (actor_id, target_id) which are
+        resolved to internal Combatant objects.
         """
-        # Look up actual combatants from string IDs
+        messages = []
+
+        # Look up actor by ID
         actor = self._get_combatant_by_id(action.actor_id)
         if not actor:
             return [f"Actor {action.actor_id} not found in battle!"]
 
+        # Look up target by ID if provided
         target: Combatant | None = None
         if action.target_id:
             target = self._get_combatant_by_id(action.target_id)
-
-        messages = []
 
         if action.action_type == ActionType.ATTACK:
             messages.extend(self._execute_basic_attack(actor, target))
@@ -754,72 +790,6 @@ class CombatSystem:
     def battle_state(self) -> BattleState | None:
         """Get current battle state."""
         return self._battle_state
-
-    # =========================================================================
-    # ViewModel Methods (voor CombatSystemProtocol)
-    # =========================================================================
-
-    def _combatant_to_view(self, combatant: Combatant) -> CombatantView:
-        """Convert een Combatant naar een CombatantView."""
-        return CombatantView(
-            actor_id=combatant.actor_id,
-            name=combatant.name,
-            level=combatant.level,
-            is_enemy=combatant.is_enemy,
-            is_alive=combatant.is_alive(),
-            is_defending=combatant.is_defending,
-            current_hp=combatant.current_hp,
-            max_hp=combatant.max_hp,
-            current_stamina=combatant.current_stamina,
-            max_stamina=combatant.max_stamina,
-            current_focus=combatant.current_focus,
-            max_focus=combatant.max_focus,
-            current_prana=combatant.current_prana,
-            max_prana=combatant.max_prana,
-            skills=tuple(combatant.skills),
-        )
-
-    def get_battle_state_view(self) -> BattleStateView | None:
-        """Haal huidige battle state view op voor UI rendering.
-
-        Returns een immutable view van de battle state die geschikt is
-        voor de presentation layer.
-        """
-        if not self._battle_state:
-            return None
-
-        # Convert party members to views
-        party_views = tuple(
-            self._combatant_to_view(m) for m in self._battle_state.party
-        )
-
-        # Convert enemies to views
-        enemy_views = tuple(
-            self._combatant_to_view(e) for e in self._battle_state.enemies
-        )
-
-        # Build turn order entries
-        current_combatant = self._get_current_combatant()
-        current_actor_id = current_combatant.actor_id if current_combatant else None
-
-        turn_order = tuple(
-            TurnOrderEntry(
-                actor_id=c.actor_id,
-                name=c.name,
-                is_enemy=c.is_enemy,
-                is_current=(c.actor_id == current_actor_id),
-                is_alive=c.is_alive(),
-            )
-            for c in self._battle_state.turn_order
-        )
-
-        return BattleStateView(
-            party=party_views,
-            enemies=enemy_views,
-            turn_order=turn_order,
-            current_actor_id=current_actor_id,
-            outcome=self.check_battle_end(),
-        )
 
 
 __all__ = [
