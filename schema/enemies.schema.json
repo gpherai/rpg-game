@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "enemies.schema.json",
+  "title": "Enemies Schema",
+  "description": "Schema for enemy definitions",
+  "type": "object",
+  "properties": {
+    "enemies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "base_stats"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique enemy identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Enemy type (minion, boss, etc.)"
+          },
+          "level": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "base_stats": {
+            "type": "object",
+            "description": "Base stat values"
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "skills": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "xp_reward": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "money_min": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "money_max": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "archetype": {
+            "type": "string"
+          },
+          "tri_affinity": {
+            "type": "object",
+            "description": "Thematic Body/Mind/Spirit scores"
+          },
+          "traits": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": ["enemies"],
+  "additionalProperties": true
+}

@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "items.schema.json",
+  "title": "Items Schema",
+  "description": "Schema for items (consumables and gear)",
+  "type": "object",
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "type"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique item identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "description": "Item type (consumable, gear)"
+          },
+          "category": {
+            "type": "string",
+            "description": "Item category (healing, weapon, armor, etc.)"
+          },
+          "gear_type": {
+            "type": "string"
+          },
+          "slot": {
+            "type": "string"
+          },
+          "effect": {
+            "type": "object",
+            "description": "Effect for consumables"
+          },
+          "stat_mods": {
+            "type": "object",
+            "description": "Stat modifiers for gear"
+          },
+          "tri_focus_primary": {
+            "type": "string"
+          },
+          "tri_focus_secondary": {
+            "type": "string"
+          },
+          "rarity": {
+            "type": "string"
+          },
+          "price": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sellable": {
+            "type": "boolean"
+          },
+          "usable_in_battle": {
+            "type": "boolean"
+          },
+          "usable_in_overworld": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": ["items"],
+  "additionalProperties": true
+}
