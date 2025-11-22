@@ -11,10 +11,11 @@ import pygame
 
 from tri_sarira_rpg.presentation.theme import (
     Colors,
+    FontCache,
     FontSizes,
+    MenuColors,
     Spacing,
     Timing,
-    FONT_FAMILY,
 )
 
 from .widgets import Widget
@@ -81,18 +82,13 @@ class PauseMenu(Widget):
         self._slot_info_cache: dict[int, str] = {}
         self._cache_valid: bool = False
 
-        # Fonts
-        pygame.font.init()
-        self._font_title = pygame.font.SysFont(FONT_FAMILY, FontSizes.SUBTITLE, bold=True)
-        self._font_menu = pygame.font.SysFont(FONT_FAMILY, FontSizes.LARGE)
-        self._font_info = pygame.font.SysFont(FONT_FAMILY, FontSizes.SMALL)
+        # Fonts (via cache)
+        self._font_title = FontCache.get(FontSizes.SUBTITLE, bold=True)
+        self._font_menu = FontCache.get(FontSizes.LARGE)
+        self._font_info = FontCache.get(FontSizes.SMALL)
 
-        # Colors
-        self._bg_color = Colors.BG_OVERLAY
-        self._border_color = Colors.BORDER
-        self._text_color = Colors.TEXT
-        self._highlight_color = Colors.HIGHLIGHT
-        self._title_color = Colors.TITLE
+        # Colors (via MenuColors scheme)
+        self._colors = MenuColors()
 
         # Main menu options
         self._main_options = [
@@ -343,10 +339,10 @@ class PauseMenu(Widget):
         """
         # Create semi-transparent background
         overlay = pygame.Surface(self.rect.size, pygame.SRCALPHA)
-        overlay.fill(self._bg_color)
+        overlay.fill(self._colors.bg)
 
         # Draw border
-        pygame.draw.rect(overlay, self._border_color, overlay.get_rect(), 3)
+        pygame.draw.rect(overlay, self._colors.border, overlay.get_rect(), 3)
 
         # Render current state
         if self._state == PauseMenuState.MAIN:
@@ -370,7 +366,7 @@ class PauseMenu(Widget):
             Surface to render on
         """
         # Title
-        title_text = self._font_title.render("GEPAUZEERD", True, self._title_color)
+        title_text = self._font_title.render("GEPAUZEERD", True, self._colors.title)
         title_rect = title_text.get_rect(center=(self.rect.width // 2, 60))
         surface.blit(title_text, title_rect)
 
@@ -383,7 +379,7 @@ class PauseMenu(Widget):
                 color = Colors.TEXT_MUTED
                 prefix = "  "
             else:
-                color = self._highlight_color if i == self._selected_index else self._text_color
+                color = self._colors.highlight if i == self._selected_index else self._colors.text
                 prefix = "► " if i == self._selected_index else "  "
 
             option_text = self._font_menu.render(f"{prefix}{text}", True, color)
@@ -392,7 +388,7 @@ class PauseMenu(Widget):
 
         # Instructions
         info_text = self._font_info.render(
-            "Gebruik Esc om direct door te gaan", True, self._text_color
+            "Gebruik Esc om direct door te gaan", True, self._colors.text
         )
         info_rect = info_text.get_rect(center=(self.rect.width // 2, self.rect.height - Spacing.XXL))
         surface.blit(info_text, info_rect)
@@ -406,13 +402,13 @@ class PauseMenu(Widget):
             Surface to render on
         """
         # Title
-        title_text = self._font_title.render("Load Spel", True, self._title_color)
+        title_text = self._font_title.render("Load Spel", True, self._colors.title)
         title_rect = title_text.get_rect(center=(self.rect.width // 2, Spacing.XXXL))
         surface.blit(title_text, title_rect)
 
         # Instructions
         info_text = self._font_info.render(
-            "Selecteer een save slot (Esc om terug)", True, self._text_color
+            "Selecteer een save slot (Esc om terug)", True, self._colors.text
         )
         info_rect = info_text.get_rect(center=(self.rect.width // 2, 80))
         surface.blit(info_text, info_rect)
@@ -421,7 +417,7 @@ class PauseMenu(Widget):
         start_y = 130
         for i in range(5):
             slot_id = i + 1
-            color = self._highlight_color if i == self._selected_slot else self._text_color
+            color = self._colors.highlight if i == self._selected_slot else self._colors.text
             prefix = "► " if i == self._selected_slot else "  "
 
             # Check if slot exists and get info
@@ -497,7 +493,7 @@ class PauseMenu(Widget):
         if not self._feedback_message:
             return
 
-        feedback_text = self._font_info.render(self._feedback_message, True, Colors.SUCCESS)
+        feedback_text = self._font_info.render(self._feedback_message, True, self._colors.success)
         feedback_rect = feedback_text.get_rect(center=(self.rect.width // 2, self.rect.height - 60))
         surface.blit(feedback_text, feedback_rect)
 

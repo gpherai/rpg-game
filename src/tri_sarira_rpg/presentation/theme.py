@@ -5,12 +5,21 @@ Dit bestand bevat alle visuele constanten voor de game UI:
 - Font groottes
 - Spacing/padding
 - Component afmetingen
+- Menu color schemes (frozen dataclasses)
+- Font caching
 
 Gebruik:
     from tri_sarira_rpg.presentation.theme import Colors, FontSizes, Spacing, Sizes
+    from tri_sarira_rpg.presentation.theme import MenuColors, DialogueColors, FontCache
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pygame
 
 
 class Colors:
@@ -158,4 +167,116 @@ class Timing:
 FONT_FAMILY = "monospace"
 
 
-__all__ = ["Colors", "FontSizes", "Spacing", "Sizes", "Timing", "FONT_FAMILY"]
+# =============================================================================
+# Color Schemes - frozen dataclasses voor UI componenten
+# =============================================================================
+
+
+@dataclass(frozen=True)
+class MenuColors:
+    """Standaard kleurenschema voor menu overlays.
+
+    Gebruik dit in plaats van losse color variabelen in UI componenten.
+    Alle menu's (pause, shop, equipment, quest_log) gebruiken deze defaults.
+    """
+
+    bg: tuple = Colors.BG_OVERLAY
+    border: tuple = Colors.BORDER
+    text: tuple = Colors.TEXT
+    highlight: tuple = Colors.HIGHLIGHT
+    title: tuple = Colors.TITLE
+    success: tuple = Colors.SUCCESS
+    error: tuple = Colors.ERROR
+
+
+@dataclass(frozen=True)
+class DialogueColors:
+    """Kleurenschema voor dialogue boxes.
+
+    Specifieke kleuren voor dialogue UI.
+    """
+
+    bg: tuple = Colors.BG_OVERLAY_LIGHT
+    border: tuple = Colors.BORDER
+    text: tuple = Colors.TEXT_WHITE
+    speaker: tuple = Colors.SPEAKER
+    choice: tuple = Colors.CHOICE
+    choice_selected: tuple = Colors.CHOICE_SELECTED
+
+
+# =============================================================================
+# Font Cache - vermijdt herhaalde SysFont aanroepen
+# =============================================================================
+
+
+class FontCache:
+    """Cache voor pygame fonts.
+
+    Voorkomt herhaalde pygame.font.SysFont() aanroepen door fonts
+    te cachen op basis van (family, size, bold) key.
+
+    Gebruik:
+        font = FontCache.get(FontSizes.NORMAL)
+        font_bold = FontCache.get(FontSizes.TITLE, bold=True)
+    """
+
+    _cache: dict[tuple[str, int, bool], pygame.Font] = {}
+    _initialized: bool = False
+
+    @classmethod
+    def _ensure_init(cls) -> None:
+        """Zorg dat pygame.font is geïnitialiseerd."""
+        if not cls._initialized:
+            import pygame
+
+            pygame.font.init()
+            cls._initialized = True
+
+    @classmethod
+    def get(
+        cls, size: int, bold: bool = False, family: str = FONT_FAMILY
+    ) -> pygame.Font:
+        """Haal een gecachte font op.
+
+        Parameters
+        ----------
+        size : int
+            Font grootte in pixels (gebruik FontSizes constanten)
+        bold : bool
+            Of de font bold moet zijn
+        family : str
+            Font family naam (default: FONT_FAMILY)
+
+        Returns
+        -------
+        pygame.Font
+            Gecachte font instance
+        """
+        cls._ensure_init()
+
+        key = (family, size, bold)
+        if key not in cls._cache:
+            import pygame
+
+            cls._cache[key] = pygame.font.SysFont(family, size, bold=bold)
+
+        return cls._cache[key]
+
+    @classmethod
+    def clear(cls) -> None:
+        """Leeg de font cache (voor testing of hot-reload)."""
+        cls._cache.clear()
+        cls._initialized = False
+
+
+__all__ = [
+    "Colors",
+    "FontSizes",
+    "Spacing",
+    "Sizes",
+    "Timing",
+    "FONT_FAMILY",
+    "MenuColors",
+    "DialogueColors",
+    "FontCache",
+]
