@@ -7,15 +7,16 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
+from .dialogue_viewmodels import (
+    ChoiceView,
+    ConversationResult,
+    DialogueContext,
+    DialogueSession,
+    DialogueView,
+)
+
 if TYPE_CHECKING:
-    from tri_sarira_rpg.core.protocols import (
-        DataRepositoryProtocol,
-        EconomySystemProtocol,
-        FlagsSystemProtocol,
-        InventorySystemProtocol,
-        PartySystemProtocol,
-        QuestSystemProtocol,
-    )
+    from tri_sarira_rpg.core.protocols import DataRepositoryProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -101,66 +102,6 @@ class DialogueGraph:
     nodes: dict[str, DialogueNode] = field(default_factory=dict)
 
 
-@dataclass
-class DialogueContext:
-    """Context voor dialogue evaluatie (referenties naar andere systems)."""
-
-    flags_system: FlagsSystemProtocol | None = None
-    party_system: PartySystemProtocol | None = None
-    inventory_system: InventorySystemProtocol | None = None
-    economy_system: EconomySystemProtocol | None = None
-    quest_system: QuestSystemProtocol | None = None
-
-
-@dataclass
-class ChoiceView:
-    """UI-vriendelijke representatie van een keuze."""
-
-    choice_id: str
-    text: str
-    index: int  # Voor UI numbering (0-based)
-
-
-@dataclass
-class DialogueView:
-    """UI-vriendelijke representatie van de huidige dialogue state."""
-
-    speaker_id: str
-    lines: list[str]  # Combined text lines
-    choices: list[ChoiceView]
-    can_auto_advance: bool
-
-
-@dataclass
-class ConversationResult:
-    """Resultaat van een dialogue action."""
-
-    conversation_ended: bool
-    next_node_id: str | None = None
-    effects_applied: list[str] = field(default_factory=list)
-
-
-class DialogueSession:
-    """Een actieve dialogue sessie."""
-
-    def __init__(
-        self,
-        dialogue_id: str,
-        graph: DialogueGraph,
-        context: DialogueContext,
-        start_node_id: str = "n_intro",
-    ) -> None:
-        self.dialogue_id = dialogue_id
-        self.graph = graph
-        self.context = context
-        self.current_node_id = start_node_id
-        self.conversation_ended = False
-
-    def get_current_node(self) -> DialogueNode | None:
-        """Haal de huidige node op."""
-        return self.graph.nodes.get(self.current_node_id)
-
-
 class DialogueSystem:
     """Beheert dialoogstate en levert nodes aan UI."""
 
@@ -243,14 +184,15 @@ class DialogueSystem:
             session.conversation_ended = True
             return None
 
-        # Combine lines into list of text strings
-        lines = [line.text for line in node.lines]
+        # Combine lines into tuple of text strings (frozen viewmodel)
+        lines = tuple(line.text for line in node.lines)
 
-        # Filter choices based on conditions
-        visible_choices = []
-        for i, choice in enumerate(node.choices):
-            if self._evaluate_conditions(choice.conditions, session.context):
-                visible_choices.append(ChoiceView(choice.choice_id, choice.text, i))
+        # Filter choices based on conditions (as tuple for frozen viewmodel)
+        visible_choices = tuple(
+            ChoiceView(choice.choice_id, choice.text, i)
+            for i, choice in enumerate(node.choices)
+            if self._evaluate_conditions(choice.conditions, session.context)
+        )
 
         # Check for auto-advance
         can_auto_advance = (
@@ -528,8 +470,8 @@ class DialogueSystem:
             logger.warning(f"Unknown condition type: {cond_type}")
             return True  # Unknown conditions pass by default
 
-    def _apply_effects(self, effects: list[EffectRef], context: DialogueContext) -> list[str]:
-        """Pas alle effects toe en return lijst van toegepaste effects.
+    def _apply_effects(self, effects: list[EffectRef], context: DialogueContext) -> tuple[str, ...]:
+        """Pas alle effects toe en return tuple van toegepaste effects.
 
         Parameters
         ----------
@@ -540,15 +482,15 @@ class DialogueSystem:
 
         Returns
         -------
-        list[str]
-            List van effect descriptions
+        tuple[str, ...]
+            Tuple van effect descriptions (voor frozen viewmodel)
         """
         applied = []
         for effect in effects:
             result = self._apply_single_effect(effect, context)
             if result:
                 applied.append(result)
-        return applied
+        return tuple(applied)
 
     def _apply_single_effect(self, effect: EffectRef, context: DialogueContext) -> str | None:
         """Pas een enkel effect toe."""
@@ -655,4 +597,11 @@ class DialogueSystem:
             return None
 
 
-__all__ = ["DialogueSystem", "DialogueContext", "DialogueSession", "DialogueView"]
+__all__ = [
+    "ChoiceView",
+    "ConversationResult",
+    "DialogueContext",
+    "DialogueSession",
+    "DialogueSystem",
+    "DialogueView",
+]

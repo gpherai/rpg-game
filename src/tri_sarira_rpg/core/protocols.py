@@ -16,6 +16,13 @@ if TYPE_CHECKING:
         BattleStateView,
         CombatantView,
     )
+    from tri_sarira_rpg.systems.dialogue_viewmodels import (
+        ChoiceView,
+        ConversationResult,
+        DialogueContext,
+        DialogueSession,
+        DialogueView,
+    )
     from tri_sarira_rpg.systems.equipment import EquipResult
     from tri_sarira_rpg.systems.progression import StatGains
     from tri_sarira_rpg.systems.quest import QuestDefinition, QuestLogEntry, QuestState
@@ -401,6 +408,38 @@ class EconomySystemProtocol(Protocol):
 
 
 # =============================================================================
+# Dialogue System Protocol
+# =============================================================================
+
+
+@runtime_checkable
+class DialogueSystemProtocol(Protocol):
+    """Protocol voor DialogueSystem interface.
+
+    Definieert de methods die presentation layer nodig heeft voor dialogue rendering
+    en interactie, zonder directe toegang tot interne DialogueSystem state.
+    """
+
+    def start_dialogue(
+        self, dialogue_id: str, context: DialogueContext, start_node_id: str = "n_intro"
+    ) -> DialogueSession | None:
+        """Start een nieuwe dialogue sessie."""
+        ...
+
+    def get_current_view(self, session: DialogueSession) -> DialogueView | None:
+        """Haal de huidige view op voor UI rendering."""
+        ...
+
+    def choose_option(self, session: DialogueSession, choice_id: str) -> ConversationResult:
+        """Verwerk spelerkeuze en advance naar volgende node."""
+        ...
+
+    def auto_advance(self, session: DialogueSession) -> ConversationResult:
+        """Auto-advance naar volgende node (als geen choices)."""
+        ...
+
+
+# =============================================================================
 # Game Protocol
 # =============================================================================
 
@@ -448,5 +487,6 @@ __all__ = [
     "EquipmentSystemProtocol",
     "CombatSystemProtocol",
     "EconomySystemProtocol",
+    "DialogueSystemProtocol",
     "GameProtocol",
 ]
