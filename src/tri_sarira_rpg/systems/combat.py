@@ -5,9 +5,16 @@ from __future__ import annotations
 import logging
 import random
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import TYPE_CHECKING, Any
 
+from .combat_viewmodels import (
+    ActionType,
+    BattleAction as BattleActionView,
+    BattleOutcome,
+    BattleStateView,
+    CombatantView,
+    TurnOrderEntry,
+)
 from .progression import LevelUpResult, ProgressionSystem, TriProfile
 
 if TYPE_CHECKING:
@@ -19,24 +26,6 @@ if TYPE_CHECKING:
     )
 
 logger = logging.getLogger(__name__)
-
-
-class ActionType(Enum):
-    """Soorten acties in combat."""
-
-    ATTACK = "attack"
-    SKILL = "skill"
-    DEFEND = "defend"
-    ITEM = "item"
-
-
-class BattleOutcome(Enum):
-    """Mogelijke uitkomsten van een battle."""
-
-    WIN = "win"
-    LOSE = "lose"
-    ESCAPE = "escape"
-    ONGOING = "ongoing"
 
 
 @dataclass
@@ -739,6 +728,72 @@ class CombatSystem:
     def battle_state(self) -> BattleState | None:
         """Get current battle state."""
         return self._battle_state
+
+    # =========================================================================
+    # ViewModel Methods (voor CombatSystemProtocol)
+    # =========================================================================
+
+    def _combatant_to_view(self, combatant: Combatant) -> CombatantView:
+        """Convert een Combatant naar een CombatantView."""
+        return CombatantView(
+            actor_id=combatant.actor_id,
+            name=combatant.name,
+            level=combatant.level,
+            is_enemy=combatant.is_enemy,
+            is_alive=combatant.is_alive(),
+            is_defending=combatant.is_defending,
+            current_hp=combatant.current_hp,
+            max_hp=combatant.max_hp,
+            current_stamina=combatant.current_stamina,
+            max_stamina=combatant.max_stamina,
+            current_focus=combatant.current_focus,
+            max_focus=combatant.max_focus,
+            current_prana=combatant.current_prana,
+            max_prana=combatant.max_prana,
+            skills=tuple(combatant.skills),
+        )
+
+    def get_battle_state_view(self) -> BattleStateView | None:
+        """Haal huidige battle state view op voor UI rendering.
+
+        Returns een immutable view van de battle state die geschikt is
+        voor de presentation layer.
+        """
+        if not self._battle_state:
+            return None
+
+        # Convert party members to views
+        party_views = tuple(
+            self._combatant_to_view(m) for m in self._battle_state.party
+        )
+
+        # Convert enemies to views
+        enemy_views = tuple(
+            self._combatant_to_view(e) for e in self._battle_state.enemies
+        )
+
+        # Build turn order entries
+        current_actor = self.get_current_actor()
+        current_actor_id = current_actor.actor_id if current_actor else None
+
+        turn_order = tuple(
+            TurnOrderEntry(
+                actor_id=c.actor_id,
+                name=c.name,
+                is_enemy=c.is_enemy,
+                is_current=(c.actor_id == current_actor_id),
+                is_alive=c.is_alive(),
+            )
+            for c in self._battle_state.turn_order
+        )
+
+        return BattleStateView(
+            party=party_views,
+            enemies=enemy_views,
+            turn_order=turn_order,
+            current_actor_id=current_actor_id,
+            outcome=self.check_battle_end(),
+        )
 
 
 __all__ = [
