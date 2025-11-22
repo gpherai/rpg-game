@@ -19,6 +19,7 @@ from tri_sarira_rpg.presentation.theme import (
 )
 from tri_sarira_rpg.presentation.ui.dialogue_box import DialogueBox
 from tri_sarira_rpg.presentation.ui.equipment_menu import EquipmentMenuUI
+from tri_sarira_rpg.presentation.ui.hud import HUD, HUDData, PartyMemberInfo
 from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
 from tri_sarira_rpg.presentation.ui.quest_log import QuestLogUI
 from tri_sarira_rpg.presentation.ui.shop_menu import ShopMenuUI
@@ -141,6 +142,10 @@ class OverworldScene(Scene):
         # Set callback for returning to main menu
         if game_instance:
             self._pause_menu.set_main_menu_callback(game_instance.return_to_main_menu)
+
+        # Initialize HUD (decoupled component that receives data via update_stats)
+        hud_rect = pygame.Rect(0, 0, self._screen_width, self._screen_height)
+        self._hud = HUD(hud_rect)
 
         # Initialize ShopMenuUI (will be created when needed)
         # This gets initialized when opening shop for first time
@@ -536,98 +541,51 @@ class OverworldScene(Scene):
         dx, dy = facing_offset.get(player.facing, (0, 0))
         pygame.draw.circle(surface, Colors.TEXT_WHITE, (center_x + dx, center_y + dy), radius // 3)
 
-    def _render_hud(self, surface: pygame.Surface) -> None:
-        """Render HUD met zone info en tijd."""
-        # Draw semi-transparent background for HUD
-        hud_bg = pygame.Surface((self._screen_width, Sizes.HUD_HEIGHT), pygame.SRCALPHA)
-        hud_bg.fill(Colors.BG_HUD)
-        surface.blit(hud_bg, (0, 0))
+    def _build_hud_data(self) -> HUDData:
+        """Bouw HUDData view model voor de HUD component.
 
-        # Zone name
-        zone_name = self._world.get_zone_name()
-        zone_text = self._font_large.render(zone_name, True, Colors.TEXT_WHITE)
-        surface.blit(zone_text, (Spacing.LG, Spacing.MD))
+        Dit zorgt voor decoupling: OverworldScene verzamelt data uit systems
+        en geeft die door aan de HUD component via een view model.
 
-        # Time display
-        time_display = self._time.get_time_display()
-        time_text = self._font.render(time_display, True, Colors.TEXT_LIGHT)
-        surface.blit(time_text, (Spacing.LG, Spacing.XXXL))
-
-        # === TOP-RIGHT HUD: Party Info ===
-        # Clean layout with clear vertical spacing to prevent overlap
-        HUD_RIGHT_X = self._screen_width - Sizes.HUD_RIGHT_OFFSET
-        HUD_PARTY_START_Y = Spacing.MD
-        PARTY_LINE_HEIGHT = Spacing.LG + 2  # Increased from 20 for better readability
-        HEADER_LINE_HEIGHT = PARTY_LINE_HEIGHT  # Houd spacing consistent met partyregels
-
+        Returns
+        -------
+        HUDData
+            View model met alle data die de HUD nodig heeft
+        """
+        # Build party member info list
         active_party = self._party.get_active_party()
-
-        # Party header
-        party_text = f"Party ({len(active_party)}/{self._party.party_max_size}):"
-        party_label = self._font.render(party_text, True, Colors.TEXT_LIGHT)
-        surface.blit(party_label, (HUD_RIGHT_X, HUD_PARTY_START_Y))
-
-        # Position header direct onder Party
-        position_y = HUD_PARTY_START_Y + HEADER_LINE_HEIGHT
-        player = self._world.player
-        pos_display = (
-            f"Position: ({player.position.x}, {player.position.y})" if player else "Position: -"
-        )
-        pos_text = self._font.render(pos_display, True, Colors.TEXT_LIGHT)
-        surface.blit(pos_text, (HUD_RIGHT_X, position_y))
-
-        # Party members - each on their own line with runtime levels, onder de headers
-        y_offset = position_y + HEADER_LINE_HEIGHT
-        for member in active_party:
-            # Use runtime level from PartyMember (already updated after battles)
-            actor_name = member.actor_id.replace("mc_", "").replace("comp_", "").capitalize()
-            member_text = f"  {actor_name} Lv {member.level}"
-            if member.is_main_character:
-                member_text += " (MC)"
-
-            text = self._font.render(member_text, True, Colors.PARTY_LIGHT)
-            surface.blit(text, (HUD_RIGHT_X, y_offset))
-            y_offset += PARTY_LINE_HEIGHT
-
-        # Controls hint
-        controls_width, controls_height = Sizes.CONTROLS_BOX
-        controls_bg = pygame.Surface((controls_width, controls_height), pygame.SRCALPHA)
-        controls_bg.fill(Colors.BG_HUD)
-        surface.blit(controls_bg, (self._screen_width - controls_width, self._screen_height - controls_height))
-
-        controls_lines = [
-            "Controls:",
-            "Arrows: Move",
-            "Space/E: Interact",
-            "F5: Save  |  F9: Load",
-            "G: Shop (debug, Chandrapur)",
-            "B: Battle (debug)",
+        party_members = [
+            PartyMemberInfo(
+                name=member.actor_id.replace("mc_", "").replace("comp_", "").capitalize(),
+                level=member.level,
+                is_main_character=member.is_main_character,
+            )
+            for member in active_party
         ]
-        for i, line in enumerate(controls_lines):
-            text = self._font.render(line, True, Colors.TEXT_LIGHT)
-            surface.blit(text, (self._screen_width - controls_width + Spacing.SM, self._screen_height - controls_height - Spacing.MD + i * Spacing.LG))
 
-        # Feedback message (save/load notifications)
-        if self._feedback_timer > 0:
-            feedback_text = self._font_large.render(self._feedback_message, True, Colors.HIGHLIGHT)
-            text_rect = feedback_text.get_rect(
-                center=(self._screen_width // 2, self._screen_height // 2 - 100)
-            )
+        # Get player position
+        player = self._world.player
+        player_x = player.position.x if player else 0
+        player_y = player.position.y if player else 0
 
-            # Draw semi-transparent background
-            padding = Spacing.LG
-            bg_rect = pygame.Rect(
-                text_rect.x - padding,
-                text_rect.y - padding,
-                text_rect.width + 2 * padding,
-                text_rect.height + 2 * padding,
-            )
-            bg = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
-            bg.fill(Colors.BG_OVERLAY)
-            surface.blit(bg, bg_rect.topleft)
+        return HUDData(
+            zone_name=self._world.get_zone_name(),
+            time_display=self._time.get_time_display(),
+            party_members=party_members,
+            party_max_size=self._party.party_max_size,
+            player_x=player_x,
+            player_y=player_y,
+            feedback_message=self._feedback_message,
+            feedback_visible=self._feedback_timer > 0,
+            screen_width=self._screen_width,
+            screen_height=self._screen_height,
+        )
 
-            # Draw text
-            surface.blit(feedback_text, text_rect)
+    def _render_hud(self, surface: pygame.Surface) -> None:
+        """Render HUD via de gedecoupelde HUD component."""
+        hud_data = self._build_hud_data()
+        self._hud.update_stats(hud_data)
+        self._hud.draw(surface)
 
     def _quick_save(self) -> None:
         """Quick save to slot 1 (S key)."""
