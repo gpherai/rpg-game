@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "quests.schema.json",
+  "title": "Quests Schema",
+  "description": "Schema for quest definitions",
+  "type": "object",
+  "properties": {
+    "quests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["quest_id", "title", "stages"],
+        "properties": {
+          "quest_id": {
+            "type": "string",
+            "description": "Unique quest identifier"
+          },
+          "title": {
+            "type": "string",
+            "description": "Display title"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quest_type": {
+            "type": "string",
+            "description": "Quest type (MSQ, side, etc.) - optional, M3 feature"
+          },
+          "tri_focus_primary": {
+            "type": "string"
+          },
+          "tri_focus_secondary": {
+            "type": "string"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["stage_id"],
+              "properties": {
+                "stage_id": { "type": "string" },
+                "description": { "type": "string" },
+                "is_final": { "type": "boolean" },
+                "next_stage_id": { "type": "string" }
+              },
+              "additionalProperties": true
+            }
+          },
+          "rewards": {
+            "type": "object",
+            "description": "Quest completion rewards"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": ["quests"],
+  "additionalProperties": true
+}

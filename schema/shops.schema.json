@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "shops.schema.json",
+  "title": "Shops Schema",
+  "description": "Schema for shop definitions",
+  "type": "object",
+  "properties": {
+    "shops": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["shop_id", "name", "inventory_entries"],
+        "properties": {
+          "shop_id": {
+            "type": "string",
+            "description": "Unique shop identifier"
+          },
+          "zone_id": {
+            "type": "string",
+            "description": "Zone where shop is located"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "shop_type": {
+            "type": "string",
+            "description": "Shop type (GENERAL, etc.)"
+          },
+          "inventory_entries": {
+            "type": "array",
+            "description": "Shop inventory",
+            "items": {
+              "type": "object",
+              "required": ["item_id"],
+              "properties": {
+                "item_id": { "type": "string" },
+                "base_price": { "type": "integer" },
+                "stock_type": { "type": "string" },
+                "min_chapter": { "type": "integer" },
+                "max_chapter": { "type": "integer" },
+                "conditions": {
+                  "type": "array",
+                  "items": { "type": "object" }
+                }
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": ["shops"],
+  "additionalProperties": true
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "npc_schedules.schema.json",
+  "title": "NPC Schedules Schema",
+  "description": "Schema for NPC schedule definitions",
+  "type": "object",
+  "properties": {
+    "npc_schedules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["npc_id", "rules"],
+        "properties": {
+          "npc_id": {
+            "type": "string",
+            "description": "NPC identifier"
+          },
+          "rules": {
+            "type": "array",
+            "description": "Schedule rules",
+            "items": {
+              "type": "object",
+              "properties": {
+                "day_type": { "type": "string" },
+                "season_index": { "type": "integer" },
+                "festival_id": { "type": ["string", "null"] },
+                "time_band": {
+                  "type": "string",
+                  "enum": ["dawn", "day", "dusk", "night"],
+                  "description": "Time of day"
+                },
+                "zone_id": { "type": "string" },
+                "tile_x": { "type": "integer" },
+                "tile_y": { "type": "integer" },
+                "facing": { "type": "string" },
+                "behavior_id": { "type": "string" }
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": ["npc_schedules"],
+  "additionalProperties": true
+}
