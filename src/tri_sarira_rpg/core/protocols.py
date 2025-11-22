@@ -10,6 +10,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
+    from tri_sarira_rpg.systems.combat_viewmodels import (
+        BattleAction,
+        BattleOutcome,
+        BattleStateView,
+        CombatantView,
+    )
     from tri_sarira_rpg.systems.equipment import EquipResult
     from tri_sarira_rpg.systems.progression import StatGains
     from tri_sarira_rpg.systems.quest import QuestDefinition, QuestLogEntry, QuestState
@@ -343,6 +349,44 @@ class EquipmentSystemProtocol(Protocol):
 
 
 # =============================================================================
+# Combat System Protocol
+# =============================================================================
+
+
+@runtime_checkable
+class CombatSystemProtocol(Protocol):
+    """Protocol voor CombatSystem interface.
+
+    Definieert de methods die presentation layer nodig heeft voor battle rendering
+    en interactie, zonder directe toegang tot interne CombatSystem state.
+    """
+
+    def start_battle(self, enemy_ids: list[str]) -> BattleStateView:
+        """Start een battle met de gegeven enemies."""
+        ...
+
+    def get_battle_state_view(self) -> BattleStateView | None:
+        """Haal huidige battle state view op voor UI rendering."""
+        ...
+
+    def get_current_actor(self) -> CombatantView | None:
+        """Haal de huidige actor op (wiens beurt het is)."""
+        ...
+
+    def execute_action(self, action: BattleAction) -> list[str]:
+        """Voer een actie uit en retourneer feedback messages."""
+        ...
+
+    def advance_turn(self) -> None:
+        """Ga naar de volgende beurt."""
+        ...
+
+    def check_battle_end(self) -> BattleOutcome:
+        """Check of de battle is afgelopen."""
+        ...
+
+
+# =============================================================================
 # Economy System Protocol (placeholder)
 # =============================================================================
 
@@ -402,6 +446,7 @@ __all__ = [
     "QuestSystemProtocol",
     "ShopSystemProtocol",
     "EquipmentSystemProtocol",
+    "CombatSystemProtocol",
     "EconomySystemProtocol",
     "GameProtocol",
 ]
