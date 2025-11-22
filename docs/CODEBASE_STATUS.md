@@ -136,18 +136,18 @@ tri-sarira-rpg/
 
 | File | Entities | Status | Description |
 |------|----------|--------|-------------|
-| **actors.json** | 2 | ✅ COMPLETE | Adhira, Rajani (with tri_profile) |
+| **actors.json** | 2 | ✅ COMPLETE | Adhira, Rajani (with growth_weights) |
 | **enemies.json** | 2 | ✅ COMPLETE | Forest Sprout, Shrine Guardian |
 | **zones.json** | 3 | ✅ COMPLETE | Chandrapur Town, Forest Route, Shrine Clearing |
 | **skills.json** | 8 | ✅ COMPLETE | Body Strike, Mind Mark, Spirit Spark, etc. |
 | **items.json** | 6 | ✅ COMPLETE | Small Herb, Medium Herb, Stamina Tonic, etc. |
 | **npc_meta.json** | 2 | ✅ COMPLETE | Adhira (MC), Rajani (companion) |
-| dialogue.json | 0 | 🔧 STUB | Dialogue trees (future) |
-| quests.json | 0 | 🔧 STUB | Quest definitions (future) |
+| **dialogue.json** | 2 | ✅ COMPLETE | Debug dialogue, Elder shrine intro |
+| **quests.json** | 3 | ✅ COMPLETE | Shrine intro, test quest, silent shrine |
 | events.json | 0 | 🔧 STUB | World events (future) |
-| shops.json | 0 | 🔧 STUB | Shop inventories (future) |
+| **shops.json** | 1 | ✅ COMPLETE | Chandrapur General Store |
 | loot_tables.json | 0 | 🔧 STUB | Loot tables (future) |
-| npc_schedules.json | 0 | 🔧 STUB | NPC schedules (future) |
+| **npc_schedules.json** | 2 | ✅ COMPLETE | Elder, Rajani schedules |
 | chests.json | 0 | 🔧 STUB | Treasure chests (future) |
 
 **Total Data Entities:**
@@ -160,14 +160,14 @@ tri-sarira-rpg/
 
 ### 2.2 Data Schema Highlights
 
-**Actors (with Tri-profile):**
+**Actors (with growth_weights):**
 ```json
 {
   "id": "mc_adhira",
   "name": "Adhira",
   "level": 1,
   "base_stats": { "STR": 8, "END": 7, ... },
-  "tri_profile": {
+  "growth_weights": {
     "phys_weight": 0.5,
     "ment_weight": 0.2,
     "spir_weight": 0.3
@@ -402,7 +402,7 @@ party.move_to_reserve("npc_comp_rajani")      # Move back to reserve
 - Systems implement their Protocol from `core/protocols.py`
 
 **Dataclass Pattern**
-- Immutable data objects (StatGains, TriProfile, LevelUpResult)
+- Immutable data objects (StatGains, GrowthWeights, LevelUpResult)
 - Type hints everywhere
 - Clean data passing
 
@@ -563,9 +563,11 @@ Zie de originele specs voor volledige design:
 
 **Known Issues:**
 - ⚠️ Time bands in code wijken af van spec (5-7 vs 5-8 voor DAWN)
-- ⚠️ Schema bestanden zijn placeholder (0 bytes)
 
 **None blocking gameplay.**
+
+**Resolved:**
+- ✅ Schema files now contain minimal validation (actors, enemies, skills, items, zones, quests, dialogue, npc_schedules, shops)
 
 ---
 
