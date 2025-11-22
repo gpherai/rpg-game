@@ -193,8 +193,9 @@ All gameplay content is defined in JSON files under `data/`:
 | `shops.json` | Shop inventories and prices |
 | `zones.json` | Zone metadata (encounter rates, type) |
 | `npc_meta.json` | NPC metadata (tiers, phases) |
-| `loot_tables.json` | Loot drop definitions |
-| `chests.json` | Treasure chest contents |
+| `npc_schedules.json` | NPC location schedules per time band |
+| `loot_tables.json` | Loot drop definitions *(stub)* |
+| `chests.json` | Treasure chest contents *(stub)* |
 
 Maps are created in **Tiled** (`.tmx` format) under `maps/`. See `docs/architecture/4.3 Tiled Conventions & Map Metadata Spec - Tri-Sarira RPG.md` for mapping conventions.
 
