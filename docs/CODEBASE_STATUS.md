@@ -1,8 +1,8 @@
 # Tri-Śarīra RPG — Complete Codebase Status
 
-**Date:** 2025-11-16
-**Branch:** `claude/f6-combat-v0-01L7zbTT5gLxNKbsnXfKvHJN`
-**Version:** v0.6 (Combat + Progression)
+**Date:** 2025-11-22
+**Branch:** `main`
+**Version:** v0.9+ (Full v0 Systems)
 **Status:** ✅ **PRODUCTION READY (v0 scope)**
 
 ---
@@ -11,18 +11,23 @@
 
 Tri-Śarīra RPG is een traditionele 2D RPG met een uniek **Tri-Śarīra** stats systeem (Body/Mind/Spirit). De game bevat momenteel:
 
-- ✅ **World & Overworld** - 3 zones (town, route, dungeon), 2D tile-based movement
+- ✅ **World & Overworld** - 5 zones (town, route, dungeon), 2D tile-based movement
 - ✅ **NPC & Party System** - Recruitment, party management (MC + 1 companion)
 - ✅ **Combat v0** - Turn-based tactical battles met skills, items, defend
 - ✅ **Progression v0** - XP curves, level-ups (Lv 1-10), Tri-profiel stat growth
-- ✅ **Inventory System** - Item management (herbs, tonics)
-- ✅ **Data Layer** - JSON-based data (actors, enemies, zones, skills, items)
+- ✅ **Dialogue System v0** - Branching dialogue met conditions en effects
+- ✅ **Quest System v0** - Multi-stage quests, rewards, quest log UI
+- ✅ **Shop System v0** - Buy items, currency management
+- ✅ **Equipment System v0** - 3 gear slots, stat bonuses
+- ✅ **Save/Load System** - Persist game state, multiple slots
+- ✅ **Inventory System** - Item management (consumables, gear)
+- ✅ **Data Layer** - JSON-based data (actors, enemies, zones, skills, items, quests, dialogue, shops)
 
 **Project Metrics:**
-- **48 Python modules** (~4,150 lines of code)
-- **13 JSON data files** (actors, enemies, zones, skills, items, etc.)
-- **32 Markdown docs** (architecture specs, reviews, guides)
-- **Test coverage:** Data validation ✅, Import checks ✅, Manual testing ✅
+- **62+ Python modules** (~4,500+ lines of code)
+- **13 JSON data files** (actors, enemies, zones, skills, items, quests, dialogue, shops, etc.)
+- **32+ Markdown docs** (architecture specs, reviews, guides)
+- **Test coverage:** 12 test files, 100+ unit tests ✅
 
 ---
 
@@ -50,31 +55,43 @@ tri-sarira-rpg/
 
 | System | LOC | Status | Description |
 |--------|-----|--------|-------------|
-| **combat.py** | 709 | ✅ DONE | Turn-based battles, skills, items, XP rewards |
-| **progression.py** | 337 | ✅ DONE | XP curves, level-ups, Tri-profiel stat growth |
-| **party.py** | 329 | ✅ DONE | Party management, recruitment, level/xp persistence |
-| **world.py** | 321 | ✅ DONE | Zone management, NPCs, encounters |
-| **inventory.py** | 107 | ✅ DONE | Item management (add, use, iterate) |
-| **time.py** | 104 | ✅ DONE | Calendar system, time of day |
-| dialogue.py | 21 | 🔧 STUB | Dialogue system (future) |
-| economy.py | 23 | 🔧 STUB | Money, shops (future) |
-| quests.py | 21 | 🔧 STUB | Quest tracking (future) |
-| items.py | 24 | 🔧 STUB | Item effects (future) |
-| save.py | 19 | 🔧 STUB | Save/load (future) |
-| state.py | 23 | 🔧 STUB | Game state management (future) |
+| **combat.py** | ~700 | ✅ DONE | Turn-based battles, skills, items, XP rewards |
+| **combat_viewmodels.py** | ~100 | ✅ DONE | Immutable viewmodels voor UI |
+| **progression.py** | ~340 | ✅ DONE | XP curves, level-ups, Tri-profiel stat growth |
+| **party.py** | ~330 | ✅ DONE | Party management, recruitment, level/xp persistence |
+| **world.py** | ~320 | ✅ DONE | Zone management, NPCs, portals, triggers |
+| **dialogue.py** | ~600 | ✅ DONE | Dialogue trees, conditions, effects |
+| **dialogue_viewmodels.py** | ~100 | ✅ DONE | Immutable viewmodels voor dialogue UI |
+| **quest.py** | ~550 | ✅ DONE | Multi-stage quests, rewards, quest log |
+| **shop.py** | ~330 | ✅ DONE | Buy items, currency management |
+| **equipment.py** | ~340 | ✅ DONE | Gear slots (weapon, body, accessory), stat bonuses |
+| **inventory.py** | ~110 | ✅ DONE | Item management (add, use, iterate) |
+| **save.py** | ~250 | ✅ DONE | Save/load, file persistence |
+| **time.py** | ~100 | ✅ DONE | Calendar system, time of day, time bands |
+| **state.py** | ~60 | ✅ DONE | GameStateFlags, story flags |
+| economy.py | ~40 | 🔧 STUB | Currency management (in ShopSystem) |
+| items.py | ~40 | 🔧 STUB | Item effects (future) |
 
-**Total Systems Code:** ~2,038 lines
+**Total Systems Code:** ~4,000+ lines
 
 ### 1.3 Presentation Layer (src/tri_sarira_rpg/presentation/)
 
-| Scene | LOC | Status | Description |
-|-------|-----|--------|-------------|
-| **battle.py** | 707 | ✅ DONE | Battle UI, menus, victory screen |
-| **overworld.py** | 446 | ✅ DONE | Overworld exploration, movement, debug menu |
-| main_menu.py | 34 | 🔧 STUB | Main menu (future) |
-| pause_menu.py | 0 | 🔧 STUB | Pause menu (future) |
+| Module | LOC | Status | Description |
+|--------|-----|--------|-------------|
+| **battle.py** | ~700 | ✅ DONE | Battle UI, menus, victory screen |
+| **overworld.py** | ~600 | ✅ DONE | Overworld exploration, overlays (HUD, dialogue, quests, shop, pause) |
+| **main_menu.py** | ~100 | ✅ DONE | Main menu (new game, load, quit) |
+| **theme.py** | ~380 | ✅ DONE | UI theming (Colors, Fonts, ThemeProvider) |
+| **ui/widgets.py** | ~80 | ✅ DONE | Base Widget, Container classes |
+| **ui/menus.py** | ~100 | ✅ DONE | Menu component for list selection |
+| **ui/dialogue_box.py** | ~150 | ✅ DONE | Dialogue rendering |
+| **ui/hud.py** | ~100 | ✅ DONE | Heads-up display |
+| **ui/quest_log.py** | ~100 | ✅ DONE | Quest log UI |
+| **ui/shop_menu.py** | ~200 | ✅ DONE | Shop interface |
+| **ui/equipment_menu.py** | ~200 | ✅ DONE | Equipment/gear UI |
+| **ui/pause_menu.py** | ~100 | ✅ DONE | Pause menu overlay |
 
-**Total Presentation Code:** ~1,187 lines
+**Total Presentation Code:** ~2,800+ lines
 
 ### 1.4 Data Access Layer (src/tri_sarira_rpg/data_access/)
 
@@ -91,12 +108,25 @@ tri-sarira-rpg/
 
 | Module | LOC | Status | Description |
 |--------|-----|--------|-------------|
-| **scene.py** | 92 | ✅ DONE | Base Scene class, SceneManager |
-| resources.py | 27 | ✅ DONE | Resource paths |
-| timing.py | 23 | ✅ DONE | Delta time tracking |
-| logging_setup.py | 17 | ✅ DONE | Logging configuration |
+| **protocols.py** | ~455 | ✅ DONE | Protocol-based interfaces voor alle systems (DI) |
+| **scene.py** | ~240 | ✅ DONE | SceneManagerProtocol, SceneStackManager, Scene base class |
+| config.py | ~50 | ✅ DONE | Config loading (TOML) |
+| entities.py | ~50 | ✅ DONE | Base dataclasses (Entity, Position) |
+| events.py | ~50 | ✅ DONE | Event definitions |
+| game_state.py | ~50 | ✅ DONE | Global game state container |
+| resources.py | ~30 | ✅ DONE | Resource paths |
+| timing.py | ~25 | ✅ DONE | Delta time tracking |
+| logging_setup.py | ~20 | ✅ DONE | Logging configuration |
 
-**Total Core Code:** ~159 lines
+**Total Core Code:** ~970 lines
+
+### 1.6 Services Layer (src/tri_sarira_rpg/services/)
+
+| Module | LOC | Status | Description |
+|--------|-----|--------|-------------|
+| **game_data.py** | ~240 | ✅ DONE | GameDataService facade met typed view models |
+
+**Total Services Code:** ~240 lines
 
 ---
 
@@ -334,20 +364,42 @@ party.move_to_reserve("npc_comp_rajani")      # Move back to reserve
 
 ### 4.1 Design Patterns
 
+**Protocol-based Dependency Injection** (core/protocols.py)
+- All systems define Protocol interfaces (`CombatSystemProtocol`, `DialogueSystemProtocol`, etc.)
+- Loose coupling: systems depend on protocols, not concrete implementations
+- `@runtime_checkable` for isinstance checks
+- `GameProtocol` for scene ↔ game communication
+
+**ViewModel Pattern** (systems/*_viewmodels.py)
+- Systems provide immutable viewmodels to UI
+- `BattleStateView`, `CombatantView`, `DialogueView`, `ChoiceView`
+- UI renders based on snapshots, no direct state mutation
+- `frozen=True` dataclasses for immutability
+
+**Scene Stack Pattern** (core/scene.py)
+- `SceneManagerProtocol` interface with `push_scene`, `pop_scene`, `switch_scene`, `clear_and_set`
+- `SceneStackManager` concrete implementation using `deque[Scene]`
+- Supports overlay scenes (pause menu over gameplay)
+
+**Service Facade Pattern** (services/game_data.py)
+- `GameDataService` provides UI-friendly typed view models
+- Abstracts raw dicts from DataRepository
+- `ItemDisplayInfo`, `SkillDisplayInfo`, `EnemyDisplayInfo`
+
+**Theme Provider Pattern** (presentation/theme.py)
+- `ThemeProviderProtocol` for UI theming injection
+- `UITheme`, `MenuColors`, `DialogueColors` frozen dataclasses
+- `FontCache` for cached font loading
+
 **Repository Pattern** (data_access/repository.py)
 - Single source for all data loading
 - Abstracts JSON file access
-- Methods: `get_actor()`, `get_enemy()`, `get_zone()`, `get_skill()`, `get_item()`
-
-**Scene Pattern** (core/scene.py)
-- Base class for all screens (Battle, Overworld, Menu)
-- Lifecycle: `update()`, `render()`, `handle_event()`
-- SceneManager for transitions
+- Methods: `get_actor()`, `get_enemy()`, `get_zone()`, `get_skill()`, `get_item()`, `get_quest()`, etc.
 
 **System Pattern** (systems/)
-- Separation of concerns (Combat, Party, World, Progression)
+- Separation of concerns (Combat, Party, World, Dialogue, Quest, Shop, Equipment, etc.)
 - Systems hold state and logic
-- Systems interact via public APIs
+- Systems implement their Protocol from `core/protocols.py`
 
 **Dataclass Pattern**
 - Immutable data objects (StatGains, TriProfile, LevelUpResult)
@@ -475,46 +527,43 @@ party.move_to_reserve("npc_comp_rajani")      # Move back to reserve
 
 ## 7. Known Limitations (v0 Scope)
 
-### 7.1 Intentional Simplifications
+### 7.1 v0 Simplifications vs Full Design Specs
 
-1. **No Save/Load System**
-   - Progress lost on exit
-   - Future: JSON save files
+De huidige code implementeert een **v0 vertical slice** van de volledige game specs. De originele design specs (docs/architecture/3.x, 2.x) beschrijven de beoogde eindsituatie en blijven leidend.
 
-2. **No Dialogue System**
-   - NPCs are placeholders
-   - Future: Dialogue trees, choices
+**Geïmplementeerd in v0 (vereenvoudigd):**
+- ✅ Save/Load System - Werkt, JSON save files
+- ✅ Dialogue System - Branching, 3 condition types, 7 effect types
+- ✅ Quest System - Multi-stage, 4 quest states (NOT_STARTED, ACTIVE, COMPLETED, FAILED)
+- ✅ Shop System - Buy-only, currency management
+- ✅ Equipment System - 3 slots (weapon, body, accessory1)
+- ✅ Party System - 2 members (MC + 1 companion)
 
-3. **No Quest System**
-   - No quest tracking or objectives
-   - Future: Quest log, quest markers
+**Nog niet geïmplementeerd (v0 scope):**
+1. **Multi-enemy Battles** - Combat is 2v1 (party vs 1 enemy)
+2. **Skill Unlocks** - Skills don't unlock on level-up
+3. **Advanced Dialogue Conditions** - Alleen FLAG_SET, FLAG_NOT_SET, COMPANION_IN_PARTY
+4. **Advanced Quest Objectives** - Geen objective tracking (TALK_TO_NPC, REACH_ZONE, etc.)
+5. **Full Party Size** - Spec zegt 4 (MC + 3), v0 heeft 2
+6. **Offhand Slot** - Spec heeft 5 slots, v0 heeft 3
+7. **Encounter System** - Random encounters niet actief
+8. **NPC Schedules** - Data exists, niet geïntegreerd
 
-4. **No Shops**
-   - Can't buy/sell items
-   - Future: Shop UI, economy
+### 7.2 Design Spec vs Code Discrepanties
 
-5. **No Multi-enemy Battles**
-   - Combat is 2v1 (party vs 1 enemy)
-   - Future: 2v2, 2v3 battles
+**Belangrijk:** De design specs beschrijven de volledige beoogde scope. Als de code eenvoudiger is, is de code v0/placeholder. De specs worden NIET aangepast naar de vereenvoudigde code.
 
-6. **No Skill Unlocks**
-   - Skills don't unlock on level-up
-   - Future: Skill trees
+Zie de originele specs voor volledige design:
+- Combat formules, stats, DEV/INS/ACC/SPD → `docs/architecture/3.1 Combat & Stats Spec.md`
+- Party phases, Circle of Companions → `docs/architecture/3.3 NPC & Party System Spec.md`
+- 7 quest states, objectives → `docs/architecture/3.4 Quests & Dialogue System Spec.md`
+- Items, gear slots, economy → `docs/architecture/3.6 Items, Gear & Economy Spec.md`
 
-7. **No Stat Variance**
-   - Fixed growth formulas (no randomness)
-   - Future: ±10% variance
-
-8. **No Promotions**
-   - Tier changes not implemented
-   - Future: Trial system
-
-### 7.2 Bugs / Edge Cases
+### 7.3 Minor Issues
 
 **Known Issues:**
-- ⚠️ Time system not integrated in UI
-- ⚠️ No level cap enforcement (spec says Lv 10, code allows beyond)
-- ⚠️ No skill resource validation (can use skill even if not enough resource - UI prevents)
+- ⚠️ Time bands in code wijken af van spec (5-7 vs 5-8 voor DAWN)
+- ⚠️ Schema bestanden zijn placeholder (0 bytes)
 
 **None blocking gameplay.**
 
@@ -539,62 +588,60 @@ f120ec0 Fix pytest warnings: verwijder return statements uit test functies
 
 ## 9. Roadmap (Next Steps)
 
-### 9.1 Priority 1 (Next Sprint)
+### 9.1 ✅ Completed (v0.9)
 
-1. **Save/Load System**
-   - Persist party state (level, xp, stats, inventory)
-   - JSON save files
-   - Auto-save after battles
+1. ~~**Save/Load System**~~ ✅ DONE
+2. ~~**Dialogue System**~~ ✅ DONE
+3. ~~**Quest System v0**~~ ✅ DONE
+4. ~~**Shop System**~~ ✅ DONE
+5. ~~**Equipment System**~~ ✅ DONE
+
+### 9.2 Priority 1 (Next Sprint)
+
+1. **Multi-enemy Battles**
+   - 2v2, 2v3 formations
+   - Enemy AI improvements
+   - Target selection UI
 
 2. **Skill Unlocks**
    - Define skill unlock levels in actors.json
    - Show "New Skill!" on level-up screen
    - Add skill to character's available skills
 
-3. **Dialogue System**
-   - Dialogue trees from `dialogue.json`
-   - NPC interactions in overworld
-   - Text box UI
+3. **Encounter System**
+   - Activate random encounters per zone
+   - Encounter tables from `enemy_groups.json`
+   - Time-band based encounters
 
-4. **Quest System v0**
-   - Simple linear quests
-   - Quest tracking UI
-   - Quest rewards (items, XP, money)
+### 9.3 Priority 2 (Later)
 
-### 9.2 Priority 2 (Later)
+4. **Advanced Dialogue Conditions**
+   - Add quest_state, time_band, stat-based conditions
+   - Add modify_stats, add/remove_companion effects
 
-5. **Shop System**
-   - Buy/sell items
-   - Shop inventories from `shops.json`
-   - Money management
+5. **Advanced Quest Features**
+   - Objective tracking (TALK_TO_NPC, REACH_ZONE, etc.)
+   - Quest branching (next_on_success/fail)
 
-6. **Multi-enemy Battles**
-   - 2v2, 2v3 formations
-   - Enemy AI improvements
-   - AoE skills
-
-7. **Enhanced UI**
+6. **Enhanced UI**
    - Animated transitions
    - Stat bars with animations
-   - Particle effects
 
-8. **Sound & Music**
+7. **Sound & Music**
    - BGM for zones
    - SFX for combat
    - UI sounds
 
-### 9.3 Priority 3 (Polish)
+### 9.4 Priority 3 (Polish)
 
-9. **Advanced Features**
+8. **Advanced Features**
    - NPC schedules (time-based)
-   - Dynamic weather
-   - Day/night cycle visuals
-   - Crafting system
+   - Full party size (4 members)
+   - Offhand slot
 
-10. **Balancing**
-    - Tune XP curve
-    - Balance skill costs
-    - Enemy difficulty scaling
+9. **Content Expansion**
+   - More zones (full R1)
+   - More enemies, quests, dialogue
 
 ---
 
@@ -765,22 +812,27 @@ target-version = "py311"
 
 **Status:** ✅ **PRODUCTION READY (v0 scope)**
 
-Tri-Śarīra RPG v0.6 is een **volledig functioneel**, **speelbaar** prototype met:
+Tri-Śarīra RPG v0.9+ is een **volledig functioneel**, **speelbaar** prototype met:
 
-- ✅ Complete combat system (turn-based, skills, items)
-- ✅ Full progression system (XP, level-ups, stat growth)
-- ✅ Working overworld (3 zones, encounters, movement)
+- ✅ Complete combat system (turn-based, skills, items, defend)
+- ✅ Full progression system (XP, level-ups, Tri-profiel stat growth)
+- ✅ Working overworld (5 zones, portals, NPC interaction)
 - ✅ Party management (recruitment, active/reserve)
-- ✅ Inventory system (items, usage)
-- ✅ Clean architecture (systems, scenes, data layer)
-- ✅ Extensive documentation (32 docs)
+- ✅ Dialogue system (branching, conditions, effects)
+- ✅ Quest system (multi-stage, rewards, quest log)
+- ✅ Shop system (buy items, currency)
+- ✅ Equipment system (3 gear slots, stat bonuses)
+- ✅ Save/Load system (multiple slots, persistence)
+- ✅ **Modern architecture** (Protocol-based DI, ViewModels, Services, ThemeProvider)
+- ✅ Extensive documentation (32+ docs)
+- ✅ Comprehensive test suite (12 test files, 100+ tests)
 
-**Next Major Milestone:** Save/Load system + Dialogue + Quests (v0.7)
+**Next Major Milestone:** Multi-enemy battles, Skill unlocks, Encounter system
 
 **Ready for:** Manual gameplay testing, balance tuning, content expansion
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** 2025-11-16
-**Maintainer:** Claude (Sonnet 4.5)
+**Document Version:** 2.0
+**Last Updated:** 2025-11-22
+**Maintainer:** Development Team
