@@ -10,9 +10,20 @@ import pygame
 from tri_sarira_rpg.core.scene import Scene, SceneManager
 
 if TYPE_CHECKING:
-    from tri_sarira_rpg.core.protocols import GameProtocol
+    from tri_sarira_rpg.core.protocols import (
+        CombatSystemProtocol,
+        DataRepositoryProtocol,
+        EquipmentSystemProtocol,
+        FlagsSystemProtocol,
+        GameProtocol,
+        InventorySystemProtocol,
+        PartySystemProtocol,
+        QuestSystemProtocol,
+        ShopSystemProtocol,
+        TimeSystemProtocol,
+        WorldSystemProtocol,
+    )
 
-from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.presentation.theme import (
     Colors,
     FontSizes,
@@ -28,20 +39,12 @@ from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
 from tri_sarira_rpg.presentation.ui.quest_log import QuestLogUI
 from tri_sarira_rpg.presentation.ui.shop_menu import ShopMenuUI
 from tri_sarira_rpg.services.game_data import GameDataService
-from tri_sarira_rpg.systems.combat import CombatSystem
 from tri_sarira_rpg.systems.dialogue import (
     DialogueContext,
     DialogueSession,
     DialogueSystem,
 )
-from tri_sarira_rpg.systems.equipment import EquipmentSystem
-from tri_sarira_rpg.systems.inventory import InventorySystem
-from tri_sarira_rpg.systems.party import PartySystem
-from tri_sarira_rpg.systems.quest import QuestSystem
-from tri_sarira_rpg.systems.shop import ShopSystem
 from tri_sarira_rpg.systems.state import GameStateFlags
-from tri_sarira_rpg.systems.time import TimeSystem
-from tri_sarira_rpg.systems.world import WorldSystem
 
 logger = logging.getLogger(__name__)
 
@@ -52,16 +55,16 @@ class OverworldScene(Scene):
     def __init__(
         self,
         manager: SceneManager,
-        world_system: WorldSystem,
-        time_system: TimeSystem,
-        party_system: PartySystem,
-        combat_system: CombatSystem,
-        inventory_system: InventorySystem,
-        data_repository: DataRepository,
-        flags_system: GameStateFlags | None = None,
-        quest_system: QuestSystem | None = None,
-        shop_system: ShopSystem | None = None,
-        equipment_system: EquipmentSystem | None = None,
+        world_system: WorldSystemProtocol,
+        time_system: TimeSystemProtocol,
+        party_system: PartySystemProtocol,
+        combat_system: CombatSystemProtocol,
+        inventory_system: InventorySystemProtocol,
+        data_repository: DataRepositoryProtocol,
+        flags_system: FlagsSystemProtocol | None = None,
+        quest_system: QuestSystemProtocol | None = None,
+        shop_system: ShopSystemProtocol | None = None,
+        equipment_system: EquipmentSystemProtocol | None = None,
         game_instance: GameProtocol | None = None,
     ) -> None:
         super().__init__(manager)
