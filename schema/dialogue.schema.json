@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "dialogue.schema.json",
+  "title": "Dialogue Schema",
+  "description": "Schema for dialogue definitions",
+  "type": "object",
+  "properties": {
+    "dialogues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["dialogue_id", "nodes"],
+        "properties": {
+          "dialogue_id": {
+            "type": "string",
+            "description": "Unique dialogue identifier"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Dialogue scope (SCENE, NPC, etc.)"
+          },
+          "owner_id": {
+            "type": "string",
+            "description": "Owner entity identifier"
+          },
+          "nodes": {
+            "type": "array",
+            "description": "Dialogue nodes",
+            "items": {
+              "type": "object",
+              "required": ["node_id"],
+              "properties": {
+                "node_id": { "type": "string" },
+                "speaker_id": { "type": "string" },
+                "lines": {
+                  "type": "array",
+                  "items": { "type": "object" }
+                },
+                "choices": {
+                  "type": "array",
+                  "items": { "type": "object" }
+                },
+                "auto_advance_to": { "type": "string" },
+                "end_conversation": { "type": "boolean" }
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": ["dialogues"],
+  "additionalProperties": true
+}
