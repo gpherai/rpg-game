@@ -9,10 +9,11 @@ import pygame
 
 from tri_sarira_rpg.presentation.theme import (
     Colors,
+    FontCache,
     FontSizes,
+    MenuColors,
     Spacing,
     Timing,
-    FONT_FAMILY,
 )
 
 from .widgets import Widget
@@ -66,23 +67,16 @@ class EquipmentMenuUI(Widget):
         self._feedback_message: str = ""
         self._feedback_timer: float = 0.0
 
-        # Fonts
-        pygame.font.init()
-        self._font_title = pygame.font.SysFont(FONT_FAMILY, FontSizes.TITLE, bold=True)
-        self._font_header = pygame.font.SysFont(FONT_FAMILY, FontSizes.MEDIUM, bold=True)
-        self._font_item = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL)
-        self._font_desc = pygame.font.SysFont(FONT_FAMILY, FontSizes.SMALL)
-        self._font_small = pygame.font.SysFont(FONT_FAMILY, FontSizes.TINY)
+        # Fonts (via cache)
+        self._font_title = FontCache.get(FontSizes.TITLE, bold=True)
+        self._font_header = FontCache.get(FontSizes.MEDIUM, bold=True)
+        self._font_item = FontCache.get(FontSizes.NORMAL)
+        self._font_desc = FontCache.get(FontSizes.SMALL)
+        self._font_small = FontCache.get(FontSizes.TINY)
 
-        # Colors
-        self._bg_color = Colors.BG_OVERLAY
-        self._border_color = Colors.BORDER
-        self._text_color = Colors.TEXT
-        self._highlight_color = Colors.HIGHLIGHT
-        self._title_color = Colors.TITLE
+        # Colors (via MenuColors + equipment-specific)
+        self._colors = MenuColors()
         self._stat_color = Colors.STAT_BONUS
-        self._error_color = Colors.ERROR
-        self._success_color = Colors.SUCCESS
 
         logger.debug(f"EquipmentMenuUI initialized for {actor_id}")
 
@@ -224,15 +218,15 @@ class EquipmentMenuUI(Widget):
         """
         # Background
         bg_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
-        bg_surface.fill(self._bg_color)
+        bg_surface.fill(self._colors.bg)
         surface.blit(bg_surface, self.rect.topleft)
 
         # Border
-        pygame.draw.rect(surface, self._border_color, self.rect, 2)
+        pygame.draw.rect(surface, self._colors.border, self.rect, 2)
 
         # Title
         title = f"Equipment - {self._member.actor_id}"
-        title_surf = self._font_title.render(title, True, self._title_color)
+        title_surf = self._font_title.render(title, True, self._colors.title)
         title_x = self.rect.x + (self.rect.width - title_surf.get_width()) // 2
         surface.blit(title_surf, (title_x, self.rect.y + Spacing.SM))
 
@@ -244,7 +238,7 @@ class EquipmentMenuUI(Widget):
 
         # Feedback message
         if self._feedback_timer > 0:
-            color = self._error_color if "Failed" in self._feedback_message else self._success_color
+            color = self._colors.error if "Failed" in self._feedback_message else self._colors.success
             feedback_surf = self._font_header.render(self._feedback_message, True, color)
             feedback_x = self.rect.x + (self.rect.width - feedback_surf.get_width()) // 2
             surface.blit(feedback_surf, (feedback_x, self.rect.y + self.rect.height - 50))
@@ -253,7 +247,7 @@ class EquipmentMenuUI(Widget):
         controls = "ESC/X: Close | Arrow/WASD: Navigate | Enter/Z: Select"
         if self._mode == "item_select":
             controls = "ESC/X: Back | Arrow/WASD: Navigate | Enter/Z: Equip"
-        controls_surf = self._font_small.render(controls, True, self._text_color)
+        controls_surf = self._font_small.render(controls, True, self._colors.text)
         controls_x = self.rect.x + (self.rect.width - controls_surf.get_width()) // 2
         surface.blit(controls_surf, (controls_x, self.rect.y + self.rect.height - Spacing.XL))
 
@@ -262,7 +256,7 @@ class EquipmentMenuUI(Widget):
         y_offset = self.rect.y + 60
 
         # Slot list
-        header_surf = self._font_header.render("Equipment Slots:", True, self._title_color)
+        header_surf = self._font_header.render("Equipment Slots:", True, self._colors.title)
         surface.blit(header_surf, (self.rect.x + Spacing.LG, y_offset))
         y_offset += Spacing.XXL
 
@@ -288,7 +282,7 @@ class EquipmentMenuUI(Widget):
 
             # Highlight selected
             is_selected = (i == self._selected_slot_index)
-            color = self._highlight_color if is_selected else self._text_color
+            color = self._colors.highlight if is_selected else self._colors.text
 
             # Render slot
             slot_text = f"{slot_name}: {equipped_name}"
@@ -319,18 +313,18 @@ class EquipmentMenuUI(Widget):
             "accessory1": "Accessory",
         }
         header = f"Select {slot_display.get(slot, slot)}:"
-        header_surf = self._font_header.render(header, True, self._title_color)
+        header_surf = self._font_header.render(header, True, self._colors.title)
         surface.blit(header_surf, (self.rect.x + Spacing.LG, y_offset))
         y_offset += Spacing.XXL
 
         # Item list
         if not self._available_items:
-            no_items_surf = self._font_item.render("No items available", True, self._text_color)
+            no_items_surf = self._font_item.render("No items available", True, self._colors.text)
             surface.blit(no_items_surf, (self.rect.x + Spacing.XXXL, y_offset))
         else:
             for i, item_id in enumerate(self._available_items):
                 is_selected = (i == self._selected_item_index)
-                color = self._highlight_color if is_selected else self._text_color
+                color = self._colors.highlight if is_selected else self._colors.text
 
                 # Get item name
                 if item_id == "<UNEQUIP>":
@@ -361,7 +355,7 @@ class EquipmentMenuUI(Widget):
         panel_y = self.rect.y + 60
 
         # Header
-        header_surf = self._font_header.render("Stats:", True, self._title_color)
+        header_surf = self._font_header.render("Stats:", True, self._colors.title)
         surface.blit(header_surf, (panel_x, panel_y))
         panel_y += Spacing.XL
 
@@ -380,7 +374,7 @@ class EquipmentMenuUI(Widget):
                 color = self._stat_color
             else:
                 stat_text = f"{stat_name}: {effective_value}"
-                color = self._text_color
+                color = self._colors.text
 
             stat_surf = self._font_desc.render(stat_text, True, color)
             surface.blit(stat_surf, (panel_x, panel_y))

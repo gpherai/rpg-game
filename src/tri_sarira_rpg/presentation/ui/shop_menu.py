@@ -9,10 +9,11 @@ import pygame
 
 from tri_sarira_rpg.presentation.theme import (
     Colors,
+    FontCache,
     FontSizes,
+    MenuColors,
     Spacing,
     Timing,
-    FONT_FAMILY,
 )
 
 from .widgets import Widget
@@ -72,24 +73,17 @@ class ShopMenuUI(Widget):
         if self._shop_def:
             self._available_items = self._shop.get_available_items(shop_id, chapter_id=chapter_id)
 
-        # Fonts
-        pygame.font.init()
-        self._font_title = pygame.font.SysFont(FONT_FAMILY, FontSizes.TITLE, bold=True)
-        self._font_header = pygame.font.SysFont(FONT_FAMILY, FontSizes.MEDIUM, bold=True)
-        self._font_item = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL)
-        self._font_desc = pygame.font.SysFont(FONT_FAMILY, FontSizes.SMALL)
-        self._font_small = pygame.font.SysFont(FONT_FAMILY, FontSizes.TINY)
+        # Fonts (via cache)
+        self._font_title = FontCache.get(FontSizes.TITLE, bold=True)
+        self._font_header = FontCache.get(FontSizes.MEDIUM, bold=True)
+        self._font_item = FontCache.get(FontSizes.NORMAL)
+        self._font_desc = FontCache.get(FontSizes.SMALL)
+        self._font_small = FontCache.get(FontSizes.TINY)
 
-        # Colors
-        self._bg_color = Colors.BG_OVERLAY
-        self._border_color = Colors.BORDER
-        self._text_color = Colors.TEXT
-        self._highlight_color = Colors.HIGHLIGHT
-        self._title_color = Colors.TITLE
+        # Colors (via MenuColors + shop-specific)
+        self._colors = MenuColors()
         self._currency_color = Colors.CURRENCY
         self._price_color = Colors.PRICE
-        self._error_color = Colors.ERROR
-        self._success_color = Colors.SUCCESS
 
         logger.debug(f"ShopMenuUI initialized for {shop_id}")
 
@@ -142,14 +136,14 @@ class ShopMenuUI(Widget):
         # Create semi-transparent background
         bg_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
         bg_rect = pygame.Rect(0, 0, self.rect.width, self.rect.height)
-        pygame.draw.rect(bg_surface, self._bg_color, bg_rect)
-        pygame.draw.rect(bg_surface, self._border_color, bg_rect, 3)
+        pygame.draw.rect(bg_surface, self._colors.bg, bg_rect)
+        pygame.draw.rect(bg_surface, self._colors.border, bg_rect, 3)
         surface.blit(bg_surface, self.rect.topleft)
 
         # Title (shop name)
         y_offset = self.rect.top + Spacing.LG
         shop_name = self._shop_def.name if self._shop_def else "Shop"
-        title_surf = self._font_title.render(shop_name, True, self._title_color)
+        title_surf = self._font_title.render(shop_name, True, self._colors.title)
         title_x = self.rect.left + (self.rect.width - title_surf.get_width()) // 2
         surface.blit(title_surf, (title_x, y_offset))
         y_offset += Spacing.XXXL + Spacing.XS
@@ -164,7 +158,7 @@ class ShopMenuUI(Widget):
         # Divider line
         pygame.draw.line(
             surface,
-            self._border_color,
+            self._colors.border,
             (self.rect.left + Spacing.LG, y_offset),
             (self.rect.right - Spacing.LG, y_offset),
             2,
@@ -174,7 +168,7 @@ class ShopMenuUI(Widget):
         # Items list (left side) and details (right side)
         if not self._available_items:
             # No items available
-            no_items_surf = self._font_item.render("Geen items beschikbaar", True, self._text_color)
+            no_items_surf = self._font_item.render("Geen items beschikbaar", True, self._colors.text)
             surface.blit(no_items_surf, (self.rect.left + Spacing.XXL, y_offset))
         else:
             # Split into two columns: item list (left) and details (right)
@@ -186,7 +180,7 @@ class ShopMenuUI(Widget):
             items_y = y_offset
             for i, entry in enumerate(self._available_items):
                 is_selected = i == self._selected_index
-                color = self._highlight_color if is_selected else self._text_color
+                color = self._colors.highlight if is_selected else self._colors.text
 
                 # Item name and price
                 item_text = f"{entry.item_id.replace('item_', '').replace('_', ' ').title()}"
@@ -211,7 +205,7 @@ class ShopMenuUI(Widget):
 
             # Item name (header)
             item_name = selected_entry.item_id.replace("item_", "").replace("_", " ").title()
-            name_surf = self._font_header.render(item_name, True, self._highlight_color)
+            name_surf = self._font_header.render(item_name, True, self._colors.highlight)
             surface.blit(name_surf, (details_x, details_y))
             details_y += Spacing.XXL
 
@@ -219,7 +213,7 @@ class ShopMenuUI(Widget):
             item_info = self._data_service.get_item_info(selected_entry.item_id)
             if item_info:
                 # Type
-                type_surf = self._font_desc.render(f"Type: {item_info.item_type}", True, self._text_color)
+                type_surf = self._font_desc.render(f"Type: {item_info.item_type}", True, self._colors.text)
                 surface.blit(type_surf, (details_x, details_y))
                 details_y += Spacing.LG
 
@@ -227,7 +221,7 @@ class ShopMenuUI(Widget):
                 desc = item_info.description or "Geen beschrijving"
                 wrapped_lines = self._wrap_text(desc, details_width)
                 for line in wrapped_lines:
-                    line_surf = self._font_desc.render(line, True, self._text_color)
+                    line_surf = self._font_desc.render(line, True, self._colors.text)
                     surface.blit(line_surf, (details_x, details_y))
                     details_y += Spacing.MEDIUM
 
@@ -235,7 +229,7 @@ class ShopMenuUI(Widget):
 
                 # Current inventory count
                 inv_count = self._inventory.get_quantity(selected_entry.item_id)
-                inv_surf = self._font_desc.render(f"In bezit: {inv_count}", True, self._text_color)
+                inv_surf = self._font_desc.render(f"In bezit: {inv_count}", True, self._colors.text)
                 surface.blit(inv_surf, (details_x, details_y))
                 details_y += Spacing.XL
 
@@ -248,7 +242,7 @@ class ShopMenuUI(Widget):
         if self._feedback_timer > 0:
             feedback_y = self.rect.bottom - 80
             feedback_surf = self._font_item.render(
-                self._feedback_message, True, self._success_color
+                self._feedback_message, True, self._colors.success
             )
             feedback_x = self.rect.left + (self.rect.width - feedback_surf.get_width()) // 2
             surface.blit(feedback_surf, (feedback_x, feedback_y))
@@ -256,7 +250,7 @@ class ShopMenuUI(Widget):
         # Controls hint (bottom)
         controls_y = self.rect.bottom - 50
         controls_text = "↑/↓: Navigeren | Enter/Z: Kopen | Esc/X: Sluiten"
-        controls_surf = self._font_small.render(controls_text, True, self._text_color)
+        controls_surf = self._font_small.render(controls_text, True, self._colors.text)
         controls_x = self.rect.left + (self.rect.width - controls_surf.get_width()) // 2
         surface.blit(controls_surf, (controls_x, controls_y))
 

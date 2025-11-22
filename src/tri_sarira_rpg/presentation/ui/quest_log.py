@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pygame
 
-from tri_sarira_rpg.presentation.theme import Colors, FontSizes, Spacing, FONT_FAMILY
+from tri_sarira_rpg.presentation.theme import Colors, FontCache, FontSizes, MenuColors, Spacing
 
 from .widgets import Widget
 
@@ -17,21 +17,17 @@ class QuestLogUI(Widget):
         self._quest_entries: list[dict] = []  # QuestLogEntry data
         self._selected_index: int = 0
 
-        # Fonts
-        pygame.font.init()
-        self._font_title = pygame.font.SysFont(FONT_FAMILY, FontSizes.LARGE, bold=True)
-        self._font_quest = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL, bold=True)
-        self._font_description = pygame.font.SysFont(FONT_FAMILY, FontSizes.SMALL)
-        self._font_small = pygame.font.SysFont(FONT_FAMILY, FontSizes.TINY)
+        # Fonts (via cache)
+        self._font_title = FontCache.get(FontSizes.LARGE, bold=True)
+        self._font_quest = FontCache.get(FontSizes.NORMAL, bold=True)
+        self._font_description = FontCache.get(FontSizes.SMALL)
+        self._font_small = FontCache.get(FontSizes.TINY)
 
-        # Colors
-        self._bg_color = Colors.BG_OVERLAY
-        self._border_color = Colors.BORDER
-        self._title_color = Colors.HIGHLIGHT
+        # Colors (via MenuColors + quest-specific)
+        self._colors = MenuColors()
         self._quest_active_color = Colors.QUEST_ACTIVE
         self._quest_completed_color = Colors.QUEST_COMPLETED
         self._quest_selected_color = Colors.QUEST_SELECTED
-        self._text_color = Colors.TEXT_WHITE
         self._stage_color = Colors.STAGE
 
     def set_quests(self, quest_entries: list[dict]) -> None:
@@ -76,15 +72,15 @@ class QuestLogUI(Widget):
 
         # Draw background with alpha
         bg_rect = pygame.Rect(0, 0, self.rect.width, self.rect.height)
-        pygame.draw.rect(log_surface, self._bg_color, bg_rect)
-        pygame.draw.rect(log_surface, self._border_color, bg_rect, 3)
+        pygame.draw.rect(log_surface, self._colors.bg, bg_rect)
+        pygame.draw.rect(log_surface, self._colors.border, bg_rect, 3)
 
         # Blit to main surface
         surface.blit(log_surface, self.rect.topleft)
 
         # Draw title
         y_offset = self.rect.top + Spacing.MD
-        title_surf = self._font_title.render("QUEST LOG", True, self._title_color)
+        title_surf = self._font_title.render("QUEST LOG", True, self._colors.highlight)
         title_x = self.rect.left + (self.rect.width - title_surf.get_width()) // 2
         surface.blit(title_surf, (title_x, y_offset))
         y_offset += Spacing.XXXL
@@ -92,7 +88,7 @@ class QuestLogUI(Widget):
         # Draw quests
         if not self._quest_entries:
             # No quests at all
-            no_quests_surf = self._font_description.render("Geen quests", True, self._text_color)
+            no_quests_surf = self._font_description.render("Geen quests", True, self._colors.text)
             surface.blit(no_quests_surf, (self.rect.left + Spacing.LG, y_offset))
         else:
             for i, entry in enumerate(self._quest_entries):
@@ -150,7 +146,7 @@ class QuestLogUI(Widget):
         # Draw help text at bottom
         y_offset = self.rect.bottom - Spacing.XXXL
         help_text = "W/S: Navigate | Q: Close"
-        help_surf = self._font_small.render(help_text, True, self._text_color)
+        help_surf = self._font_small.render(help_text, True, self._colors.text)
         help_x = self.rect.left + (self.rect.width - help_surf.get_width()) // 2
         surface.blit(help_surf, (help_x, y_offset))
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pygame
 
-from tri_sarira_rpg.presentation.theme import Colors, FontSizes, Spacing, FONT_FAMILY
+from tri_sarira_rpg.presentation.theme import DialogueColors, FontCache, FontSizes, Spacing
 
 from .widgets import Widget
 
@@ -19,19 +19,13 @@ class DialogueBox(Widget):
         self._speaker: str = ""
         self._selected_choice_index: int = 0
 
-        # Fonts
-        pygame.font.init()
-        self._font = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL)
-        self._font_speaker = pygame.font.SysFont(FONT_FAMILY, FontSizes.LARGE, bold=True)
-        self._font_small = pygame.font.SysFont(FONT_FAMILY, FontSizes.SMALL)
+        # Fonts (via cache)
+        self._font = FontCache.get(FontSizes.NORMAL)
+        self._font_speaker = FontCache.get(FontSizes.LARGE, bold=True)
+        self._font_small = FontCache.get(FontSizes.SMALL)
 
-        # Colors
-        self._bg_color = Colors.BG_OVERLAY_LIGHT
-        self._border_color = Colors.BORDER
-        self._text_color = Colors.TEXT_WHITE
-        self._speaker_color = Colors.SPEAKER
-        self._choice_color = Colors.CHOICE
-        self._choice_selected_color = Colors.CHOICE_SELECTED
+        # Colors (via DialogueColors scheme)
+        self._colors = DialogueColors()
 
     def set_content(self, speaker: str, lines: list[str], choices: list[tuple[str, str]]) -> None:
         """Update tekst en keuzeopties.
@@ -89,8 +83,8 @@ class DialogueBox(Widget):
 
         # Draw background with alpha
         bg_rect = pygame.Rect(0, 0, self.rect.width, self.rect.height)
-        pygame.draw.rect(box_surface, self._bg_color, bg_rect)
-        pygame.draw.rect(box_surface, self._border_color, bg_rect, 2)
+        pygame.draw.rect(box_surface, self._colors.bg, bg_rect)
+        pygame.draw.rect(box_surface, self._colors.border, bg_rect, 2)
 
         # Blit to main surface
         surface.blit(box_surface, self.rect.topleft)
@@ -98,13 +92,13 @@ class DialogueBox(Widget):
         # Draw speaker name
         y_offset = self.rect.top + Spacing.SM
         if self._speaker:
-            speaker_surf = self._font_speaker.render(self._speaker, True, self._speaker_color)
+            speaker_surf = self._font_speaker.render(self._speaker, True, self._colors.speaker)
             surface.blit(speaker_surf, (self.rect.left + Spacing.MD, y_offset))
             y_offset += Spacing.XXL
 
         # Draw dialogue lines
         for line in self._lines:
-            line_surf = self._font.render(line, True, self._text_color)
+            line_surf = self._font.render(line, True, self._colors.text)
             surface.blit(line_surf, (self.rect.left + Spacing.MD, y_offset))
             y_offset += Spacing.XL
 
@@ -116,9 +110,9 @@ class DialogueBox(Widget):
         for i, (choice_id, text) in enumerate(self._choices):
             # Highlight selected choice
             color = (
-                self._choice_selected_color
+                self._colors.choice_selected
                 if i == self._selected_choice_index
-                else self._choice_color
+                else self._colors.choice
             )
 
             # Draw choice number and text
