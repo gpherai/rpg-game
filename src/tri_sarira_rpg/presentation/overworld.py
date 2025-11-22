@@ -756,11 +756,8 @@ class OverworldScene(Scene):
             self._dialogue_session = None
             return
 
-        # Convert ChoiceView list to (choice_id, text) tuples
-        choices = [(c.choice_id, c.text) for c in view.choices]
-
-        # Update dialogue box
-        self._dialogue_box.set_content(view.speaker_id, view.lines, choices)
+        # Update dialogue box with viewmodel directly
+        self._dialogue_box.set_view(view)
 
     def _refresh_quest_log(self) -> None:
         """Refresh quest log UI with current quest data."""

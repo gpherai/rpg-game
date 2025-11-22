@@ -2,21 +2,27 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pygame
 
 from tri_sarira_rpg.presentation.theme import DialogueColors, FontCache, FontSizes, Spacing
 
 from .widgets import Widget
 
+if TYPE_CHECKING:
+    from tri_sarira_rpg.systems.dialogue_viewmodels import DialogueView
+
 
 class DialogueBox(Widget):
-    """Toont dialooglijnen en keuzes."""
+    """Toont dialooglijnen en keuzes.
+
+    Werkt uitsluitend met DialogueView viewmodels - geen raw dicts of JSON.
+    """
 
     def __init__(self, rect: pygame.Rect) -> None:
         super().__init__(rect)
-        self._lines: list[str] = []
-        self._choices: list[tuple[str, str]] = []  # (choice_id, text)
-        self._speaker: str = ""
+        self._view: DialogueView | None = None
         self._selected_choice_index: int = 0
 
         # Fonts (via cache)
@@ -27,21 +33,15 @@ class DialogueBox(Widget):
         # Colors (via DialogueColors scheme)
         self._colors = DialogueColors()
 
-    def set_content(self, speaker: str, lines: list[str], choices: list[tuple[str, str]]) -> None:
-        """Update tekst en keuzeopties.
+    def set_view(self, view: DialogueView) -> None:
+        """Update met een nieuw DialogueView viewmodel.
 
         Parameters
         ----------
-        speaker : str
-            Speaker ID (will be displayed as name)
-        lines : list[str]
-            List of text lines to display
-        choices : list[tuple[str, str]]
-            List of (choice_id, text) tuples
+        view : DialogueView
+            Het viewmodel met speaker, tekst en keuzes
         """
-        self._speaker = speaker
-        self._lines = lines
-        self._choices = choices
+        self._view = view
         self._selected_choice_index = 0  # Reset selection
 
     def handle_event(self, event: pygame.event.Event) -> str | None:
@@ -57,27 +57,28 @@ class DialogueBox(Widget):
         str | None
             choice_id if a choice was confirmed, None otherwise
         """
-        if event.type != pygame.KEYDOWN:
+        if event.type != pygame.KEYDOWN or not self._view:
             return None
+
+        choices = self._view.choices
 
         # Navigation
         if event.key in (pygame.K_UP, pygame.K_w):
-            if self._choices:
-                self._selected_choice_index = (self._selected_choice_index - 1) % len(self._choices)
+            if choices:
+                self._selected_choice_index = (self._selected_choice_index - 1) % len(choices)
         elif event.key in (pygame.K_DOWN, pygame.K_s):
-            if self._choices:
-                self._selected_choice_index = (self._selected_choice_index + 1) % len(self._choices)
+            if choices:
+                self._selected_choice_index = (self._selected_choice_index + 1) % len(choices)
 
         # Confirmation
         elif event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_z):
-            if self._choices:
-                choice_id, _ = self._choices[self._selected_choice_index]
-                return choice_id
+            if choices:
+                return choices[self._selected_choice_index].choice_id
 
         return None
 
     def draw(self, surface: pygame.Surface) -> None:
-        """Render dialoogtekst en keuzes."""
+        """Render dialoogtekst en keuzes vanuit het viewmodel."""
         # Create a surface with per-pixel alpha for transparency
         box_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
 
@@ -89,25 +90,30 @@ class DialogueBox(Widget):
         # Blit to main surface
         surface.blit(box_surface, self.rect.topleft)
 
+        # Early return if no view set
+        if not self._view:
+            return
+
         # Draw speaker name
         y_offset = self.rect.top + Spacing.SM
-        if self._speaker:
-            speaker_surf = self._font_speaker.render(self._speaker, True, self._colors.speaker)
+        if self._view.speaker_id:
+            speaker_surf = self._font_speaker.render(self._view.speaker_id, True, self._colors.speaker)
             surface.blit(speaker_surf, (self.rect.left + Spacing.MD, y_offset))
             y_offset += Spacing.XXL
 
         # Draw dialogue lines
-        for line in self._lines:
+        for line in self._view.lines:
             line_surf = self._font.render(line, True, self._colors.text)
             surface.blit(line_surf, (self.rect.left + Spacing.MD, y_offset))
             y_offset += Spacing.XL
 
         # Add spacing before choices
-        if self._choices:
+        choices = self._view.choices
+        if choices:
             y_offset += Spacing.MD
 
-        # Draw choices
-        for i, (choice_id, text) in enumerate(self._choices):
+        # Draw choices from ChoiceView viewmodels
+        for i, choice in enumerate(choices):
             # Highlight selected choice
             color = (
                 self._colors.choice_selected
@@ -116,7 +122,7 @@ class DialogueBox(Widget):
             )
 
             # Draw choice number and text
-            choice_text = f"{i + 1}. {text}"
+            choice_text = f"{i + 1}. {choice.text}"
             choice_surf = self._font.render(choice_text, True, color)
             surface.blit(choice_surf, (self.rect.left + Spacing.XXL, y_offset))
             y_offset += Spacing.XL
