@@ -3,20 +3,9 @@
 from __future__ import annotations
 
 import logging
-import sys
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-
-# Python 3.11+ heeft tomllib in stdlib
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    try:
-        import tomli as tomllib  # type: ignore
-    except ImportError:
-        raise ImportError(
-            "tomllib not available. Install tomli for Python <3.11: pip install tomli"
-        )
 
 logger = logging.getLogger(__name__)
 
