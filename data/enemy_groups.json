@@ -11,7 +11,7 @@
       "tags": ["shrine", "spirit", "common"],
       "encounter_weight": 30,
       "min_level": 4,
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 2,
         "mind": 5,
         "spirit": 8
@@ -29,7 +29,7 @@
       "tags": ["shrine", "mixed", "common"],
       "encounter_weight": 25,
       "min_level": 5,
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 4,
         "mind": 4,
         "spirit": 7
@@ -46,7 +46,7 @@
       "tags": ["shrine", "mind", "illusion"],
       "encounter_weight": 20,
       "min_level": 4,
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 3,
         "mind": 7,
         "spirit": 6
@@ -63,7 +63,7 @@
       "tags": ["shrine", "body", "physical"],
       "encounter_weight": 15,
       "min_level": 5,
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 7,
         "mind": 3,
         "spirit": 5
@@ -81,7 +81,7 @@
       "tags": ["shrine", "elite", "mixed", "rare"],
       "encounter_weight": 10,
       "min_level": 5,
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 5,
         "mind": 6,
         "spirit": 7
@@ -97,7 +97,7 @@
       "tags": ["shrine", "boss", "story", "unique"],
       "encounter_weight": 0,
       "min_level": 6,
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 7,
         "mind": 5,
         "spirit": 9
@@ -115,7 +115,7 @@
       "tags": ["shrine", "boss", "story", "adds"],
       "encounter_weight": 0,
       "min_level": 6,
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 6,
         "mind": 5,
         "spirit": 9

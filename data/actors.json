@@ -16,7 +16,7 @@
         "PRA": 8,
         "RES": 6
       },
-      "tri_profile": {
+      "growth_weights": {
         "phys_weight": 0.5,
         "ment_weight": 0.2,
         "spir_weight": 0.3
@@ -34,7 +34,7 @@
         "sk_spirit_spark"
       ],
       "archetype": "seeker",
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 4,
         "mind": 6,
         "spirit": 7
@@ -60,7 +60,7 @@
         "PRA": 7,
         "RES": 6
       },
-      "tri_profile": {
+      "growth_weights": {
         "phys_weight": 0.2,
         "ment_weight": 0.5,
         "spir_weight": 0.3
@@ -77,7 +77,7 @@
         "sk_body_quick_step"
       ],
       "archetype": "guide",
-      "tri_sharira_profile": {
+      "tri_affinity": {
         "body": 3,
         "mind": 8,
         "spirit": 8

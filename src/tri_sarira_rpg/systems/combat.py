@@ -16,7 +16,7 @@ from .combat_viewmodels import (
     CombatantView,
     TurnOrderEntry,
 )
-from .progression import LevelUpResult, ProgressionSystem, TriProfile
+from .progression import LevelUpResult, ProgressionSystem, GrowthWeights
 
 logger = logging.getLogger(__name__)
 
@@ -677,21 +677,21 @@ class CombatSystem:
                 if not party_member.is_alive():
                     continue
 
-                # Get actor data for tri_profile
+                # Get actor data for growth_weights
                 actor_data = self._data_repository.get_actor(party_member.actor_id)
                 if not actor_data:
                     logger.warning(f"No actor data for {party_member.actor_id}, skipping level-up")
                     continue
 
-                tri_profile_data = actor_data.get("tri_profile")
-                if not tri_profile_data:
-                    logger.warning(f"No tri_profile for {party_member.actor_id}, skipping level-up")
+                growth_weights_data = actor_data.get("growth_weights")
+                if not growth_weights_data:
+                    logger.warning(f"No growth_weights for {party_member.actor_id}, skipping level-up")
                     continue
 
-                tri_profile = TriProfile(
-                    phys_weight=tri_profile_data.get("phys_weight", 0.33),
-                    ment_weight=tri_profile_data.get("ment_weight", 0.33),
-                    spir_weight=tri_profile_data.get("spir_weight", 0.34),
+                growth_weights = GrowthWeights(
+                    phys_weight=growth_weights_data.get("phys_weight", 0.33),
+                    ment_weight=growth_weights_data.get("ment_weight", 0.33),
+                    spir_weight=growth_weights_data.get("spir_weight", 0.34),
                 )
 
                 # Get current XP from PartySystem
@@ -724,7 +724,7 @@ class CombatSystem:
                     current_level=current_level,
                     current_xp=current_xp,
                     earned_xp=total_xp,
-                    tri_profile=tri_profile,
+                    growth_weights=growth_weights,
                     base_stats=base_stats,
                 )
 
