@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "zones.schema.json",
+  "title": "Zones Schema",
+  "description": "Schema for world zones",
+  "type": "object",
+  "properties": {
+    "zones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "type"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique zone identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["town", "route", "dungeon"],
+            "description": "Zone type"
+          },
+          "description": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "recommended_level": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "level_range": {
+            "type": "object",
+            "properties": {
+              "min": { "type": "integer" },
+              "max": { "type": "integer" }
+            }
+          },
+          "map_id": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "connected_zones": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "tri_sharira_bias": {
+            "type": "object",
+            "description": "Zone's spiritual character"
+          },
+          "tri_affinity": {
+            "type": "object",
+            "description": "Thematic Body/Mind/Spirit scores"
+          },
+          "sanctity": {
+            "type": "integer"
+          },
+          "danger_tier": {
+            "type": "integer"
+          },
+          "ambient_tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": ["zones"],
+  "additionalProperties": true
+}
