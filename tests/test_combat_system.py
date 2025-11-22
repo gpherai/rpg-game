@@ -49,18 +49,18 @@ def test_battle_initialization(combat_system: CombatSystem, party_system: PartyS
     assert len(state.enemies) == 1, "Should have 1 enemy"
     assert len(state.turn_order) == 2, "Turn order should include both combatants"
 
-    # Check that party member is correctly initialized
+    # Check that party member is correctly initialized (using viewmodel)
     party_member = state.party[0]
     assert party_member.actor_id == "mc_adhira"
     assert party_member.is_enemy is False
-    assert party_member.is_alive()
+    assert party_member.is_alive  # property, not method
     assert party_member.current_hp > 0
 
     # Check that enemy is correctly initialized
     enemy = state.enemies[0]
     assert enemy.actor_id == "en_forest_sprout"
     assert enemy.is_enemy is True
-    assert enemy.is_alive()
+    assert enemy.is_alive  # property, not method
     assert enemy.current_hp > 0
 
 
@@ -99,19 +99,23 @@ def test_basic_attack_damage_calculation(combat_system: CombatSystem) -> None:
     """Test dat basic attack damage correct wordt berekend."""
     state = combat_system.start_battle(["en_forest_sprout"])
 
-    attacker = state.party[0]
-    target = state.enemies[0]
+    # Get actor IDs from viewmodel
+    attacker_id = state.party[0].actor_id
+    target_id = state.enemies[0].actor_id
 
-    initial_hp = target.current_hp
+    # Get initial HP from internal state (for mutation check)
+    internal_state = combat_system.battle_state
+    assert internal_state is not None
+    initial_hp = internal_state.enemies[0].current_hp
 
-    # Execute basic attack
-    action = BattleAction(actor=attacker, action_type=ActionType.ATTACK, target=target)
+    # Execute basic attack using string IDs
+    action = BattleAction(actor_id=attacker_id, action_type=ActionType.ATTACK, target_id=target_id)
     messages = combat_system.execute_action(action)
 
     # Check that damage was dealt (or miss occurred)
     if "misses" not in " ".join(messages):
-        assert target.current_hp < initial_hp, "Target should have taken damage"
-        assert target.current_hp >= 0, "HP should not go negative"
+        assert internal_state.enemies[0].current_hp < initial_hp, "Target should have taken damage"
+        assert internal_state.enemies[0].current_hp >= 0, "HP should not go negative"
 
 
 def test_defend_action_bug(combat_system: CombatSystem) -> None:
@@ -123,13 +127,18 @@ def test_defend_action_bug(combat_system: CombatSystem) -> None:
     """
     state = combat_system.start_battle(["en_forest_sprout"])
 
-    defender = state.party[0]
+    defender_id = state.party[0].actor_id
+
+    # Access internal state to verify flags
+    internal_state = combat_system.battle_state
+    assert internal_state is not None
+    defender = internal_state.party[0]
 
     # Verify defender is not defending initially
     assert defender.is_defending is False
 
     # Execute defend action
-    action = BattleAction(actor=defender, action_type=ActionType.DEFEND)
+    action = BattleAction(actor_id=defender_id, action_type=ActionType.DEFEND)
     messages = combat_system.execute_action(action)
 
     assert any("defensive stance" in msg for msg in messages)
@@ -138,16 +147,18 @@ def test_defend_action_bug(combat_system: CombatSystem) -> None:
     # This is the "easy mode" bug - defend flag is cleared too early
     assert defender.is_defending is False, "BUG: Defend flag cleared at end of action"
 
-    # The bug means defend won't actually protect on next incoming attack
-    # (unless we set it again right before damage calculation)
-
 
 def test_defend_reduces_damage(combat_system: CombatSystem) -> None:
     """Test dat defend damage reduction werkt (wanneer flag handmatig wordt gezet)."""
     state = combat_system.start_battle(["en_forest_sprout"])
 
-    attacker = state.enemies[0]
-    defender = state.party[0]
+    attacker_id = state.enemies[0].actor_id
+    defender_id = state.party[0].actor_id
+
+    # Access internal state for mutation
+    internal_state = combat_system.battle_state
+    assert internal_state is not None
+    defender = internal_state.party[0]
 
     # Manually set defend flag (simulating correct behavior)
     defender.is_defending = True
@@ -155,14 +166,11 @@ def test_defend_reduces_damage(combat_system: CombatSystem) -> None:
     initial_hp = defender.current_hp
 
     # Execute attack
-    action = BattleAction(actor=attacker, action_type=ActionType.ATTACK, target=defender)
+    action = BattleAction(actor_id=attacker_id, action_type=ActionType.ATTACK, target_id=defender_id)
     messages = combat_system.execute_action(action)
 
     # If hit occurred, check that "defending" message appeared
     if "misses" not in " ".join(messages) and defender.current_hp < initial_hp:
-        # Defend should reduce damage by 50%
-        # We can't easily verify the exact reduction without knowing the base damage,
-        # but we can verify that the defend message appeared
         assert any("defending" in msg for msg in messages)
 
 
@@ -170,20 +178,23 @@ def test_skill_usage_with_resource_cost(combat_system: CombatSystem) -> None:
     """Test dat skills resource costs consumeren."""
     state = combat_system.start_battle(["en_forest_sprout"])
 
-    user = state.party[0]
-    target = state.enemies[0]
+    user_id = state.party[0].actor_id
+    target_id = state.enemies[0].actor_id
 
-    # Adhira should have sk_body_strike (costs stamina)
+    # Access internal state for stamina check
+    internal_state = combat_system.battle_state
+    assert internal_state is not None
+    user = internal_state.party[0]
+
     initial_stamina = user.current_stamina
 
     # Execute skill
     action = BattleAction(
-        actor=user, action_type=ActionType.SKILL, target=target, skill_id="sk_body_strike"
+        actor_id=user_id, action_type=ActionType.SKILL, target_id=target_id, skill_id="sk_body_strike"
     )
     messages = combat_system.execute_action(action)
 
     # Verify stamina was consumed
-    # (sk_body_strike costs 3 stamina according to skills.json)
     assert user.current_stamina < initial_stamina, "Stamina should be consumed"
 
 
@@ -191,15 +202,20 @@ def test_skill_insufficient_resources(combat_system: CombatSystem) -> None:
     """Test dat skills falen wanneer resources onvoldoende zijn."""
     state = combat_system.start_battle(["en_forest_sprout"])
 
-    user = state.party[0]
-    target = state.enemies[0]
+    user_id = state.party[0].actor_id
+    target_id = state.enemies[0].actor_id
+
+    # Access internal state for mutation
+    internal_state = combat_system.battle_state
+    assert internal_state is not None
+    user = internal_state.party[0]
 
     # Drain stamina
     user.current_stamina = 0
 
     # Try to use skill that costs stamina
     action = BattleAction(
-        actor=user, action_type=ActionType.SKILL, target=target, skill_id="sk_body_strike"
+        actor_id=user_id, action_type=ActionType.SKILL, target_id=target_id, skill_id="sk_body_strike"
     )
     messages = combat_system.execute_action(action)
 
@@ -218,10 +234,13 @@ def test_xp_distribution_bug(combat_system: CombatSystem, party_system: PartySys
     party_system.add_to_active_party("npc_comp_rajani")
 
     # Start battle
-    state = combat_system.start_battle(["en_forest_sprout"])
+    combat_system.start_battle(["en_forest_sprout"])
 
-    # Kill all enemies to win
-    for enemy in state.enemies:
+    # Access internal state to kill enemies
+    internal_state = combat_system.battle_state
+    assert internal_state is not None
+
+    for enemy in internal_state.enemies:
         enemy.current_hp = 0
 
     # Get battle result
@@ -231,26 +250,24 @@ def test_xp_distribution_bug(combat_system: CombatSystem, party_system: PartySys
     result = combat_system.get_battle_result(outcome)
 
     # BUG VERIFICATION: Both party members should get FULL XP
-    # (not divided XP)
     assert len(result.earned_xp) == 2, "Both members should get XP"
 
     adhira_xp = result.earned_xp.get("mc_adhira", 0)
     rajani_xp = result.earned_xp.get("comp_rajani", 0)
 
-    # Bug: Both should get the same FULL amount
     assert adhira_xp == rajani_xp, "BUG: Both members get full XP (not divided)"
     assert adhira_xp > 0, "XP should be positive"
-
-    # The bug means 2 members get 2x total XP
-    # If enemy gives 10 XP, both get 10 (total 20 distributed)
 
 
 def test_battle_victory_xp_rewards(combat_system: CombatSystem) -> None:
     """Test dat victory XP rewards correct worden uitgedeeld."""
-    state = combat_system.start_battle(["en_forest_sprout"])
+    combat_system.start_battle(["en_forest_sprout"])
 
-    # Kill enemy
-    for enemy in state.enemies:
+    # Access internal state to kill enemy
+    internal_state = combat_system.battle_state
+    assert internal_state is not None
+
+    for enemy in internal_state.enemies:
         enemy.current_hp = 0
 
     # Check battle end
@@ -267,10 +284,13 @@ def test_battle_victory_xp_rewards(combat_system: CombatSystem) -> None:
 
 def test_battle_defeat(combat_system: CombatSystem) -> None:
     """Test dat defeat correct wordt gedetecteerd."""
-    state = combat_system.start_battle(["en_forest_sprout"])
+    combat_system.start_battle(["en_forest_sprout"])
 
-    # Kill all party members
-    for member in state.party:
+    # Access internal state to kill party
+    internal_state = combat_system.battle_state
+    assert internal_state is not None
+
+    for member in internal_state.party:
         member.current_hp = 0
 
     # Check battle end
@@ -287,46 +307,31 @@ def test_level_up_from_combat(combat_system: CombatSystem, party_system: PartySy
     initial_level = member.level
 
     # Start battle
-    state = combat_system.start_battle(["en_forest_sprout"])
+    combat_system.start_battle(["en_forest_sprout"])
 
-    # Manually set high XP to trigger level-up
-    # Set party member to near level-up
-    party_member_combatant = state.party[0]
+    # Access internal state to kill enemy
+    internal_state = combat_system.battle_state
+    assert internal_state is not None
 
-    # Kill enemy to win
-    for enemy in state.enemies:
+    for enemy in internal_state.enemies:
         enemy.current_hp = 0
 
     # Manually set XP high enough for level-up
-    # This is a bit hacky, but we need to ensure level-up occurs
-    # We'll set the current XP via PartySystem first
-    party_system.update_member_level("adhira", initial_level, 25)  # Near level-up threshold
+    party_system.update_member_level("adhira", initial_level, 25)
 
     # Get battle result
     outcome = combat_system.check_battle_end()
     result = combat_system.get_battle_result(outcome)
 
     # Check if level-up occurred
-    # Note: Level-up only occurs if earned XP + current XP >= threshold
-    # For Forest Sprout (5 XP) + 25 current = 30 XP, should reach Lv 2
     if result.level_ups:
         level_up = result.level_ups[0]
         assert level_up.new_level > level_up.old_level
         assert level_up.stat_gains is not None
-        # Verify at least some stat gains occurred
         gains = level_up.stat_gains
         total_gains = (
-            gains.STR
-            + gains.END
-            + gains.DEF
-            + gains.SPD
-            + gains.ACC
-            + gains.FOC
-            + gains.INS
-            + gains.WILL
-            + gains.MAG
-            + gains.PRA
-            + gains.RES
+            gains.STR + gains.END + gains.DEF + gains.SPD + gains.ACC +
+            gains.FOC + gains.INS + gains.WILL + gains.MAG + gains.PRA + gains.RES
         )
         assert total_gains > 0, "Should have stat gains on level-up"
 
@@ -335,7 +340,12 @@ def test_item_usage_healing(combat_system: CombatSystem) -> None:
     """Test dat items correct kunnen worden gebruikt voor healing."""
     state = combat_system.start_battle(["en_forest_sprout"])
 
-    user = state.party[0]
+    user_id = state.party[0].actor_id
+
+    # Access internal state for mutation
+    internal_state = combat_system.battle_state
+    assert internal_state is not None
+    user = internal_state.party[0]
 
     # Damage user first
     user.current_hp = user.max_hp // 2
@@ -343,7 +353,7 @@ def test_item_usage_healing(combat_system: CombatSystem) -> None:
 
     # Use healing item (small_herb)
     action = BattleAction(
-        actor=user, action_type=ActionType.ITEM, target=user, item_id="item_small_herb"
+        actor_id=user_id, action_type=ActionType.ITEM, target_id=user_id, item_id="item_small_herb"
     )
     messages = combat_system.execute_action(action)
 
@@ -354,9 +364,12 @@ def test_item_usage_healing(combat_system: CombatSystem) -> None:
 
 def test_combatant_stat_modifiers(combat_system: CombatSystem) -> None:
     """Test dat stat modifiers correct werken."""
-    state = combat_system.start_battle(["en_forest_sprout"])
+    combat_system.start_battle(["en_forest_sprout"])
 
-    combatant = state.party[0]
+    # Access internal state for stat modifier testing
+    internal_state = combat_system.battle_state
+    assert internal_state is not None
+    combatant = internal_state.party[0]
 
     # Get base stat
     base_str = combatant.STR
@@ -381,7 +394,7 @@ def test_combatant_stat_modifiers(combat_system: CombatSystem) -> None:
 
 def test_battle_ongoing(combat_system: CombatSystem) -> None:
     """Test dat battle ONGOING status correct wordt gedetecteerd."""
-    state = combat_system.start_battle(["en_forest_sprout"])
+    combat_system.start_battle(["en_forest_sprout"])
 
     # Both party and enemies alive
     outcome = combat_system.check_battle_end()
