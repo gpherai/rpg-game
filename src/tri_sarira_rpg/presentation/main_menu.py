@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pygame
 
@@ -19,6 +19,7 @@ from tri_sarira_rpg.presentation.theme import (
 )
 
 if TYPE_CHECKING:
+    from tri_sarira_rpg.core.protocols import GameProtocol
     from tri_sarira_rpg.systems.save import SaveSystem
 
 logger = logging.getLogger(__name__)
@@ -48,7 +49,7 @@ class MainMenuScene(Scene):
     def __init__(
         self,
         manager: SceneManager,
-        game_instance: Any = None,
+        game_instance: GameProtocol | None = None,
     ) -> None:
         """Initialize main menu.
 
@@ -56,7 +57,7 @@ class MainMenuScene(Scene):
         ----------
         manager : SceneManager
             Scene manager reference
-        game_instance : Any, optional
+        game_instance : GameProtocol | None, optional
             Reference to Game instance for system access
         """
         super().__init__(manager)

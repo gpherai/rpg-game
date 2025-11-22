@@ -353,6 +353,40 @@ class EconomySystemProtocol(Protocol):
         ...
 
 
+# =============================================================================
+# Game Protocol
+# =============================================================================
+
+
+@runtime_checkable
+class GameProtocol(Protocol):
+    """Protocol voor Game class interface.
+
+    Definieert de methods die presentation layer nodig heeft van de Game class,
+    zonder directe dependency op de concrete Game implementatie.
+    """
+
+    def save_game(self, slot_id: int = 1) -> bool:
+        """Save game naar opgegeven slot."""
+        ...
+
+    def load_game(self, slot_id: int = 1) -> bool:
+        """Load game van opgegeven slot."""
+        ...
+
+    def return_to_main_menu(self) -> None:
+        """Keer terug naar main menu."""
+        ...
+
+    def start_overworld(self) -> None:
+        """Start/herstart overworld scene."""
+        ...
+
+    def start_new_game(self) -> None:
+        """Start een nieuw spel."""
+        ...
+
+
 __all__ = [
     "SaveableSystem",
     "PartyMemberProtocol",
@@ -366,4 +400,5 @@ __all__ = [
     "ShopSystemProtocol",
     "EquipmentSystemProtocol",
     "EconomySystemProtocol",
+    "GameProtocol",
 ]

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import logging
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pygame
 
@@ -19,7 +20,7 @@ from tri_sarira_rpg.presentation.theme import (
 from .widgets import Widget
 
 if TYPE_CHECKING:
-    pass
+    from tri_sarira_rpg.core.protocols import GameProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,10 @@ class PauseMenu(Widget):
     """Pause menu overlay voor gameplay scenes."""
 
     def __init__(
-        self, rect: pygame.Rect, game_instance: Any = None, allow_load: bool = True
+        self,
+        rect: pygame.Rect,
+        game_instance: GameProtocol | None = None,
+        allow_load: bool = True,
     ) -> None:
         """Initialize pause menu.
 
@@ -54,7 +58,7 @@ class PauseMenu(Widget):
         ----------
         rect : pygame.Rect
             Menu rectangle (position and size)
-        game_instance : Any, optional
+        game_instance : GameProtocol | None, optional
             Reference to Game instance for save/load
         allow_load : bool
             Whether to allow loading during gameplay (default True)
@@ -67,7 +71,7 @@ class PauseMenu(Widget):
         self._selected_slot = 0
 
         # Callback for returning to main menu
-        self._on_main_menu_callback: Any = None
+        self._on_main_menu_callback: Callable[[], None] | None = None
 
         # Feedback message
         self._feedback_message: str = ""

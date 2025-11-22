@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING
 
 import pygame
 
 from tri_sarira_rpg.core.scene import Scene, SceneManager
+
+if TYPE_CHECKING:
+    from tri_sarira_rpg.core.protocols import GameProtocol
+
 from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.presentation.theme import (
     Colors,
@@ -57,7 +61,7 @@ class OverworldScene(Scene):
         quest_system: QuestSystem | None = None,
         shop_system: ShopSystem | None = None,
         equipment_system: EquipmentSystem | None = None,
-        game_instance: Any = None,
+        game_instance: GameProtocol | None = None,
     ) -> None:
         super().__init__(manager)
         self._world = world_system
