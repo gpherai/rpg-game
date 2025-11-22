@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from tri_sarira_rpg.core.protocols import (
         CombatSystemProtocol,
         DataRepositoryProtocol,
+        DialogueSystemProtocol,
         EquipmentSystemProtocol,
         FlagsSystemProtocol,
         GameProtocol,
@@ -42,7 +43,6 @@ from tri_sarira_rpg.services.game_data import GameDataService
 from tri_sarira_rpg.systems.dialogue import (
     DialogueContext,
     DialogueSession,
-    DialogueSystem,
 )
 from tri_sarira_rpg.systems.state import GameStateFlags
 
@@ -61,6 +61,7 @@ class OverworldScene(Scene):
         combat_system: CombatSystemProtocol,
         inventory_system: InventorySystemProtocol,
         data_repository: DataRepositoryProtocol,
+        dialogue_system: DialogueSystemProtocol,
         flags_system: FlagsSystemProtocol | None = None,
         quest_system: QuestSystemProtocol | None = None,
         shop_system: ShopSystemProtocol | None = None,
@@ -81,8 +82,8 @@ class OverworldScene(Scene):
         self._equipment = equipment_system
         self._game = game_instance
 
-        # Dialogue system and UI
-        self._dialogue_system = DialogueSystem(data_repository)
+        # Dialogue system and UI (injected via constructor)
+        self._dialogue_system = dialogue_system
         self._dialogue_session: DialogueSession | None = None
         self._dialogue_box: DialogueBox | None = None
 
