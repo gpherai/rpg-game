@@ -7,6 +7,14 @@ from typing import TYPE_CHECKING
 
 import pygame
 
+from tri_sarira_rpg.presentation.theme import (
+    Colors,
+    FontSizes,
+    Spacing,
+    Timing,
+    FONT_FAMILY,
+)
+
 from .widgets import Widget
 
 if TYPE_CHECKING:
@@ -60,21 +68,21 @@ class EquipmentMenuUI(Widget):
 
         # Fonts
         pygame.font.init()
-        self._font_title = pygame.font.SysFont("monospace", 28, bold=True)
-        self._font_header = pygame.font.SysFont("monospace", 18, bold=True)
-        self._font_item = pygame.font.SysFont("monospace", 16)
-        self._font_desc = pygame.font.SysFont("monospace", 14)
-        self._font_small = pygame.font.SysFont("monospace", 12)
+        self._font_title = pygame.font.SysFont(FONT_FAMILY, FontSizes.TITLE, bold=True)
+        self._font_header = pygame.font.SysFont(FONT_FAMILY, FontSizes.MEDIUM, bold=True)
+        self._font_item = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL)
+        self._font_desc = pygame.font.SysFont(FONT_FAMILY, FontSizes.SMALL)
+        self._font_small = pygame.font.SysFont(FONT_FAMILY, FontSizes.TINY)
 
         # Colors
-        self._bg_color = (20, 20, 40, 240)
-        self._border_color = (100, 150, 200)
-        self._text_color = (220, 220, 220)
-        self._highlight_color = (255, 220, 100)
-        self._title_color = (255, 200, 150)
-        self._stat_color = (150, 255, 150)
-        self._error_color = (255, 100, 100)
-        self._success_color = (100, 255, 100)
+        self._bg_color = Colors.BG_OVERLAY
+        self._border_color = Colors.BORDER
+        self._text_color = Colors.TEXT
+        self._highlight_color = Colors.HIGHLIGHT
+        self._title_color = Colors.TITLE
+        self._stat_color = Colors.STAT_BONUS
+        self._error_color = Colors.ERROR
+        self._success_color = Colors.SUCCESS
 
         logger.debug(f"EquipmentMenuUI initialized for {actor_id}")
 
@@ -189,7 +197,7 @@ class EquipmentMenuUI(Widget):
     def _show_feedback(self, message: str, is_error: bool) -> None:
         """Show feedback message."""
         self._feedback_message = message
-        self._feedback_timer = 2.0  # Show for 2 seconds
+        self._feedback_timer = Timing.FEEDBACK_DURATION
         if is_error:
             logger.warning(f"Equipment menu feedback: {message}")
         else:
@@ -226,7 +234,7 @@ class EquipmentMenuUI(Widget):
         title = f"Equipment - {self._member.actor_id}"
         title_surf = self._font_title.render(title, True, self._title_color)
         title_x = self.rect.x + (self.rect.width - title_surf.get_width()) // 2
-        surface.blit(title_surf, (title_x, self.rect.y + 10))
+        surface.blit(title_surf, (title_x, self.rect.y + Spacing.SM))
 
         # Mode-specific rendering
         if self._mode == "slot_select":
@@ -247,7 +255,7 @@ class EquipmentMenuUI(Widget):
             controls = "ESC/X: Back | Arrow/WASD: Navigate | Enter/Z: Equip"
         controls_surf = self._font_small.render(controls, True, self._text_color)
         controls_x = self.rect.x + (self.rect.width - controls_surf.get_width()) // 2
-        surface.blit(controls_surf, (controls_x, self.rect.y + self.rect.height - 25))
+        surface.blit(controls_surf, (controls_x, self.rect.y + self.rect.height - Spacing.XL))
 
     def _render_slot_select(self, surface: pygame.Surface) -> None:
         """Render slot selection mode."""
@@ -255,8 +263,8 @@ class EquipmentMenuUI(Widget):
 
         # Slot list
         header_surf = self._font_header.render("Equipment Slots:", True, self._title_color)
-        surface.blit(header_surf, (self.rect.x + 20, y_offset))
-        y_offset += 30
+        surface.blit(header_surf, (self.rect.x + Spacing.LG, y_offset))
+        y_offset += Spacing.XXL
 
         equipped_gear = self._equipment.get_all_equipped_gear(self._actor_id)
 
@@ -284,7 +292,7 @@ class EquipmentMenuUI(Widget):
             # Render slot
             slot_text = f"{slot_name}: {equipped_name}"
             slot_surf = self._font_item.render(slot_text, True, color)
-            x_pos = self.rect.x + 40 if is_selected else self.rect.x + 50
+            x_pos = self.rect.x + Spacing.XXXL if is_selected else self.rect.x + 50
             surface.blit(slot_surf, (x_pos, y_offset))
 
             # Show stat mods if equipped
@@ -294,10 +302,10 @@ class EquipmentMenuUI(Widget):
                     stat_mods = item_data["stat_mods"]
                     stats_text = ", ".join(f"+{v} {k}" for k, v in stat_mods.items())
                     stats_surf = self._font_desc.render(f"  [{stats_text}]", True, self._stat_color)
-                    surface.blit(stats_surf, (self.rect.x + 60, y_offset + 20))
-                    y_offset += 20
+                    surface.blit(stats_surf, (self.rect.x + 60, y_offset + Spacing.LG))
+                    y_offset += Spacing.LG
 
-            y_offset += 40
+            y_offset += Spacing.XXXL
 
         # Show total stats on right side
         self._render_stats_panel(surface)
@@ -315,13 +323,13 @@ class EquipmentMenuUI(Widget):
         }
         header = f"Select {slot_display.get(slot, slot)}:"
         header_surf = self._font_header.render(header, True, self._title_color)
-        surface.blit(header_surf, (self.rect.x + 20, y_offset))
-        y_offset += 30
+        surface.blit(header_surf, (self.rect.x + Spacing.LG, y_offset))
+        y_offset += Spacing.XXL
 
         # Item list
         if not self._available_items:
             no_items_surf = self._font_item.render("No items available", True, self._text_color)
-            surface.blit(no_items_surf, (self.rect.x + 40, y_offset))
+            surface.blit(no_items_surf, (self.rect.x + Spacing.XXXL, y_offset))
         else:
             for i, item_id in enumerate(self._available_items):
                 is_selected = (i == self._selected_item_index)
@@ -336,7 +344,7 @@ class EquipmentMenuUI(Widget):
 
                 # Render item
                 item_surf = self._font_item.render(item_name, True, color)
-                x_pos = self.rect.x + 40 if is_selected else self.rect.x + 50
+                x_pos = self.rect.x + Spacing.XXXL if is_selected else self.rect.x + 50
                 surface.blit(item_surf, (x_pos, y_offset))
 
                 # Show stat mods for selected item
@@ -348,10 +356,10 @@ class EquipmentMenuUI(Widget):
                         stats_surf = self._font_desc.render(
                             f"  [{stats_text}]", True, self._stat_color
                         )
-                        surface.blit(stats_surf, (self.rect.x + 60, y_offset + 20))
-                        y_offset += 20
+                        surface.blit(stats_surf, (self.rect.x + 60, y_offset + Spacing.LG))
+                        y_offset += Spacing.LG
 
-                y_offset += 40
+                y_offset += Spacing.XXXL
 
     def _render_stats_panel(self, surface: pygame.Surface) -> None:
         """Render stats summary panel on the right side."""
@@ -361,7 +369,7 @@ class EquipmentMenuUI(Widget):
         # Header
         header_surf = self._font_header.render("Stats:", True, self._title_color)
         surface.blit(header_surf, (panel_x, panel_y))
-        panel_y += 25
+        panel_y += Spacing.XL
 
         # Get effective stats
         effective_stats = self._equipment.get_effective_stats(self._actor_id)
@@ -382,7 +390,7 @@ class EquipmentMenuUI(Widget):
 
             stat_surf = self._font_desc.render(stat_text, True, color)
             surface.blit(stat_surf, (panel_x, panel_y))
-            panel_y += 18
+            panel_y += Spacing.MEDIUM
 
 
 __all__ = ["EquipmentMenuUI"]

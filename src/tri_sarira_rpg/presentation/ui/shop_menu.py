@@ -7,6 +7,14 @@ from typing import TYPE_CHECKING
 
 import pygame
 
+from tri_sarira_rpg.presentation.theme import (
+    Colors,
+    FontSizes,
+    Spacing,
+    Timing,
+    FONT_FAMILY,
+)
+
 from .widgets import Widget
 
 if TYPE_CHECKING:
@@ -66,22 +74,22 @@ class ShopMenuUI(Widget):
 
         # Fonts
         pygame.font.init()
-        self._font_title = pygame.font.SysFont("monospace", 28, bold=True)
-        self._font_header = pygame.font.SysFont("monospace", 18, bold=True)
-        self._font_item = pygame.font.SysFont("monospace", 16)
-        self._font_desc = pygame.font.SysFont("monospace", 14)
-        self._font_small = pygame.font.SysFont("monospace", 12)
+        self._font_title = pygame.font.SysFont(FONT_FAMILY, FontSizes.TITLE, bold=True)
+        self._font_header = pygame.font.SysFont(FONT_FAMILY, FontSizes.MEDIUM, bold=True)
+        self._font_item = pygame.font.SysFont(FONT_FAMILY, FontSizes.NORMAL)
+        self._font_desc = pygame.font.SysFont(FONT_FAMILY, FontSizes.SMALL)
+        self._font_small = pygame.font.SysFont(FONT_FAMILY, FontSizes.TINY)
 
         # Colors
-        self._bg_color = (20, 20, 40, 240)  # Semi-transparent dark blue
-        self._border_color = (100, 150, 200)
-        self._text_color = (220, 220, 220)
-        self._highlight_color = (255, 220, 100)
-        self._title_color = (255, 200, 150)
-        self._currency_color = (255, 220, 50)
-        self._price_color = (150, 255, 150)
-        self._error_color = (255, 100, 100)
-        self._success_color = (100, 255, 100)
+        self._bg_color = Colors.BG_OVERLAY
+        self._border_color = Colors.BORDER
+        self._text_color = Colors.TEXT
+        self._highlight_color = Colors.HIGHLIGHT
+        self._title_color = Colors.TITLE
+        self._currency_color = Colors.CURRENCY
+        self._price_color = Colors.PRICE
+        self._error_color = Colors.ERROR
+        self._success_color = Colors.SUCCESS
 
         logger.debug(f"ShopMenuUI initialized for {shop_id}")
 
@@ -139,40 +147,40 @@ class ShopMenuUI(Widget):
         surface.blit(bg_surface, self.rect.topleft)
 
         # Title (shop name)
-        y_offset = self.rect.top + 20
+        y_offset = self.rect.top + Spacing.LG
         shop_name = self._shop_def.name if self._shop_def else "Shop"
         title_surf = self._font_title.render(shop_name, True, self._title_color)
         title_x = self.rect.left + (self.rect.width - title_surf.get_width()) // 2
         surface.blit(title_surf, (title_x, y_offset))
-        y_offset += 45
+        y_offset += Spacing.XXXL + Spacing.XS
 
         # Currency display
         currency = self._shop.get_currency()
         currency_text = f"Rūpa: {currency}"
         currency_surf = self._font_header.render(currency_text, True, self._currency_color)
-        surface.blit(currency_surf, (self.rect.left + 30, y_offset))
-        y_offset += 35
+        surface.blit(currency_surf, (self.rect.left + Spacing.XXL, y_offset))
+        y_offset += Spacing.XXL + Spacing.XS
 
         # Divider line
         pygame.draw.line(
             surface,
             self._border_color,
-            (self.rect.left + 20, y_offset),
-            (self.rect.right - 20, y_offset),
+            (self.rect.left + Spacing.LG, y_offset),
+            (self.rect.right - Spacing.LG, y_offset),
             2,
         )
-        y_offset += 20
+        y_offset += Spacing.LG
 
         # Items list (left side) and details (right side)
         if not self._available_items:
             # No items available
             no_items_surf = self._font_item.render("Geen items beschikbaar", True, self._text_color)
-            surface.blit(no_items_surf, (self.rect.left + 30, y_offset))
+            surface.blit(no_items_surf, (self.rect.left + Spacing.XXL, y_offset))
         else:
             # Split into two columns: item list (left) and details (right)
-            list_x = self.rect.left + 30
-            details_x = self.rect.left + self.rect.width // 2 + 10
-            details_width = self.rect.width // 2 - 40
+            list_x = self.rect.left + Spacing.XXL
+            details_x = self.rect.left + self.rect.width // 2 + Spacing.SM
+            details_width = self.rect.width // 2 - Spacing.XXXL
 
             # Draw items list
             items_y = y_offset
@@ -195,7 +203,7 @@ class ShopMenuUI(Widget):
                 price_surf = self._font_small.render(price_text, True, self._price_color)
                 surface.blit(price_surf, (list_x + 220, items_y + 2))
 
-                items_y += 25
+                items_y += Spacing.XL
 
             # Draw selected item details (right side)
             selected_entry = self._available_items[self._selected_index]
@@ -205,7 +213,7 @@ class ShopMenuUI(Widget):
             item_name = selected_entry.item_id.replace("item_", "").replace("_", " ").title()
             name_surf = self._font_header.render(item_name, True, self._highlight_color)
             surface.blit(name_surf, (details_x, details_y))
-            details_y += 30
+            details_y += Spacing.XXL
 
             # Get item data from repository
             item_data = self._repository.get_item(selected_entry.item_id)
@@ -214,7 +222,7 @@ class ShopMenuUI(Widget):
                 item_type = item_data.get("type", "unknown")
                 type_surf = self._font_desc.render(f"Type: {item_type}", True, self._text_color)
                 surface.blit(type_surf, (details_x, details_y))
-                details_y += 20
+                details_y += Spacing.LG
 
                 # Description (wrapped)
                 desc = item_data.get("description", "Geen beschrijving")
@@ -222,15 +230,15 @@ class ShopMenuUI(Widget):
                 for line in wrapped_lines:
                     line_surf = self._font_desc.render(line, True, self._text_color)
                     surface.blit(line_surf, (details_x, details_y))
-                    details_y += 18
+                    details_y += Spacing.MEDIUM
 
-                details_y += 10
+                details_y += Spacing.SM
 
                 # Current inventory count
                 inv_count = self._inventory.get_quantity(selected_entry.item_id)
                 inv_surf = self._font_desc.render(f"In bezit: {inv_count}", True, self._text_color)
                 surface.blit(inv_surf, (details_x, details_y))
-                details_y += 25
+                details_y += Spacing.XL
 
             # Price (large, emphasized)
             price_text = f"Prijs: {selected_entry.base_price} Rūpa"
@@ -271,7 +279,7 @@ class ShopMenuUI(Widget):
             self._feedback_message = (
                 f"Gekocht: 1x {item_name} voor {selected_entry.base_price} Rūpa"
             )
-            self._feedback_timer = 2.5
+            self._feedback_timer = Timing.FEEDBACK_DURATION + 0.5
             logger.info(f"Purchase successful: {item_id}")
         else:
             # Handle errors
@@ -284,7 +292,7 @@ class ShopMenuUI(Widget):
             else:
                 self._feedback_message = f"Fout: {result.reason}"
 
-            self._feedback_timer = 2.0
+            self._feedback_timer = Timing.FEEDBACK_DURATION
             logger.warning(f"Purchase failed: {result.reason}")
 
     def _wrap_text(self, text: str, max_width: int) -> list[str]:

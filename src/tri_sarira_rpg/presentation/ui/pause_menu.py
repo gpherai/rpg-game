@@ -8,6 +8,14 @@ from typing import TYPE_CHECKING, Any
 
 import pygame
 
+from tri_sarira_rpg.presentation.theme import (
+    Colors,
+    FontSizes,
+    Spacing,
+    Timing,
+    FONT_FAMILY,
+)
+
 from .widgets import Widget
 
 if TYPE_CHECKING:
@@ -71,16 +79,16 @@ class PauseMenu(Widget):
 
         # Fonts
         pygame.font.init()
-        self._font_title = pygame.font.SysFont("monospace", 32, bold=True)
-        self._font_menu = pygame.font.SysFont("monospace", 20)
-        self._font_info = pygame.font.SysFont("monospace", 14)
+        self._font_title = pygame.font.SysFont(FONT_FAMILY, FontSizes.SUBTITLE, bold=True)
+        self._font_menu = pygame.font.SysFont(FONT_FAMILY, FontSizes.LARGE)
+        self._font_info = pygame.font.SysFont(FONT_FAMILY, FontSizes.SMALL)
 
         # Colors
-        self._bg_color = (20, 20, 30, 230)  # Semi-transparent dark
-        self._border_color = (100, 150, 200)
-        self._text_color = (220, 220, 220)
-        self._highlight_color = (255, 220, 100)
-        self._title_color = (255, 200, 150)
+        self._bg_color = Colors.BG_OVERLAY
+        self._border_color = Colors.BORDER
+        self._text_color = Colors.TEXT
+        self._highlight_color = Colors.HIGHLIGHT
+        self._title_color = Colors.TITLE
 
         # Main menu options
         self._main_options = [
@@ -368,21 +376,21 @@ class PauseMenu(Widget):
             # Skip load option if not allowed
             if option == PauseMenuOption.LOAD and not self._allow_load:
                 # Gray out the option
-                color = (100, 100, 100)
+                color = Colors.TEXT_MUTED
                 prefix = "  "
             else:
                 color = self._highlight_color if i == self._selected_index else self._text_color
                 prefix = "► " if i == self._selected_index else "  "
 
             option_text = self._font_menu.render(f"{prefix}{text}", True, color)
-            option_rect = option_text.get_rect(center=(self.rect.width // 2, start_y + i * 40))
+            option_rect = option_text.get_rect(center=(self.rect.width // 2, start_y + i * Spacing.XXXL))
             surface.blit(option_text, option_rect)
 
         # Instructions
         info_text = self._font_info.render(
             "Gebruik Esc om direct door te gaan", True, self._text_color
         )
-        info_rect = info_text.get_rect(center=(self.rect.width // 2, self.rect.height - 30))
+        info_rect = info_text.get_rect(center=(self.rect.width // 2, self.rect.height - Spacing.XXL))
         surface.blit(info_text, info_rect)
 
     def _render_load_select(self, surface: pygame.Surface) -> None:
@@ -395,7 +403,7 @@ class PauseMenu(Widget):
         """
         # Title
         title_text = self._font_title.render("Load Spel", True, self._title_color)
-        title_rect = title_text.get_rect(center=(self.rect.width // 2, 40))
+        title_rect = title_text.get_rect(center=(self.rect.width // 2, Spacing.XXXL))
         surface.blit(title_text, title_rect)
 
         # Instructions
@@ -417,7 +425,7 @@ class PauseMenu(Widget):
             slot_text = f"{prefix}Slot {slot_id}: {slot_info}"
 
             text_surface = self._font_menu.render(slot_text, True, color)
-            text_rect = text_surface.get_rect(center=(self.rect.width // 2, start_y + i * 40))
+            text_rect = text_surface.get_rect(center=(self.rect.width // 2, start_y + i * Spacing.XXXL))
             surface.blit(text_surface, text_rect)
 
     def _get_slot_info(self, slot_id: int) -> str:
@@ -485,7 +493,7 @@ class PauseMenu(Widget):
         if not self._feedback_message:
             return
 
-        feedback_text = self._font_info.render(self._feedback_message, True, (100, 255, 100))
+        feedback_text = self._font_info.render(self._feedback_message, True, Colors.SUCCESS)
         feedback_rect = feedback_text.get_rect(center=(self.rect.width // 2, self.rect.height - 60))
         surface.blit(feedback_text, feedback_rect)
 
