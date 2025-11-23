@@ -42,7 +42,6 @@ class DataRepository:
         def add_error(message: str) -> None:
             nonlocal all_ok
             self._validation_errors.append(message)
-            logger.error(message)
             all_ok = False
 
         # Load core files
@@ -230,6 +229,15 @@ class DataRepository:
     def get_validation_errors(self) -> list[str]:
         """Geef alle validatiefouten terug."""
         return self._validation_errors.copy()
+
+    @staticmethod
+    def format_validation_errors(errors: list[str]) -> str:
+        """Maak een leesbare samenvatting van validatiefouten."""
+        if not errors:
+            return "Data validation passed with no errors."
+        lines = [f"Data validation failed with {len(errors)} error(s):"]
+        lines.extend([f"  - {err}" for err in errors])
+        return "\n".join(lines)
 
     # Actor methods
     def get_actor(self, actor_id: str) -> dict[str, Any] | None:
