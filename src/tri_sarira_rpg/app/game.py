@@ -303,14 +303,6 @@ class Game:
         )
         self._quest_system.load_definitions(self._data_repository)
 
-        # Re-attach shared systems to world (for triggers/events)
-        self._world_system.attach_systems(
-            flags_system=self._flags_system,
-            quest_system=self._quest_system,
-            inventory_system=self._inventory_system,
-            combat_system=self._combat_system,
-        )
-
         # Re-initialize shop system with starting currency
         economy_state = {"currency_amount": 500, "shop_states": {}}
         self._shop_system = ShopSystem(
@@ -335,6 +327,14 @@ class Game:
             flags_system=self._flags_system,
             quest_system=self._quest_system,
             shop_system=self._shop_system,
+        )
+
+        # Re-attach shared systems to world (for triggers/events) using fresh instances
+        self._world_system.attach_systems(
+            flags_system=self._flags_system,
+            quest_system=self._quest_system,
+            inventory_system=self._inventory_system,
+            combat_system=self._combat_system,
         )
 
         # Load starting zone

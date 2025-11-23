@@ -7,6 +7,7 @@ from pathlib import Path
 from tri_sarira_rpg.core.entities import Position
 from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.systems.world import Trigger, WorldSystem
+from tri_sarira_rpg.utils.tiled_loader import ObjectLayer, TiledMap, TiledObject
 
 
 class DummyFlags:
@@ -105,6 +106,37 @@ def test_start_battle_uses_enemy_group() -> None:
     assert world._combat.started
     group = world._combat.started[-1]
     assert group == ["en_shrine_construct", "en_corrupted_wisp", "en_corrupted_wisp"]
+
+
+def test_restore_from_save_deactivates_once_per_save_triggers() -> None:
+    world = make_world()
+
+    # Stub zone and map to avoid real TMX dependency
+    world._data_repository.get_zone = lambda zid: {"id": zid}
+    tiled_map = TiledMap(width=5, height=5, tile_width=32, tile_height=32)
+    chest = TiledObject(
+        id=1,
+        name="ch_test",
+        type="Chest",
+        x=0,
+        y=0,
+        properties={"chest_id": "ch_test"},
+    )
+    tiled_map.object_layers["Chests"] = ObjectLayer(name="Chests", objects=[chest])
+    world._tiled_loader.load_map = lambda zone_id: tiled_map
+
+    save_state = {
+        "current_zone_id": "z_test",
+        "player_state": {"position": {"x": 0, "y": 0}, "facing": "S"},
+        "triggered_ids": ["ch_test"],
+    }
+
+    world.restore_from_save(save_state)
+
+    trigger = world._triggers.get("ch_test")
+    assert trigger is not None
+    assert trigger.active is False
+    assert "ch_test" in world._triggered_ids
 
 
 def test_quest_actions_dispatch() -> None:
