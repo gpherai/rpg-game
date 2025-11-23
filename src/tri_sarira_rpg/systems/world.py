@@ -47,6 +47,7 @@ class WorldSystem:
         quest_system: Any | None = None,
         inventory_system: Any | None = None,
         combat_system: Any | None = None,
+        time_system: Any | None = None,
         on_show_message: Any | None = None,
         on_start_battle: Any | None = None,
         on_start_dialogue: Any | None = None,
@@ -57,6 +58,7 @@ class WorldSystem:
         self._quest = quest_system
         self._inventory = inventory_system
         self._combat = combat_system
+        self._time = time_system
         self._on_show_message = on_show_message
         self._on_start_battle = on_start_battle
         self._on_start_dialogue = on_start_dialogue
@@ -252,6 +254,9 @@ class WorldSystem:
         self._player.position.x = new_x
         self._player.position.y = new_y
 
+        if self._time:
+            self._time.on_player_step()
+
         # Check for triggers ON_ENTER and ON_STEP
         self._check_triggers_at_position("ON_ENTER")
         self._check_triggers_at_position("ON_STEP")
@@ -326,6 +331,7 @@ class WorldSystem:
         on_show_message: Any | None = None,
         on_start_battle: Any | None = None,
         on_start_dialogue: Any | None = None,
+        time_system: Any | None = None,
     ) -> None:
         """Koppel optionele systems voor triggers/collectables."""
         if flags_system:
@@ -336,6 +342,8 @@ class WorldSystem:
             self._inventory = inventory_system
         if combat_system:
             self._combat = combat_system
+        if time_system:
+            self._time = time_system
         if on_show_message:
             self._on_show_message = on_show_message
         if on_start_battle:

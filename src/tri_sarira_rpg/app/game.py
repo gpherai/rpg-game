@@ -101,6 +101,7 @@ class Game:
             party_system=self._party_system,
             data_repository=self._data_repository,
             equipment_system=self._equipment_system,
+            time_system=self._time_system,
         )
 
         # Game state flags
@@ -120,6 +121,7 @@ class Game:
             quest_system=self._quest_system,
             inventory_system=self._inventory_system,
             combat_system=self._combat_system,
+            time_system=self._time_system,
         )
 
         # Shop system (Step 8: Shop System v0)
@@ -316,6 +318,7 @@ class Game:
             party_system=self._party_system,
             data_repository=self._data_repository,
             equipment_system=self._equipment_system,
+            time_system=self._time_system,
         )
 
         # Re-initialize save system with new references
@@ -335,6 +338,7 @@ class Game:
             quest_system=self._quest_system,
             inventory_system=self._inventory_system,
             combat_system=self._combat_system,
+            time_system=self._time_system,
         )
 
         # Load starting zone

@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from tri_sarira_rpg.core.entities import Position
 from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.systems.world import Trigger, WorldSystem
+from tri_sarira_rpg.systems.time import TimeSystem
 from tri_sarira_rpg.utils.tiled_loader import ObjectLayer, TiledMap, TiledObject
 
 
@@ -159,6 +161,74 @@ def test_play_cutscene_action_stub() -> None:
 
     world._execute_event_actions([action])
     assert messages == ["Cutscene placeholder"]
+
+
+def test_time_advances_on_move() -> None:
+    """Elke stap in de overworld moet 1 minuut kosten."""
+    time_system = TimeSystem()
+    world = WorldSystem()
+    world.attach_systems(time_system=time_system)
+
+    # Stub map en speler
+    world._current_map = TiledMap(
+        width=3, height=3, tile_width=32, tile_height=32, properties={}, object_layers={}, tile_layers={}
+    )
+    from tri_sarira_rpg.core.entities import Position
+    from tri_sarira_rpg.systems.world import PlayerState
+
+    world._player = PlayerState(zone_id="z_test", position=Position(x=1, y=1))
+    start_time = time_system.state.time_of_day
+
+    moved = world.move_player(1, 0)
+
+    assert moved is True
+    assert time_system.state.time_of_day == start_time + 1
+
+
+def test_time_advances_on_portal_transition(monkeypatch) -> None:
+    """Portal/zone wissel moet 1 minuut toevoegen bovenop de stap."""
+    time_system = TimeSystem()
+    world = WorldSystem(time_system=time_system)
+
+    # Maak een map met een portal op (0,0)
+    portal = TiledObject(
+        id=1,
+        name="portal_to_next",
+        type="Portal",
+        x=0,
+        y=0,
+        width=32,
+        height=32,
+        properties={"target_zone_id": "z_next", "target_spawn_id": None},
+    )
+    world._current_map = TiledMap(
+        width=2,
+        height=1,
+        tile_width=32,
+        tile_height=32,
+        properties={},
+        object_layers={"Portals": ObjectLayer(name="Portals", objects=[portal])},
+    )
+
+    from tri_sarira_rpg.core.entities import Position
+    from tri_sarira_rpg.systems.world import PlayerState
+
+    world._player = PlayerState(zone_id="z_curr", position=Position(x=0, y=0))
+
+    # Stub repo + loader om echte fileloads te vermijden
+    world._data_repository.get_zone = lambda *_: {"id": "z_next"}  # type: ignore[attr-defined]
+    world._tiled_loader.load_map = (
+        lambda *_: TiledMap(
+            width=1, height=1, tile_width=32, tile_height=32, properties={}, object_layers={}
+        )
+    )
+
+    start_time = time_system.state.time_of_day
+    # Stap naar portal-tegel (x=1,y=0) geeft +1 minuut
+    moved = world.move_player(1, 0)
+    assert moved is True
+    world._check_portal_transition()
+    assert time_system.state.time_of_day == start_time + 1
 
 
 def test_restore_from_save_deactivates_once_per_save_triggers() -> None:
