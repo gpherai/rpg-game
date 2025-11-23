@@ -201,6 +201,9 @@ class DataRepository:
             if z and z not in zone_ids:
                 add_error(f"events.json: event {eid} has unknown trigger zone_id {z}")
             for action in event.get("actions", []):
+                if "action_type" not in action:
+                    add_error(f"events.json: event {eid} has action without action_type")
+                    continue
                 eg = action.get("enemy_group_id")
                 if eg and all(g.get("group_id") != eg for g in enemy_groups):
                     add_error(f"events.json: event {eid} references unknown enemy_group_id {eg}")
@@ -411,8 +414,47 @@ class DataRepository:
 
     def get_events_for_zone(self, zone_id: str) -> list[dict[str, Any]]:
         """Filter eventdefinities voor de opgegeven zone."""
-        # Not implemented yet (no events.json in this step)
-        return []
+        events = self.get_all_events()
+        return [event for event in events if event.get("trigger", {}).get("zone_id") == zone_id]
+
+    def get_event(self, event_id: str) -> dict[str, Any] | None:
+        """Haal een event op uit events.json."""
+        events = self.get_all_events()
+        for event in events:
+            if event.get("event_id") == event_id:
+                return event
+        return None
+
+    def get_all_events(self) -> list[dict[str, Any]]:
+        """Haal alle events op uit events.json."""
+        try:
+            data = self._loader.load_json("events.json")
+            return data.get("events", [])
+        except FileNotFoundError:
+            logger.warning("events.json not found, returning empty list")
+            return []
+
+    def get_chest(self, chest_id: str) -> dict[str, Any] | None:
+        """Haal een chestdefinitie op uit chests.json."""
+        try:
+            data = self._loader.load_json("chests.json")
+            for chest in data.get("chests", []):
+                if chest.get("chest_id") == chest_id:
+                    return chest
+        except FileNotFoundError:
+            logger.warning("chests.json not found")
+        return None
+
+    def get_enemy_group(self, group_id: str) -> dict[str, Any] | None:
+        """Haal een enemy group op uit enemy_groups.json."""
+        try:
+            data = self._loader.load_json("enemy_groups.json")
+            for group in data.get("enemy_groups", []):
+                if group.get("group_id") == group_id:
+                    return group
+        except FileNotFoundError:
+            logger.warning("enemy_groups.json not found")
+        return None
 
     # Shop methods (Step 8: Shop System v0)
     def get_shop(self, shop_id: str) -> dict[str, Any] | None:

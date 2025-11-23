@@ -114,6 +114,14 @@ class Game:
         # Load quest definitions from JSON
         self._quest_system.load_definitions(self._data_repository)
 
+        # Attach shared systems to world (for triggers/events)
+        self._world_system.attach_systems(
+            flags_system=self._flags_system,
+            quest_system=self._quest_system,
+            inventory_system=self._inventory_system,
+            combat_system=self._combat_system,
+        )
+
         # Shop system (Step 8: Shop System v0)
         economy_state = {"currency_amount": 500, "shop_states": {}}  # Start with 500 Rūpa
         self._shop_system = ShopSystem(
