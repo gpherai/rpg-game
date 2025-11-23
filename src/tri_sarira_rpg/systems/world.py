@@ -46,6 +46,9 @@ class WorldSystem:
         quest_system: Any | None = None,
         inventory_system: Any | None = None,
         combat_system: Any | None = None,
+        on_show_message: Any | None = None,
+        on_start_battle: Any | None = None,
+        on_start_dialogue: Any | None = None,
     ) -> None:
         self._data_repository = data_repository or DataRepository()
         self._tiled_loader = TiledLoader(maps_dir=maps_dir)
@@ -53,6 +56,9 @@ class WorldSystem:
         self._quest = quest_system
         self._inventory = inventory_system
         self._combat = combat_system
+        self._on_show_message = on_show_message
+        self._on_start_battle = on_start_battle
+        self._on_start_dialogue = on_start_dialogue
 
         # Current world state
         self._current_zone_id: str | None = None
@@ -62,6 +68,14 @@ class WorldSystem:
         # Triggers (chests, events)
         self._triggers: dict[str, Trigger] = {}
         self._triggered_ids: set[str] = set()  # For once_per_save tracking
+
+    def reset_state(self) -> None:
+        """Reset runtime state (triggers, current map/player) for new games."""
+        self._current_zone_id = None
+        self._current_map = None
+        self._player = None
+        self._triggers.clear()
+        self._triggered_ids.clear()
 
     def load_zone(
         self, zone_id: str, spawn_id: str | None = None, from_portal: bool = False
@@ -287,6 +301,9 @@ class WorldSystem:
         quest_system: Any | None = None,
         inventory_system: Any | None = None,
         combat_system: Any | None = None,
+        on_show_message: Any | None = None,
+        on_start_battle: Any | None = None,
+        on_start_dialogue: Any | None = None,
     ) -> None:
         """Koppel optionele systems voor triggers/collectables."""
         if flags_system:
@@ -297,6 +314,12 @@ class WorldSystem:
             self._inventory = inventory_system
         if combat_system:
             self._combat = combat_system
+        if on_show_message:
+            self._on_show_message = on_show_message
+        if on_start_battle:
+            self._on_start_battle = on_start_battle
+        if on_start_dialogue:
+            self._on_start_dialogue = on_start_dialogue
 
     def _trigger_event(self, trigger: Trigger) -> None:
         """Activeer een trigger."""
@@ -351,6 +374,11 @@ class WorldSystem:
         if self._flags:
             self._flags.set_flag(opened_flag)
 
+        # Feedback message
+        if self._on_show_message:
+            loot_text = ", ".join(f"{entry.get('quantity',1)}x {entry.get('item_id')}" for entry in contents)
+            self._on_show_message(f"Chest opened: {loot_text}")
+
     def _execute_event_actions(self, actions: list[dict[str, Any]]) -> None:
         """Voer event acties uit."""
         for action in actions:
@@ -394,13 +422,16 @@ class WorldSystem:
 
             elif action_type == "START_BATTLE":
                 group_id = action.get("enemy_group_id")
-                if group_id and self._combat:
+                if group_id:
                     group = self._data_repository.get_enemy_group(group_id)
                     if not group:
                         logger.warning(f"[EVENT] Enemy group {group_id} not found")
                         continue
                     enemy_ids = group.get("enemies", [])
-                    self._combat.start_battle(enemy_ids)
+                    if self._on_start_battle:
+                        self._on_start_battle(enemy_ids)
+                    elif self._combat:
+                        self._combat.start_battle(enemy_ids)
                     logger.info(f"[EVENT] Battle started with group {group_id} ({enemy_ids})")
                 else:
                     logger.warning("[EVENT] Cannot start battle; missing combat system or group_id")
@@ -442,6 +473,14 @@ class WorldSystem:
                         logger.info(f"[EVENT] Quest completed: {quest_id}")
                     except Exception as e:
                         logger.warning(f"[EVENT] Failed to complete quest {quest_id}: {e}")
+
+            elif action_type == "START_DIALOGUE":
+                dialogue_id = action.get("dialogue_id")
+                if dialogue_id:
+                    if self._on_start_dialogue:
+                        self._on_start_dialogue(dialogue_id)
+                    else:
+                        logger.warning("[EVENT] START_DIALOGUE has no handler attached")
 
             else:
                 logger.warning(f"[EVENT] Unsupported action_type: {action_type}")
