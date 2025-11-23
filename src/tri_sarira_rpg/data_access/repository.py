@@ -386,13 +386,6 @@ class DataRepository:
             logger.warning("items.json not found, returning empty list")
             return []
 
-    # Legacy methods (for compatibility)
-    def get_enemies_for_group(self, group_id: str) -> list[dict[str, Any]]:
-        """Retourneer enemy-entries voor een encountergroep."""
-        # For now just return all enemies matching the group_id tag
-        enemies = self.get_all_enemies()
-        return [e for e in enemies if group_id in e.get("tags", [])]
-
     def get_quest(self, quest_id: str) -> dict[str, Any] | None:
         """Haal questdata op voor questsystemen."""
         try:
@@ -468,17 +461,6 @@ class DataRepository:
                     return chest
         except FileNotFoundError:
             logger.warning("chests.json not found")
-        return None
-
-    def get_enemy_group(self, group_id: str) -> dict[str, Any] | None:
-        """Haal een enemy group op uit enemy_groups.json."""
-        try:
-            data = self._loader.load_json("enemy_groups.json")
-            for group in data.get("enemy_groups", []):
-                if group.get("group_id") == group_id:
-                    return group
-        except FileNotFoundError:
-            logger.warning("enemy_groups.json not found")
         return None
 
     # Shop methods (Step 8: Shop System v0)
