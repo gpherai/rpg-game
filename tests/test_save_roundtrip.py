@@ -230,6 +230,27 @@ def test_load_metadata_fallback_when_missing_file(save_system: SaveSystem, test_
     assert metadata["day_index"] == save_data["time_state"]["day_index"]
 
 
+def test_save_to_different_slots_writes_separate_metadata(
+    save_system: SaveSystem, test_save_dir: Path
+) -> None:
+    """Opslaan naar meerdere slots schrijft voor elk slot metadata."""
+    save_data = save_system.build_save()
+    save_system.save_to_file(1, save_data)
+    save_system.save_to_file(2, save_data)
+
+    meta1 = test_save_dir / "save_slot_1_meta.json"
+    meta2 = test_save_dir / "save_slot_2_meta.json"
+
+    assert meta1.exists()
+    assert meta2.exists()
+
+    md1 = save_system.load_metadata(1)
+    md2 = save_system.load_metadata(2)
+
+    assert md1 is not None and md2 is not None
+    assert md1["slot_id"] == 1
+    assert md2["slot_id"] == 2
+
 def test_party_state_roundtrip(save_system: SaveSystem, party_system: PartySystem) -> None:
     """Test dat party state correct wordt gesaved en restored."""
     # Get initial state
