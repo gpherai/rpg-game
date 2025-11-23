@@ -214,6 +214,22 @@ def test_all_referenced_skills_exist(data_repository: DataRepository) -> None:
     assert not missing_skill_errors, f"Missing skill references: {missing_skill_errors}"
 
 
+def test_r1_main_story_quest_structure(data_loader: DataLoader) -> None:
+    """Controleer basisstructuur van de R1 main story quest."""
+    data = data_loader.load_json("quests.json")
+    quests = {q["quest_id"]: q for q in data.get("quests", [])}
+    quest = quests.get("q_r1_shrine_purification")
+    assert quest is not None, "q_r1_shrine_purification should exist"
+
+    stages = quest.get("stages", [])
+    stage_ids = [s.get("stage_id") for s in stages]
+    expected = ["talk_to_elder", "travel_to_shrine", "cleanse_shrine", "report_back"]
+    assert stage_ids == expected, f"Unexpected stage order: {stage_ids}"
+
+    # Ensure final stage is marked final
+    assert stages[-1].get("is_final") is True, "Final stage should be marked is_final"
+
+
 def test_repository_get_all_actors(data_repository: DataRepository) -> None:
     """Test dat get_all_actors actors teruggeeft met valide structuur."""
     actors = data_repository.get_all_actors()

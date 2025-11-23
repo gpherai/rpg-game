@@ -181,23 +181,29 @@ class BattleScene(Scene):
                 self._selected_skill_index = min(max_index, self._selected_skill_index + 1)
             elif key in (pygame.K_RETURN, pygame.K_SPACE):
                 self._confirm_skill_selection()
-            elif key == pygame.K_ESCAPE:
+            elif key in (pygame.K_ESCAPE, pygame.K_BACKSPACE, pygame.K_q):
                 self._menu_state = MenuState.MAIN_MENU
+                self._selected_skill_index = 0
 
         elif self._menu_state == MenuState.TARGET_SELECT:
             state = self._combat.get_battle_state_view()
             if not state:
                 return
 
-            max_index = len(state.enemies) - 1
-            if key == pygame.K_LEFT or key == pygame.K_a:
+            alive_enemies = [e for e in state.enemies if e.is_alive]
+            max_index = max(0, len(alive_enemies) - 1)
+            self._selected_target_index = min(self._selected_target_index, max_index)
+
+            # Vertical navigation (enemies staan onder elkaar)
+            if key in (pygame.K_UP, pygame.K_w):
                 self._selected_target_index = max(0, self._selected_target_index - 1)
-            elif key == pygame.K_RIGHT or key == pygame.K_d:
+            elif key in (pygame.K_DOWN, pygame.K_s):
                 self._selected_target_index = min(max_index, self._selected_target_index + 1)
             elif key in (pygame.K_RETURN, pygame.K_SPACE):
                 self._confirm_target_selection()
-            elif key == pygame.K_ESCAPE:
+            elif key in (pygame.K_ESCAPE, pygame.K_BACKSPACE, pygame.K_q):
                 self._menu_state = MenuState.MAIN_MENU
+                self._selected_target_index = 0
 
         elif self._menu_state == MenuState.ITEM_SELECT:
             available_items = self._inventory.get_available_items()
@@ -209,8 +215,9 @@ class BattleScene(Scene):
                 self._selected_item_index = min(max_index, self._selected_item_index + 1)
             elif key in (pygame.K_RETURN, pygame.K_SPACE):
                 self._confirm_item_selection()
-            elif key == pygame.K_ESCAPE:
+            elif key in (pygame.K_ESCAPE, pygame.K_BACKSPACE, pygame.K_q):
                 self._menu_state = MenuState.MAIN_MENU
+                self._selected_item_index = 0
 
     def _confirm_main_menu_selection(self) -> None:
         """Confirm main menu choice."""
@@ -501,23 +508,17 @@ class BattleScene(Scene):
         x_start = self._screen_width - 350
         y_offset = 100
 
-        for i, enemy in enumerate(state.enemies):
-            if not enemy.is_alive:
-                continue  # Skip dead enemies (is_alive is property)
+        alive_enemies = [e for e in state.enemies if e.is_alive]
+
+        for i, enemy in enumerate(alive_enemies):
 
             x = x_start
             y = y_offset + i * 100
 
             # Highlight if selected as target
             if self._menu_state == MenuState.TARGET_SELECT:
-                alive_enemies = [e for e in state.enemies if e.is_alive]
-                if i < len(alive_enemies) and i == self._selected_target_index:
-                    pygame.draw.rect(
-                        surface,
-                        self._color_highlight,
-                        (x - 10, y - 10, 320, 90),
-                        3,
-                    )
+                if i == self._selected_target_index:
+                    pygame.draw.rect(surface, self._color_highlight, (x - 10, y - 10, 320, 90), 3)
 
             # Draw name
             name_text = self._font_large.render(enemy.name, True, self._color_enemy)

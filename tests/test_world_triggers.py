@@ -108,6 +108,46 @@ def test_start_battle_uses_enemy_group() -> None:
     assert group == ["en_shrine_construct", "en_corrupted_wisp", "en_corrupted_wisp"]
 
 
+def test_damage_party_action_is_handled() -> None:
+    messages: list[str] = []
+
+    def show_message(msg: str) -> None:
+        messages.append(msg)
+
+    world = make_world()
+    world.attach_systems(on_show_message=show_message)
+
+    action = {
+        "action_type": "DAMAGE_PARTY",
+        "damage_amount": 10,
+        "damage_type": "physical",
+        "message": "A hidden trap hits you!",
+    }
+
+    world._execute_event_actions([action])
+
+    assert messages == ["A hidden trap hits you!"]
+
+
+def test_play_cutscene_action_stub() -> None:
+    messages: list[str] = []
+
+    def show_message(msg: str) -> None:
+        messages.append(msg)
+
+    world = make_world()
+    world.attach_systems(on_show_message=show_message)
+
+    action = {
+        "action_type": "PLAY_CUTSCENE",
+        "cutscene_id": "cs_test",
+        "message": "Cutscene placeholder",
+    }
+
+    world._execute_event_actions([action])
+    assert messages == ["Cutscene placeholder"]
+
+
 def test_restore_from_save_deactivates_once_per_save_triggers() -> None:
     world = make_world()
 

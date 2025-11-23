@@ -40,6 +40,11 @@
           "action_type": "SET_FLAG",
           "flag_id": "flag_shrine_clearing_guardians_defeated",
           "value": true
+        },
+        {
+          "action_type": "QUEST_ADVANCE",
+          "quest_id": "q_r1_shrine_purification",
+          "stage_id": "cleanse_shrine"
         }
       ]
     },
@@ -184,6 +189,11 @@
           "action_type": "SET_FLAG",
           "flag_id": "flag_shrine_boss_defeated",
           "value": true
+        },
+        {
+          "action_type": "QUEST_ADVANCE",
+          "quest_id": "q_r1_shrine_purification",
+          "stage_id": "report_back"
         }
       ]
     },

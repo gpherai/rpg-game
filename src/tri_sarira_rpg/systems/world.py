@@ -444,6 +444,15 @@ class WorldSystem:
                 else:
                     logger.warning("[EVENT] Cannot start battle; missing combat system or group_id")
 
+            elif action_type == "DAMAGE_PARTY":
+                damage_amount = action.get("damage_amount", 0)
+                damage_type = action.get("damage_type", "generic")
+                logger.info(f"[EVENT] Party takes {damage_amount} {damage_type} damage (stub)")
+                # Overworld heeft geen HP-tracking; toon alleen message indien mogelijk
+                msg = action.get("message")
+                if self._on_show_message and msg:
+                    self._on_show_message(msg)
+
             elif action_type == "QUEST_START":
                 quest_id = action.get("quest_id")
                 if quest_id and self._quest:
@@ -489,6 +498,14 @@ class WorldSystem:
                         self._on_start_dialogue(dialogue_id)
                     else:
                         logger.warning("[EVENT] START_DIALOGUE has no handler attached")
+
+            elif action_type == "PLAY_CUTSCENE":
+                cutscene_id = action.get("cutscene_id", "<unknown>")
+                logger.info(f"[EVENT] Play cutscene: {cutscene_id} (stub)")
+                # Optional inline message for feedback
+                msg = action.get("message")
+                if msg and self._on_show_message:
+                    self._on_show_message(msg)
 
             else:
                 logger.warning(f"[EVENT] Unsupported action_type: {action_type}")

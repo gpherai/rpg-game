@@ -26,6 +26,45 @@
       }
     },
     {
+      "quest_id": "q_r1_shrine_purification",
+      "title": "Zuivering van het Heiligdom",
+      "description": "De elder vraagt je het heiligdom te zuiveren en verslag uit te brengen.",
+      "quest_type": "MSQ",
+      "stages": [
+        {
+          "stage_id": "talk_to_elder",
+          "description": "Praat met de elder in Chandrapur over de problemen bij het heiligdom.",
+          "is_final": false,
+          "next_stage_id": "travel_to_shrine"
+        },
+        {
+          "stage_id": "travel_to_shrine",
+          "description": "Reis via de bosroute naar de shrine clearing en breek door de corrupte wachters.",
+          "is_final": false,
+          "next_stage_id": "cleanse_shrine"
+        },
+        {
+          "stage_id": "cleanse_shrine",
+          "description": "Versla de corrupted guardians en de shrine guardian in het binnenste heiligdom.",
+          "is_final": false,
+          "next_stage_id": "report_back"
+        },
+        {
+          "stage_id": "report_back",
+          "description": "Keer terug naar Chandrapur en rapporteer bij de elder.",
+          "is_final": true
+        }
+      ],
+      "rewards": {
+        "xp": 200,
+        "money": 80,
+        "items": [
+          { "item_id": "item_medium_herb", "quantity": 2 },
+          { "item_id": "item_stamina_tonic", "quantity": 1 }
+        ]
+      }
+    },
+    {
       "quest_id": "q_test_simple",
       "title": "Test Quest: Simpel",
       "description": "Een simpele test quest met één stage voor testing.",
