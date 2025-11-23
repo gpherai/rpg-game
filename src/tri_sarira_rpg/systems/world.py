@@ -42,9 +42,17 @@ class WorldSystem:
         self,
         data_repository: DataRepository | None = None,
         maps_dir: Path | None = None,
+        flags_system: Any | None = None,
+        quest_system: Any | None = None,
+        inventory_system: Any | None = None,
+        combat_system: Any | None = None,
     ) -> None:
         self._data_repository = data_repository or DataRepository()
         self._tiled_loader = TiledLoader(maps_dir=maps_dir)
+        self._flags = flags_system
+        self._quest = quest_system
+        self._inventory = inventory_system
+        self._combat = combat_system
 
         # Current world state
         self._current_zone_id: str | None = None
@@ -208,7 +216,8 @@ class WorldSystem:
         self._player.position.x = new_x
         self._player.position.y = new_y
 
-        # Check for triggers ON_STEP
+        # Check for triggers ON_ENTER and ON_STEP
+        self._check_triggers_at_position("ON_ENTER")
         self._check_triggers_at_position("ON_STEP")
 
         # Check for portals
@@ -271,6 +280,24 @@ class WorldSystem:
             # Trigger the event
             self._trigger_event(trigger)
 
+    def attach_systems(
+        self,
+        *,
+        flags_system: Any | None = None,
+        quest_system: Any | None = None,
+        inventory_system: Any | None = None,
+        combat_system: Any | None = None,
+    ) -> None:
+        """Koppel optionele systems voor triggers/collectables."""
+        if flags_system:
+            self._flags = flags_system
+        if quest_system:
+            self._quest = quest_system
+        if inventory_system:
+            self._inventory = inventory_system
+        if combat_system:
+            self._combat = combat_system
+
     def _trigger_event(self, trigger: Trigger) -> None:
         """Activeer een trigger."""
         logger.info(
@@ -283,8 +310,141 @@ class WorldSystem:
             self._triggered_ids.add(trigger.trigger_id)
             trigger.active = False
 
-        # For Step 3, we just log the trigger
-        # Later: call event system, open chest, start dialogue, etc.
+        # Chest trigger (chest_id == event_id)
+        if trigger.event_id:
+            chest = self._data_repository.get_chest(trigger.event_id)
+            if chest:
+                self._open_chest(chest)
+                return
+
+            # Regular event trigger
+            event_def = self._data_repository.get_event(trigger.event_id)
+            if event_def:
+                self._execute_event_actions(event_def.get("actions", []))
+                return
+
+        logger.warning(f"No event/chest found for trigger {trigger.event_id}")
+
+    def _open_chest(self, chest: dict[str, Any]) -> None:
+        """Verwerk chest contents en flags."""
+        chest_id = chest.get("chest_id", "<unknown>")
+
+        # Already opened?
+        opened_flag = f"chest_opened_{chest_id}"
+        if self._flags and self._flags.has_flag(opened_flag):
+            logger.info(f"Chest {chest_id} already opened")
+            return
+
+        # Give items
+        contents = chest.get("contents", [])
+        if self._inventory:
+            for entry in contents:
+                item_id = entry.get("item_id")
+                qty = entry.get("quantity", 1)
+                if item_id:
+                    self._inventory.add_item(item_id, qty)
+                    logger.info(f"Received {qty}x {item_id} from chest {chest_id}")
+        else:
+            logger.warning("No inventory system attached; cannot grant chest items")
+
+        # Set flag
+        if self._flags:
+            self._flags.set_flag(opened_flag)
+
+    def _execute_event_actions(self, actions: list[dict[str, Any]]) -> None:
+        """Voer event acties uit."""
+        for action in actions:
+            action_type = action.get("action_type")
+            if not action_type:
+                logger.warning("Event action missing action_type")
+                continue
+
+            if action_type == "SHOW_MESSAGE":
+                message = action.get("message", "")
+                logger.info(f"[EVENT] {message}")
+
+            elif action_type == "SET_FLAG":
+                flag_id = action.get("flag_id")
+                if flag_id and self._flags:
+                    self._flags.set_flag(flag_id)
+                    logger.info(f"[EVENT] Flag set: {flag_id}")
+
+            elif action_type == "CLEAR_FLAG":
+                flag_id = action.get("flag_id")
+                if flag_id and self._flags:
+                    self._flags.clear_flag(flag_id)
+                    logger.info(f"[EVENT] Flag cleared: {flag_id}")
+
+            elif action_type in ("GIVE_ITEM", "GRANT_REWARDS"):
+                # GRANT_REWARDS may include XP/money; for now handle items subset
+                item_id = action.get("item_id")
+                qty = action.get("quantity", 1)
+                if item_id and self._inventory:
+                    self._inventory.add_item(item_id, qty)
+                    logger.info(f"[EVENT] Received {qty}x {item_id}")
+
+            elif action_type == "CHEST_OPEN":
+                chest_id = action.get("chest_id")
+                if chest_id:
+                    chest_def = self._data_repository.get_chest(chest_id)
+                    if chest_def:
+                        self._open_chest(chest_def)
+                    else:
+                        logger.warning(f"[EVENT] Chest {chest_id} not found")
+
+            elif action_type == "START_BATTLE":
+                group_id = action.get("enemy_group_id")
+                if group_id and self._combat:
+                    group = self._data_repository.get_enemy_group(group_id)
+                    if not group:
+                        logger.warning(f"[EVENT] Enemy group {group_id} not found")
+                        continue
+                    enemy_ids = group.get("enemies", [])
+                    self._combat.start_battle(enemy_ids)
+                    logger.info(f"[EVENT] Battle started with group {group_id} ({enemy_ids})")
+                else:
+                    logger.warning("[EVENT] Cannot start battle; missing combat system or group_id")
+
+            elif action_type == "QUEST_START":
+                quest_id = action.get("quest_id")
+                if quest_id and self._quest:
+                    try:
+                        self._quest.start_quest(quest_id)
+                        logger.info(f"[EVENT] Quest started: {quest_id}")
+                    except Exception as e:
+                        logger.warning(f"[EVENT] Failed to start quest {quest_id}: {e}")
+
+            elif action_type == "QUEST_ADVANCE":
+                quest_id = action.get("quest_id")
+                stage_id = action.get("stage_id") or action.get("next_stage_id")
+                if quest_id and self._quest:
+                    try:
+                        self._quest.advance_quest(quest_id, stage_id)
+                        logger.info(f"[EVENT] Quest advanced: {quest_id} -> {stage_id}")
+                    except Exception as e:
+                        logger.warning(f"[EVENT] Failed to advance quest {quest_id}: {e}")
+
+            elif action_type == "COMPLETE_QUEST_STAGE":
+                quest_id = action.get("quest_id")
+                stage_id = action.get("stage_id")
+                if quest_id and self._quest:
+                    try:
+                        self._quest.advance_quest(quest_id, stage_id)
+                        logger.info(f"[EVENT] Quest stage completed: {quest_id} {stage_id}")
+                    except Exception as e:
+                        logger.warning(f"[EVENT] Failed to complete quest stage {quest_id}: {e}")
+
+            elif action_type == "QUEST_COMPLETE":
+                quest_id = action.get("quest_id")
+                if quest_id and self._quest:
+                    try:
+                        self._quest.complete_quest(quest_id)
+                        logger.info(f"[EVENT] Quest completed: {quest_id}")
+                    except Exception as e:
+                        logger.warning(f"[EVENT] Failed to complete quest {quest_id}: {e}")
+
+            else:
+                logger.warning(f"[EVENT] Unsupported action_type: {action_type}")
 
     def _check_portal_transition(self) -> None:
         """Check of de speler op een portal staat en voer transitie uit."""
