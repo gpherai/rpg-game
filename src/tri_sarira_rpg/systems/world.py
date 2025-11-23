@@ -13,6 +13,7 @@ from tri_sarira_rpg.data_access.repository import DataRepository
 if TYPE_CHECKING:
     from tri_sarira_rpg.core.protocols import (
         CombatSystemProtocol,
+        DataRepositoryProtocol,
         FlagsSystemProtocol,
         InventorySystemProtocol,
         QuestSystemProtocol,
@@ -50,7 +51,7 @@ class WorldSystem:
 
     def __init__(
         self,
-        data_repository: DataRepository | None = None,
+        data_repository: "DataRepositoryProtocol | None" = None,
         maps_dir: Path | None = None,
         flags_system: Any | None = None,
         quest_system: Any | None = None,
