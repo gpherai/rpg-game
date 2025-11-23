@@ -118,6 +118,21 @@
           "duration": 3
         }
       ]
+    },
+    {
+      "id": "sk_spirit_drain",
+      "name": "Spirit Drain",
+      "description": "Spirituele aanval die levensenergie wegtrekt",
+      "domain": "Spiritual",
+      "type": "attack",
+      "target": "single_enemy",
+      "power": 9,
+      "accuracy_bonus": 0,
+      "resource_cost": {
+        "type": "prana",
+        "amount": 4
+      },
+      "effects": []
     }
   ]
 }

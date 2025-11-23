@@ -259,6 +259,33 @@ def test_xp_distribution_bug(combat_system: CombatSystem, party_system: PartySys
     assert adhira_xp > 0, "XP should be positive"
 
 
+def test_duplicate_enemy_ids_target_alive_enemy(combat_system: CombatSystem) -> None:
+    """Wanneer meerdere enemies dezelfde actor_id delen, moet een levende target gekozen worden."""
+    combat_system.start_battle(["en_forest_sprout", "en_forest_sprout"])
+
+    internal_state = combat_system.battle_state
+    assert internal_state is not None
+
+    # Maak de eerste enemy "dood"
+    internal_state.enemies[0].current_hp = 0
+    assert internal_state.enemies[0].is_alive() is False
+    assert internal_state.enemies[1].is_alive() is True
+
+    # Lookup moet de levende enemy teruggeven
+    target = combat_system._get_combatant_by_id("en_forest_sprout")
+    assert target is internal_state.enemies[1]
+
+    # Actie op het target mag geen "no target" melding geven
+    action = BattleAction(
+        actor_id=internal_state.party[0].actor_id,
+        action_type=ActionType.ATTACK,
+        target_id="en_forest_sprout",
+    )
+    messages = combat_system.execute_action(action)
+    joined = " ".join(messages)
+    assert "no target" not in joined
+
+
 def test_battle_victory_xp_rewards(combat_system: CombatSystem) -> None:
     """Test dat victory XP rewards correct worden uitgedeeld."""
     combat_system.start_battle(["en_forest_sprout"])

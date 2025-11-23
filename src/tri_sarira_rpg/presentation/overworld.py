@@ -39,6 +39,7 @@ from tri_sarira_rpg.presentation.ui.hud import HUD, HUDData, PartyMemberInfo
 from tri_sarira_rpg.presentation.ui.pause_menu import PauseMenu
 from tri_sarira_rpg.presentation.ui.quest_log import QuestLogUI
 from tri_sarira_rpg.presentation.ui.shop_menu import ShopMenuUI
+from tri_sarira_rpg.presentation.battle import BattleScene
 from tri_sarira_rpg.services.game_data import GameDataService
 from tri_sarira_rpg.systems.dialogue import (
     DialogueContext,

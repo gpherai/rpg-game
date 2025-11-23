@@ -391,10 +391,15 @@ class CombatSystem:
         """Look up a combatant by their actor_id string."""
         if not self._battle_state:
             return None
+        fallback: Combatant | None = None
         for combatant in self._battle_state.party + self._battle_state.enemies:
-            if combatant.actor_id == actor_id:
+            if combatant.actor_id != actor_id:
+                continue
+            if combatant.is_alive():
                 return combatant
-        return None
+            if fallback is None:
+                fallback = combatant
+        return fallback
 
     def execute_action(self, action: BattleAction) -> list[str]:
         """Voer een actie uit en retourneer feedback messages.
