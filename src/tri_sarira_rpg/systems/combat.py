@@ -323,6 +323,10 @@ class CombatSystem:
             skills=enemy_data.get("skills", []),
         )
 
+    def _start_turn(self, combatant: Combatant) -> None:
+        """Voer begin-of-turn effecten uit (zoals Defend resetten)."""
+        combatant.is_defending = False
+
     def _get_current_combatant(self) -> Combatant | None:
         """Internal: haal de huidige combatant op (voor interne logica)."""
         if not self._battle_state:
@@ -332,6 +336,7 @@ class CombatSystem:
         while self._battle_state.current_turn_index < len(self._battle_state.turn_order):
             current = self._battle_state.turn_order[self._battle_state.current_turn_index]
             if current.is_alive():
+                self._start_turn(current)
                 return current
             # Skip dead unit
             self._battle_state.current_turn_index += 1
@@ -466,9 +471,6 @@ class CombatSystem:
             messages.extend(self._execute_defend(actor))
         elif action.action_type == ActionType.ITEM:
             messages.extend(self._execute_item(actor, target, action.item_id))
-
-        # Clear defend flag at end of action
-        actor.is_defending = False
 
         return messages
 

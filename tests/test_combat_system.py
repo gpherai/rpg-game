@@ -119,60 +119,52 @@ def test_basic_attack_damage_calculation(combat_system: CombatSystem) -> None:
         assert internal_state.enemies[0].current_hp >= 0, "HP should not go negative"
 
 
-def test_defend_action_bug(combat_system: CombatSystem) -> None:
-    """Test defend action en VERIFIEER de bekende 'easy mode' bug.
-
-    BUG: is_defending wordt gereset aan het EINDE van execute_action,
-    dus de defend flag werkt niet correct voor de volgende beurt.
-    Dit is GEWENST gedrag voor testing (easy mode).
-    """
-    state = combat_system.start_battle(["en_forest_sprout"])
-
-    defender_id = state.party[0].actor_id
-
-    # Access internal state to verify flags
+def test_defend_action_persists_and_is_cleared(combat_system: CombatSystem) -> None:
+    """Test dat de Defend-status correct wordt gezet, een ronde aanhoudt en gereset wordt."""
+    # Setup
+    combat_system.start_battle(["en_shrine_guardian"])
     internal_state = combat_system.battle_state
     assert internal_state is not None
-    defender = internal_state.party[0]
+    player = internal_state.party[0]
+    enemy = internal_state.enemies[0]
 
-    # Verify defender is not defending initially
-    assert defender.is_defending is False
+    # --- Turn 1: Player's turn ---
+    # De vlag is False aan het begin van de beurt (verzekerd door de fix)
+    assert player.is_defending is False
 
-    # Execute defend action
-    action = BattleAction(actor_id=defender_id, action_type=ActionType.DEFEND)
-    messages = combat_system.execute_action(action)
+    # Speler kiest "Defend"
+    action_defend = BattleAction(actor_id=player.battle_id, action_type=ActionType.DEFEND)
+    combat_system.execute_action(action_defend)
 
-    assert any("defensive stance" in msg for msg in messages)
+    # De vlag moet nu True zijn, en blijft zo na de actie
+    assert player.is_defending is True
 
-    # BUG VERIFICATION: is_defending should be False after execute_action
-    # This is the "easy mode" bug - defend flag is cleared too early
-    assert defender.is_defending is False, "BUG: Defend flag cleared at end of action"
+    # --- Turn 2: Enemy's turn ---
+    combat_system.advance_turn()
+    assert combat_system.get_current_actor().actor_id == enemy.actor_id
 
+    # De speler is nog steeds aan het verdedigen
+    assert player.is_defending is True
 
-def test_defend_reduces_damage(combat_system: CombatSystem) -> None:
-    """Test dat defend damage reduction werkt (wanneer flag handmatig wordt gezet)."""
-    state = combat_system.start_battle(["en_forest_sprout"])
+    # Vijand valt aan
+    enemy_action = BattleAction(
+        actor_id=enemy.battle_id, action_type=ActionType.ATTACK, target_id=player.battle_id
+    )
+    combat_system.execute_action(enemy_action)
 
-    attacker_id = state.enemies[0].actor_id
-    defender_id = state.party[0].actor_id
+    # De vlag van de speler is nog steeds True, want het is zijn beurt nog niet geweest
+    assert player.is_defending is True
 
-    # Access internal state for mutation
-    internal_state = combat_system.battle_state
-    assert internal_state is not None
-    defender = internal_state.party[0]
+    # --- Turn 3: Player's turn again ---
+    combat_system.advance_turn()
 
-    # Manually set defend flag (simulating correct behavior)
-    defender.is_defending = True
+    # get_current_actor() roept _get_current_combatant aan, die de vlag reset
+    current_actor_view = combat_system.get_current_actor()
+    assert current_actor_view is not None
+    assert current_actor_view.actor_id == player.actor_id
 
-    initial_hp = defender.current_hp
-
-    # Execute attack
-    action = BattleAction(actor_id=attacker_id, action_type=ActionType.ATTACK, target_id=defender_id)
-    messages = combat_system.execute_action(action)
-
-    # If hit occurred, check that "defending" message appeared
-    if "misses" not in " ".join(messages) and defender.current_hp < initial_hp:
-        assert any("defending" in msg for msg in messages)
+    # De interne state van de speler moet nu gereset zijn
+    assert player.is_defending is False, "Defend status should be cleared at the start of the next turn."
 
 
 def test_skill_usage_with_resource_cost(combat_system: CombatSystem) -> None:
