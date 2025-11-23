@@ -198,6 +198,12 @@ class OverworldScene(Scene):
 
             # Priority 1.5: If equipment menu is visible, route to equipment menu UI
             if self._equipment_menu_visible:
+                # Allow quick toggle close with the same key (I) or Esc
+                if event.key in (pygame.K_i, pygame.K_ESCAPE):
+                    self._equipment_menu_visible = False
+                    logger.debug("Closing equipment menu via toggle")
+                    return
+
                 if self._equipment_menu_ui:
                     should_close = self._equipment_menu_ui.handle_event(event)
                     if should_close:

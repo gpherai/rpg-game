@@ -163,25 +163,149 @@
           "node_id": "n_intro",
           "speaker_id": "npc_r1_elder",
           "lines": [
-            {"text": "Welkom, reiziger. De shrine maakt onrustige geluiden."}
+            {"text": "Welkom, reiziger. De shrine is verontrustend stil geworden."}
           ],
           "choices": [
             {
-              "choice_id": "c_help",
-              "text": "Ik kijk het na.",
-              "effects": [
-                {"effect_type": "QUEST_START", "quest_id": "q_r1_shrine_intro"}
+              "choice_id": "c_start",
+              "text": "Wat is er aan de hand bij het heiligdom?",
+              "conditions": [
+                {"condition_type": "FLAG_NOT_SET", "params": {"flag_id": "flag_r1_msq_started"}}
               ],
-              "next_node_id": "n_ack",
+              "effects": [
+                {"effect_type": "SET_FLAG", "flag_id": "flag_r1_msq_started"},
+                {"effect_type": "QUEST_START", "quest_id": "q_r1_shrine_purification"},
+                {
+                  "effect_type": "QUEST_ADVANCE",
+                  "quest_id": "q_r1_shrine_purification",
+                  "next_stage_id": "travel_to_shrine"
+                }
+              ],
+              "next_node_id": "n_ack_start",
+              "end_conversation": false
+            },
+            {
+              "choice_id": "c_reminder",
+              "text": "Ik ga op weg naar de shrine.",
+              "conditions": [
+                {"condition_type": "FLAG_SET", "params": {"flag_id": "flag_r1_msq_started"}},
+                {"condition_type": "FLAG_NOT_SET", "params": {"flag_id": "flag_shrine_boss_defeated"}}
+              ],
+              "next_node_id": "n_reminder",
+              "end_conversation": false
+            },
+            {
+              "choice_id": "c_report",
+              "text": "De shrine is gezuiverd.",
+              "conditions": [
+                {"condition_type": "FLAG_SET", "params": {"flag_id": "flag_r1_msq_started"}},
+                {"condition_type": "FLAG_SET", "params": {"flag_id": "flag_shrine_boss_defeated"}},
+                {"condition_type": "FLAG_NOT_SET", "params": {"flag_id": "flag_r1_msq_completed"}}
+              ],
+              "effects": [
+                {"effect_type": "QUEST_COMPLETE", "quest_id": "q_r1_shrine_purification"},
+                {"effect_type": "SET_FLAG", "flag_id": "flag_r1_msq_completed"}
+              ],
+              "next_node_id": "n_complete",
+              "end_conversation": false
+            },
+            {
+              "choice_id": "c_after",
+              "text": "Hoe staat het met het heiligdom?",
+              "conditions": [
+                {"condition_type": "FLAG_SET", "params": {"flag_id": "flag_r1_msq_completed"}}
+              ],
+              "next_node_id": "n_post_complete",
               "end_conversation": false
             }
           ]
         },
         {
-          "node_id": "n_ack",
+          "node_id": "n_ack_start",
           "speaker_id": "npc_r1_elder",
           "lines": [
-            {"text": "Dank je. Ga voorzichtig."}
+            {"text": "Dank je. Ga via het bos naar de shrine clearing en verjaag de corruptie."}
+          ],
+          "choices": [],
+          "end_conversation": true
+        },
+        {
+          "node_id": "n_reminder",
+          "speaker_id": "npc_r1_elder",
+          "lines": [
+            {"text": "Haast je naar de shrine. De spirits wachten op jouw hulp."}
+          ],
+          "choices": [],
+          "end_conversation": true
+        },
+        {
+          "node_id": "n_complete",
+          "speaker_id": "npc_r1_elder",
+          "lines": [
+            {"text": "Uitstekend werk. De dorpelingen zullen weer rust vinden dankzij jou."}
+          ],
+          "choices": [],
+          "end_conversation": true
+        },
+        {
+          "node_id": "n_post_complete",
+          "speaker_id": "npc_r1_elder",
+          "lines": [
+            {"text": "Het heiligdom ademt weer. Blijf alert, maar rust nu uit."}
+          ],
+          "choices": [],
+          "end_conversation": true
+        }
+      ]
+    },
+    {
+      "dialogue_id": "dlg_r1_rajani_shrine_reaction",
+      "scope": "NPC",
+      "owner_id": "npc_comp_rajani",
+      "nodes": [
+        {
+          "node_id": "n_intro",
+          "speaker_id": "comp_rajani",
+          "lines": [
+            {"text": "Adhira, het is vreemd hoe stil de shrine werd."}
+          ],
+          "choices": [
+            {
+              "choice_id": "c_post_boss",
+              "text": "De corruptie is verjaagd.",
+              "conditions": [
+                {"condition_type": "FLAG_SET", "params": {"flag_id": "flag_shrine_boss_defeated"}},
+                {"condition_type": "COMPANION_IN_PARTY", "params": {"npc_id": "npc_comp_rajani"}}
+              ],
+              "next_node_id": "n_after",
+              "end_conversation": false
+            },
+            {
+              "choice_id": "c_pre_boss",
+              "text": "We gaan het heiligdom helpen.",
+              "conditions": [
+                {"condition_type": "FLAG_NOT_SET", "params": {"flag_id": "flag_shrine_boss_defeated"}},
+                {"condition_type": "COMPANION_IN_PARTY", "params": {"npc_id": "npc_comp_rajani"}}
+              ],
+              "next_node_id": "n_before",
+              "end_conversation": false
+            }
+          ]
+        },
+        {
+          "node_id": "n_before",
+          "speaker_id": "comp_rajani",
+          "lines": [
+            {"text": "Ik zal naast je staan. Laten we de spirits eer aandoen."}
+          ],
+          "choices": [],
+          "end_conversation": true
+        },
+        {
+          "node_id": "n_after",
+          "speaker_id": "comp_rajani",
+          "lines": [
+            {"text": "Je deed het. Ik voelde de stilte breken—de spirits luisteren weer."}
           ],
           "choices": [],
           "end_conversation": true
