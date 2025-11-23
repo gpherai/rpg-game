@@ -204,6 +204,16 @@ def test_repository_load_and_validate_all(data_repository: DataRepository) -> No
     assert success is True
 
 
+def test_all_referenced_skills_exist(data_repository: DataRepository) -> None:
+    """Skills die door actors/enemies gebruikt worden moeten bestaan."""
+    success = data_repository.load_and_validate_all()
+    errors = data_repository.get_validation_errors()
+    missing_skill_errors = [e for e in errors if "skill_id" in e]
+
+    assert success is True, f"Validation failed: {errors}"
+    assert not missing_skill_errors, f"Missing skill references: {missing_skill_errors}"
+
+
 def test_repository_get_all_actors(data_repository: DataRepository) -> None:
     """Test dat get_all_actors actors teruggeeft met valide structuur."""
     actors = data_repository.get_all_actors()

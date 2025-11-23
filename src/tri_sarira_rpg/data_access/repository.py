@@ -109,6 +109,19 @@ class DataRepository:
             if actor_id and actor_id not in actor_ids:
                 add_error(f"npc_meta.json: actor_id {actor_id} not found for npc {npc.get('npc_id')}")
 
+        # Skills referenced by actors/enemies must exist
+        for actor in loaded.get("actors.json", {}).get("actors", []):
+            actor_id = actor.get("id", "<unknown>")
+            for skill_id in actor.get("starting_skills", []):
+                if skill_id not in skill_ids:
+                    add_error(f"actors.json: actor {actor_id} references unknown skill_id {skill_id}")
+
+        for enemy in loaded.get("enemies.json", {}).get("enemies", []):
+            enemy_id = enemy.get("id", "<unknown>")
+            for skill_id in enemy.get("skills", []):
+                if skill_id not in skill_ids:
+                    add_error(f"enemies.json: enemy {enemy_id} references unknown skill_id {skill_id}")
+
         # npc_schedules: npc_id and zone_id must exist
         for sched in loaded.get("npc_schedules.json", {}).get("npc_schedules", []):
             npc_id = sched.get("npc_id")
