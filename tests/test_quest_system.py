@@ -232,14 +232,15 @@ def test_dialogue_quest_integration(
     assert session is not None
 
     # Choose option that starts quest
-    result = dialogue_system.choose_option(session, "c_help")
+    result = dialogue_system.choose_option(session, "c_start")
 
     # Verify quest was started
-    assert "Started quest: q_r1_shrine_intro" in result.effects_applied
+    assert "Started quest: q_r1_shrine_purification" in result.effects_applied
 
-    quest_state = quest_system.get_state("q_r1_shrine_intro")
+    quest_state = quest_system.get_state("q_r1_shrine_purification")
     assert quest_state is not None
     assert quest_state.status == QuestStatus.ACTIVE
+    assert quest_state.current_stage_id == "travel_to_shrine"
 
 
 def test_quest_not_found_error(quest_system: QuestSystem) -> None:
