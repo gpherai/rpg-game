@@ -175,7 +175,9 @@ class TiledLoader:
             # Parse map-level custom properties
             properties_elem = root.find("properties")
             if properties_elem is not None:
-                tiled_map.properties = self._parse_properties(properties_elem)
+                tiled_map.properties = self._parse_properties(
+                    properties_elem, context=f"map:{zone_id}"
+                )
 
             # Parse tile layers
             for layer_elem in root.findall("layer"):
@@ -201,9 +203,21 @@ class TiledLoader:
             logger.error(f"Error loading Tiled map {tmx_path}: {e}")
             raise
 
-    def _parse_properties(self, properties_elem: ET.Element) -> dict[str, Any]:
-        """Parse custom properties uit een <properties> element."""
+    def _parse_properties(
+        self, properties_elem: ET.Element, context: str = ""
+    ) -> dict[str, Any]:
+        """Parse custom properties uit een <properties> element.
+
+        Parameters
+        ----------
+        properties_elem : ET.Element
+            Het <properties> XML element.
+        context : str
+            Extra context voor logging (bijv. object naam/id of layer naam).
+        """
         props = {}
+        ctx_prefix = f"[{context}] " if context else ""
+
         for prop_elem in properties_elem.findall("property"):
             name = prop_elem.get("name", "")
             value = prop_elem.get("value", "")
@@ -214,14 +228,18 @@ class TiledLoader:
                 try:
                     props[name] = int(value)
                 except ValueError:
-                    logger.warning(f"Invalid int property '{name}' with value '{value}', using 0")
+                    logger.warning(
+                        "%sInvalid int property '%s' with value '%s', using 0",
+                        ctx_prefix, name, value
+                    )
                     props[name] = 0
             elif prop_type == "float":
                 try:
                     props[name] = float(value)
                 except ValueError:
                     logger.warning(
-                        f"Invalid float property '{name}' with value '{value}', using 0.0"
+                        "%sInvalid float property '%s' with value '%s', using 0.0",
+                        ctx_prefix, name, value
                     )
                     props[name] = 0.0
             elif prop_type == "bool":
@@ -295,7 +313,8 @@ class TiledLoader:
             properties = {}
             properties_elem = obj_elem.find("properties")
             if properties_elem is not None:
-                properties = self._parse_properties(properties_elem)
+                obj_context = f"{obj_type}:{obj_name}" if obj_name else f"{obj_type}:id={obj_id}"
+                properties = self._parse_properties(properties_elem, context=obj_context)
 
             tiled_obj = TiledObject(
                 id=obj_id,
