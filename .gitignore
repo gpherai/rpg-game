@@ -18,6 +18,7 @@ dist/
 .idea/
 .DS_Store
 saves/
+gemini.md
 
 # Package manager lock files
 uv.lock

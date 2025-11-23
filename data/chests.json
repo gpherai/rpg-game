@@ -68,7 +68,6 @@
       "zone_id": "z_r1_shrine_inner",
       "contents": [
         {"item_id": "item_medium_herb", "quantity": 3},
-        {"item_id": "item_stamina_tonic", "quantity": 2},
         {"item_id": "item_stamina_tonic", "quantity": 2}
       ],
       "one_time_only": true,

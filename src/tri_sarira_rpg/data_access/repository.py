@@ -39,61 +39,205 @@ class DataRepository:
         self._validation_errors.clear()
         all_ok = True
 
-        # Required data files
-        for data_type in ["actors", "enemies", "zones"]:
-            try:
-                data = self._loader.load_json(f"{data_type}.json")
-                required = self.REQUIRED_KEYS.get(data_type, ["id", "name"])
-                errors = self._loader.validate_data(data, data_type, required)
+        def add_error(message: str) -> None:
+            nonlocal all_ok
+            self._validation_errors.append(message)
+            all_ok = False
 
-                if errors:
-                    self._validation_errors.extend(errors)
-                    all_ok = False
-                    for error in errors:
-                        logger.error(f"Validation error: {error}")
-                else:
-                    logger.info(f"✓ {data_type}.json validated successfully")
-
-            except FileNotFoundError as e:
-                self._validation_errors.append(str(e))
-                logger.error(f"File not found: {e}")
-                all_ok = False
-            except ValueError as e:
-                self._validation_errors.append(str(e))
-                logger.error(f"Invalid data: {e}")
-                all_ok = False
-
-        # Optional data files (Step 4+)
-        for optional_file, data_type in [
+        # Load core files
+        required_files = [
+            ("actors.json", "actors"),
+            ("enemies.json", "enemies"),
+            ("items.json", "items"),
+            ("skills.json", "skills"),
+            ("zones.json", "zones"),
             ("npc_meta.json", "npcs"),
+            ("npc_schedules.json", "npc_schedules"),
+            ("quests.json", "quests"),
+            ("dialogue.json", "dialogues"),
+            ("chests.json", "chests"),
+            ("enemy_groups.json", "enemy_groups"),
+            ("loot_tables.json", "loot_tables"),
+            ("events.json", "events"),
+            ("shops.json", "shops"),
+        ]
+
+        loaded: dict[str, dict[str, Any]] = {}
+
+        for filename, _ in required_files:
+            try:
+                loaded[filename] = self._loader.load_json(filename)
+            except FileNotFoundError as e:
+                add_error(f"Required data file missing: {filename} ({e})")
+            except ValueError as e:
+                add_error(f"Invalid JSON in {filename}: {e}")
+
+        # Basic required-key validation for simple types
+        for filename, data_type in [
+            ("actors.json", "actors"),
+            ("enemies.json", "enemies"),
+            ("zones.json", "zones"),
             ("skills.json", "skills"),
             ("items.json", "items"),
         ]:
-            try:
-                data = self._loader.load_json(optional_file)
-                required = self.REQUIRED_KEYS.get(data_type, ["id"])
-                errors = self._loader.validate_data(data, data_type, required)
+            data = loaded.get(filename)
+            if not data:
+                continue
+            required = self.REQUIRED_KEYS.get(data_type, ["id", "name"])
+            errors = self._loader.validate_data(data, data_type, required)
+            if errors:
+                for error in errors:
+                    add_error(error)
 
-                if errors:
-                    self._validation_errors.extend(errors)
-                    for error in errors:
-                        logger.error(f"Validation error: {error}")
-                    # Don't fail validation entirely for optional file
-                else:
-                    logger.info(f"✓ {optional_file} validated successfully")
+        # Build lookup sets for cross-ref checks
+        actor_ids = {a["id"] for a in loaded.get("actors.json", {}).get("actors", [])}
+        enemy_ids = {e["id"] for e in loaded.get("enemies.json", {}).get("enemies", [])}
+        item_ids = {i["id"] for i in loaded.get("items.json", {}).get("items", [])}
+        skill_ids = {s["id"] for s in loaded.get("skills.json", {}).get("skills", [])}
+        zone_ids = {z["id"] for z in loaded.get("zones.json", {}).get("zones", [])}
+        npc_meta = loaded.get("npc_meta.json", {}).get("npcs", [])
+        npc_ids = {n.get("npc_id") for n in npc_meta if n.get("npc_id")}
+        quest_defs = loaded.get("quests.json", {}).get("quests", [])
+        quest_ids = {q["quest_id"] for q in quest_defs if "quest_id" in q}
+        enemy_groups = loaded.get("enemy_groups.json", {}).get("enemy_groups", [])
 
-            except FileNotFoundError:
-                logger.info(f"{optional_file} not found (optional for Step 4+/5+)")
-            except ValueError as e:
-                self._validation_errors.append(str(e))
-                logger.error(f"Invalid {optional_file} data: {e}")
-                # Don't fail validation entirely for optional file
+        # npc_meta basic check (actor_id optional)
+        for npc in npc_meta:
+            if "npc_id" not in npc:
+                add_error("npc_meta.json: entry missing npc_id")
+            actor_id = npc.get("actor_id")
+            if actor_id and actor_id not in actor_ids:
+                add_error(f"npc_meta.json: actor_id {actor_id} not found for npc {npc.get('npc_id')}")
+
+        # npc_schedules: npc_id and zone_id must exist
+        for sched in loaded.get("npc_schedules.json", {}).get("npc_schedules", []):
+            npc_id = sched.get("npc_id")
+            if npc_id and npc_id not in npc_ids:
+                add_error(f"npc_schedules.json: npc_id {npc_id} not found in npc_meta.json")
+            for rule in sched.get("rules", []):
+                z = rule.get("zone_id")
+                if z and z not in zone_ids:
+                    add_error(f"npc_schedules.json: rule zone_id {z} not found for npc {npc_id}")
+
+        # Quests: stages/rewards/items
+        seen_quest_ids: set[str] = set()
+        for quest in quest_defs:
+            qid = quest.get("quest_id")
+            if not qid:
+                add_error("quests.json: quest missing quest_id")
+                continue
+            if qid in seen_quest_ids:
+                add_error(f"quests.json: duplicate quest_id {qid}")
+            seen_quest_ids.add(qid)
+
+            stages = quest.get("stages", [])
+            if not stages:
+                add_error(f"quests.json: quest {qid} has no stages")
+            for reward in quest.get("rewards", {}).get("items", []):
+                iid = reward.get("item_id")
+                if iid and iid not in item_ids:
+                    add_error(f"quests.json: reward item_id {iid} not found for quest {qid}")
+
+        # Dialogue: speakers/items/quests in effects/conditions
+        dialogue_entries = loaded.get("dialogue.json", {}).get("dialogues", [])
+        for dlg in dialogue_entries:
+            for node in dlg.get("nodes", []):
+                speaker = node.get("speaker_id")
+                if speaker and speaker not in npc_ids and speaker not in actor_ids:
+                    add_error(f"dialogue.json: speaker_id {speaker} not found (dialogue {dlg.get('dialogue_id')})")
+                # Node-level effects (rare)
+                for eff in node.get("effects", []):
+                    iid = eff.get("item_id")
+                    if iid and iid not in item_ids:
+                        add_error(f"dialogue.json: item_id {iid} not found in node {node.get('node_id')}")
+                for choice in node.get("choices", []):
+                    for eff in choice.get("effects", []):
+                        iid = eff.get("item_id")
+                        if iid and iid not in item_ids:
+                            add_error(
+                                f"dialogue.json: item_id {iid} not found in choice {choice.get('choice_id')} "
+                                f"(dialogue {dlg.get('dialogue_id')})"
+                            )
+                    for cond in choice.get("conditions", []):
+                        if cond.get("condition_type") == "COMPANION_IN_PARTY":
+                            npc_id = cond.get("params", {}).get("npc_id")
+                            if npc_id and npc_id not in npc_ids:
+                                add_error(
+                                    f"dialogue.json: npc_id {npc_id} in condition not found "
+                                    f"(dialogue {dlg.get('dialogue_id')})"
+                                )
+
+        # Chests: zone_id and item_ids
+        for chest in loaded.get("chests.json", {}).get("chests", []):
+            cid = chest.get("chest_id")
+            zone_id = chest.get("zone_id")
+            if zone_id and zone_id not in zone_ids:
+                add_error(f"chests.json: chest {cid} has unknown zone_id {zone_id}")
+            for entry in chest.get("contents", []):
+                iid = entry.get("item_id")
+                if iid and iid not in item_ids:
+                    add_error(f"chests.json: chest {cid} references unknown item_id {iid}")
+
+        # Loot tables: item_ids must exist
+        for table in loaded.get("loot_tables.json", {}).get("loot_tables", []):
+            tid = table.get("loot_table_id")
+            for entry in table.get("entries", []):
+                iid = entry.get("item_id")
+                if iid and iid not in item_ids:
+                    add_error(f"loot_tables.json: loot_table {tid} references unknown item_id {iid}")
+
+        # Enemy groups: enemies must exist
+        for group in enemy_groups:
+            gid = group.get("group_id")
+            for enemy in group.get("enemies", []):
+                if enemy not in enemy_ids:
+                    add_error(f"enemy_groups.json: group {gid} references unknown enemy_id {enemy}")
+
+        # Events: enemy_group_id, quest_id/stage_id, zone_id (if present)
+        for event in loaded.get("events.json", {}).get("events", []):
+            eid = event.get("event_id")
+            trig = event.get("trigger", {})
+            z = trig.get("zone_id")
+            if z and z not in zone_ids:
+                add_error(f"events.json: event {eid} has unknown trigger zone_id {z}")
+            for action in event.get("actions", []):
+                eg = action.get("enemy_group_id")
+                if eg and all(g.get("group_id") != eg for g in enemy_groups):
+                    add_error(f"events.json: event {eid} references unknown enemy_group_id {eg}")
+                qid = action.get("quest_id")
+                if qid and qid not in quest_ids:
+                    add_error(f"events.json: event {eid} references unknown quest_id {qid}")
+                sid = action.get("stage_id")
+                if qid and sid:
+                    quest = next((q for q in quest_defs if q.get("quest_id") == qid), None)
+                    if quest and all(s.get("stage_id") != sid for s in quest.get("stages", [])):
+                        add_error(f"events.json: event {eid} references unknown stage_id {sid} for quest {qid}")
+
+        # Shops: zone_id and item_ids
+        for shop in loaded.get("shops.json", {}).get("shops", []):
+            sid = shop.get("shop_id")
+            zone_id = shop.get("zone_id")
+            if zone_id and zone_id not in zone_ids:
+                add_error(f"shops.json: shop {sid} has unknown zone_id {zone_id}")
+            for entry in shop.get("inventory_entries", []):
+                iid = entry.get("item_id")
+                if iid and iid not in item_ids:
+                    add_error(f"shops.json: shop {sid} references unknown item_id {iid}")
 
         return all_ok
 
     def get_validation_errors(self) -> list[str]:
         """Geef alle validatiefouten terug."""
         return self._validation_errors.copy()
+
+    @staticmethod
+    def format_validation_errors(errors: list[str]) -> str:
+        """Maak een leesbare samenvatting van validatiefouten."""
+        if not errors:
+            return "Data validation passed with no errors."
+        lines = [f"Data validation failed with {len(errors)} error(s):"]
+        lines.extend([f"  - {err}" for err in errors])
+        return "\n".join(lines)
 
     # Actor methods
     def get_actor(self, actor_id: str) -> dict[str, Any] | None:

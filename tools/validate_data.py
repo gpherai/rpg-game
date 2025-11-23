@@ -80,10 +80,9 @@ def validate_data() -> bool:
     core_ok = repo.load_and_validate_all()
     if not core_ok:
         errors = True
-        logger.error("")
-        logger.error("Validation errors found:")
-        for error in repo.get_validation_errors():
-            logger.error(f"  - {error}")
+        formatted = DataRepository.format_validation_errors(repo.get_validation_errors())
+        for line in formatted.splitlines():
+            logger.error(line)
 
     # Print summary
     logger.info("")
