@@ -303,6 +303,14 @@ class Game:
         )
         self._quest_system.load_definitions(self._data_repository)
 
+        # Re-attach shared systems to world (for triggers/events)
+        self._world_system.attach_systems(
+            flags_system=self._flags_system,
+            quest_system=self._quest_system,
+            inventory_system=self._inventory_system,
+            combat_system=self._combat_system,
+        )
+
         # Re-initialize shop system with starting currency
         economy_state = {"currency_amount": 500, "shop_states": {}}
         self._shop_system = ShopSystem(
@@ -331,6 +339,7 @@ class Game:
 
         # Load starting zone
         start_zone_id = "z_r1_chandrapur_town"
+        self._world_system.reset_state()
         try:
             self._world_system.load_zone(start_zone_id)
             logger.info(f"✓ Starting zone loaded: {start_zone_id}")

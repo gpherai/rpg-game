@@ -156,12 +156,35 @@ class OverworldScene(Scene):
         hud_rect = pygame.Rect(0, 0, self._screen_width, self._screen_height)
         self._hud = HUD(hud_rect)
 
+        # Message overlay
+        self._message_queue: list[str] = []
+        self._active_message: str | None = None
+        self._message_rect = pygame.Rect(
+            Spacing.SM,
+            self._screen_height - Sizes.DIALOGUE_HEIGHT - Spacing.SM,
+            self._screen_width - Spacing.SM * 2,
+            Sizes.DIALOGUE_HEIGHT,
+        )
+
+        # Register callbacks with world system
+        self._world.attach_systems(
+            on_show_message=self._enqueue_message,
+            on_start_battle=self._start_battle_from_event,
+            on_start_dialogue=self._start_dialogue_from_event,
+        )
+
         # Initialize ShopMenuUI (will be created when needed)
         # This gets initialized when opening shop for first time
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """Verwerk input events."""
         if event.type == pygame.KEYDOWN:
+            # Message overlay has priority
+            if self._active_message:
+                if event.key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_z, pygame.K_x):
+                    self._dismiss_message()
+                return
+
             # Priority 1: If shop menu is visible, route to shop menu UI first
             # (so ESC closes shop instead of opening pause menu)
             if self._shop_menu_visible:
@@ -292,6 +315,8 @@ class OverworldScene(Scene):
         # Update feedback timer
         if self._feedback_timer > 0:
             self._feedback_timer -= dt
+            if self._feedback_timer <= 0:
+                self._feedback_message = ""
 
         # Skip movement if in dialogue or quest log is open
         if self._dialogue_session or self._quest_log_visible:
@@ -364,6 +389,10 @@ class OverworldScene(Scene):
         # Render pause menu if paused
         if self._paused:
             self._pause_menu.render(surface)
+
+        # Render message overlay last
+        if self._active_message:
+            self._render_message(surface, self._active_message)
 
     def _update_camera(self) -> None:
         """Update camera om player te volgen."""
@@ -655,6 +684,61 @@ class OverworldScene(Scene):
                 logger.info("[DEBUG] Rajani recruited and added to active party")
             else:
                 logger.warning("[DEBUG] Party full, Rajani recruited but in reserve")
+
+    # ------------------------------------------------------------------
+    # Message / callbacks from world events
+    # ------------------------------------------------------------------
+    def _enqueue_message(self, text: str) -> None:
+        """Queue a message voor on-screen display."""
+        if text:
+            self._message_queue.append(text)
+            if not self._active_message:
+                self._active_message = self._message_queue.pop(0)
+
+    def _dismiss_message(self) -> None:
+        """Dismiss current message and show next if available."""
+        if self._message_queue:
+            self._active_message = self._message_queue.pop(0)
+        else:
+            self._active_message = None
+
+    def _start_battle_from_event(self, enemy_ids: list[str]) -> None:
+        """Callback: start a battle scene from event trigger."""
+        self._combat.start_battle(enemy_ids)
+        battle_scene = BattleScene(
+            self.manager,
+            self._combat,
+            self._inventory,
+            self._data_repository,
+            self._party,
+            game_instance=self._game,
+        )
+        self.manager.push_scene(battle_scene)
+
+    def _start_dialogue_from_event(self, dialogue_id: str) -> None:
+        """Callback: start a dialogue session from event trigger."""
+        context = DialogueContext(
+            flags_system=self._flags,
+            party_system=self._party,
+            inventory_system=self._inventory,
+            quest_system=self._quest,
+        )
+        session = self._dialogue_system.start_dialogue(dialogue_id, context)
+        if session:
+            self._dialogue_session = session
+            self._dialogue_box.set_session(session)
+        else:
+            logger.warning(f"Dialogue {dialogue_id} not found or failed to start")
+
+    def _render_message(self, surface: pygame.Surface, message: str) -> None:
+        """Render een eenvoudige message overlay."""
+        pygame.draw.rect(surface, Colors.BG_OVERLAY, self._message_rect, border_radius=8)
+        pygame.draw.rect(surface, Colors.BORDER, self._message_rect, width=2, border_radius=8)
+
+        text_surface = self._font.render(message, True, Colors.TEXT)
+        text_rect = text_surface.get_rect()
+        text_rect.center = self._message_rect.center
+        surface.blit(text_surface, text_rect)
 
     def _debug_start_battle(self) -> None:
         """Debug functie: start een test battle (Step 5 Combat v0)."""
