@@ -263,14 +263,15 @@ class BattleScene(Scene):
             return
 
         target = alive_enemies[self._selected_target_index]
+        target_token = target.battle_id
 
         # Determine action type based on previous menu state
         if self._menu_state == MenuState.TARGET_SELECT:
             if self._selected_menu_index == 0:  # Was in Attack menu
-                self._execute_attack_action(current_actor, target)
+                self._execute_attack_action(current_actor, target_token)
             elif self._selected_menu_index == 1:  # Was in Skill menu
                 skill_id = current_actor.skills[self._selected_skill_index]
-                self._execute_skill_action(current_actor, target, skill_id)
+                self._execute_skill_action(current_actor, target_token, skill_id)
 
     def _confirm_item_selection(self) -> None:
         """Confirm item selection and use it."""
@@ -286,23 +287,23 @@ class BattleScene(Scene):
         # For v0: items always target self
         self._execute_item_action(current_actor, current_actor, item_id)
 
-    def _execute_attack_action(self, actor: CombatantView, target: CombatantView) -> None:
+    def _execute_attack_action(self, actor: CombatantView, target_id: str) -> None:
         """Execute basic attack."""
         action = BattleAction(
-            actor_id=actor.actor_id, action_type=ActionType.ATTACK, target_id=target.actor_id
+            actor_id=actor.battle_id, action_type=ActionType.ATTACK, target_id=target_id
         )
         messages = self._combat.execute_action(action)
         self._add_to_log(messages)
         self._advance_turn()
 
     def _execute_skill_action(
-        self, actor: CombatantView, target: CombatantView, skill_id: str
+        self, actor: CombatantView, target_id: str, skill_id: str
     ) -> None:
         """Execute skill."""
         action = BattleAction(
-            actor_id=actor.actor_id,
+            actor_id=actor.battle_id,
             action_type=ActionType.SKILL,
-            target_id=target.actor_id,
+            target_id=target_id,
             skill_id=skill_id,
         )
         messages = self._combat.execute_action(action)
@@ -315,7 +316,7 @@ class BattleScene(Scene):
         if not current_actor:
             return
 
-        action = BattleAction(actor_id=current_actor.actor_id, action_type=ActionType.DEFEND)
+        action = BattleAction(actor_id=current_actor.battle_id, action_type=ActionType.DEFEND)
         messages = self._combat.execute_action(action)
         self._add_to_log(messages)
         self._advance_turn()
@@ -332,9 +333,9 @@ class BattleScene(Scene):
             return
 
         action = BattleAction(
-            actor_id=actor.actor_id,
+            actor_id=actor.battle_id,
             action_type=ActionType.ITEM,
-            target_id=target.actor_id,
+            target_id=target.battle_id,
             item_id=item_id,
         )
         messages = self._combat.execute_action(action)
@@ -564,7 +565,8 @@ class BattleScene(Scene):
             return
 
         menu_x = self._screen_width // 2 - 150
-        menu_y = self._screen_height - 250
+        # Position menu higher to avoid overlap with action log
+        menu_y = self._screen_height - 390
 
         # Draw menu background
         menu_bg = pygame.Surface((300, 200), pygame.SRCALPHA)

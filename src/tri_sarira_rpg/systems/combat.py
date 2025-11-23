@@ -29,6 +29,7 @@ BattleAction = BattleActionView
 class Combatant:
     """Een unit in combat (party member of enemy)."""
 
+    battle_id: str  # unieke id binnen battle
     actor_id: str  # mc_adhira, comp_rajani, en_forest_sprout, etc.
     name: str
     level: int
@@ -206,7 +207,7 @@ class CombatSystem:
         party_combatants = []
         active_party = self._party.get_active_party()
 
-        for member in active_party:
+        for idx, member in enumerate(active_party):
             actor_data = self._data_repository.get_actor(member.actor_id)
             if actor_data:
                 # Use effective stats (base + gear) if equipment system available
@@ -216,6 +217,7 @@ class CombatSystem:
                     stats = member.base_stats
 
                 combatant = self._create_combatant_from_actor(
+                    battle_id=f"{member.actor_id}#{idx}",
                     actor_data=actor_data,
                     level=member.level,
                     stats=stats,
@@ -227,10 +229,10 @@ class CombatSystem:
 
         # Create enemy combatants
         enemy_combatants = []
-        for enemy_id in enemy_ids:
+        for idx, enemy_id in enumerate(enemy_ids):
             enemy_data = self._data_repository.get_enemy(enemy_id)
             if enemy_data:
-                combatant = self._create_combatant_from_enemy(enemy_data)
+                combatant = self._create_combatant_from_enemy(enemy_data, index=idx)
                 enemy_combatants.append(combatant)
                 logger.debug(
                     f"Enemy: {combatant.name} (HP: {combatant.current_hp}/{combatant.max_hp})"
@@ -252,6 +254,7 @@ class CombatSystem:
 
     def _create_combatant_from_actor(
         self,
+        battle_id: str,
         actor_data: dict[str, Any],
         level: int | None = None,
         stats: dict[str, int] | None = None,
@@ -274,6 +277,7 @@ class CombatSystem:
             level = actor_data.get("level", 1)
 
         return Combatant(
+            battle_id=battle_id,
             actor_id=actor_data["id"],
             name=actor_data["name"],
             level=level,
@@ -292,10 +296,11 @@ class CombatSystem:
             skills=actor_data.get("starting_skills", []),
         )
 
-    def _create_combatant_from_enemy(self, enemy_data: dict[str, Any]) -> Combatant:
+    def _create_combatant_from_enemy(self, enemy_data: dict[str, Any], index: int) -> Combatant:
         """Create a Combatant from enemy data."""
         stats = enemy_data.get("base_stats", {})
         return Combatant(
+            battle_id=f"{enemy_data['id']}#{index}",
             actor_id=enemy_data["id"],
             name=enemy_data["name"],
             level=enemy_data.get("level", 1),
@@ -344,6 +349,7 @@ class CombatSystem:
     def _combatant_to_view(self, combatant: Combatant) -> CombatantView:
         """Convert internal Combatant to immutable CombatantView for UI."""
         return CombatantView(
+            battle_id=combatant.battle_id,
             actor_id=combatant.actor_id,
             name=combatant.name,
             level=combatant.level,
@@ -388,12 +394,41 @@ class CombatSystem:
         )
 
     def _get_combatant_by_id(self, actor_id: str) -> Combatant | None:
-        """Look up a combatant by their actor_id string."""
+        """Look up a combatant by their actor_id string.
+
+        Supports optional suffix '#n' to target the nth alive enemy with that ID.
+        Falls back to battle_id match first, then actor_id.
+        """
         if not self._battle_state:
             return None
+
+        base_id = actor_id
+        target_index: int | None = None
+        if "#" in actor_id:
+            base_id, _, idx = actor_id.partition("#")
+            try:
+                target_index = int(idx)
+            except ValueError:
+                target_index = None
+
+        # First try exact battle_id match
+        for combatant in self._battle_state.party + self._battle_state.enemies:
+            if combatant.battle_id == actor_id:
+                return combatant
+
+        # Then try nth alive enemy with same actor_id
+        if target_index is not None:
+            match = 0
+            for combatant in self._battle_state.enemies:
+                if combatant.actor_id != base_id or not combatant.is_alive():
+                    continue
+                if match == target_index:
+                    return combatant
+                match += 1
+
         fallback: Combatant | None = None
         for combatant in self._battle_state.party + self._battle_state.enemies:
-            if combatant.actor_id != actor_id:
+            if combatant.actor_id != base_id:
                 continue
             if combatant.is_alive():
                 return combatant

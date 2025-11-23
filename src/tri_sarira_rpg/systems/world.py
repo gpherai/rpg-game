@@ -9,6 +9,7 @@ from typing import Any
 
 from tri_sarira_rpg.core.entities import Position
 from tri_sarira_rpg.data_access.repository import DataRepository
+from tri_sarira_rpg.systems.quest import QuestStatus
 from tri_sarira_rpg.utils.tiled_loader import TiledLoader, TiledMap
 
 logger = logging.getLogger(__name__)
@@ -78,7 +79,11 @@ class WorldSystem:
         self._triggered_ids.clear()
 
     def load_zone(
-        self, zone_id: str, spawn_id: str | None = None, from_portal: bool = False
+        self,
+        zone_id: str,
+        spawn_id: str | None = None,
+        from_portal: bool = False,
+        facing: str | None = None,
     ) -> None:
         """Laad een nieuwe zone en plaats de speler op een spawn point.
 
@@ -91,6 +96,9 @@ class WorldSystem:
         from_portal : bool
             True als zone load getriggerd is door portal transition.
             Voorkomt infinite loops bij portals op spawn points.
+        facing : str | None
+            Richting waarin de speler kijkt na spawn (N/E/S/W). Bij None wordt
+            een spawn property "facing" gebruikt of fallback "S".
         """
         logger.info(f"Loading zone: {zone_id} (spawn: {spawn_id or 'default'})")
 
@@ -117,13 +125,19 @@ class WorldSystem:
 
         if spawn:
             spawn_x, spawn_y = spawn.get_tile_coords(tiled_map.tile_width)
-            self._player = PlayerState(zone_id=zone_id, position=Position(x=spawn_x, y=spawn_y))
+            spawn_facing = facing or spawn.properties.get("facing") or "S"
+            self._player = PlayerState(
+                zone_id=zone_id, position=Position(x=spawn_x, y=spawn_y), facing=spawn_facing
+            )
             logger.info(f"Player spawned at ({spawn_x}, {spawn_y})")
         else:
             # Fallback: center of map
             center_x = tiled_map.width // 2
             center_y = tiled_map.height // 2
-            self._player = PlayerState(zone_id=zone_id, position=Position(x=center_x, y=center_y))
+            spawn_facing = facing or "S"
+            self._player = PlayerState(
+                zone_id=zone_id, position=Position(x=center_x, y=center_y), facing=spawn_facing
+            )
             logger.warning(f"No spawn point found, using map center: ({center_x}, {center_y})")
 
         # Load triggers
@@ -467,8 +481,14 @@ class WorldSystem:
                 stage_id = action.get("stage_id") or action.get("next_stage_id")
                 if quest_id and self._quest:
                     try:
-                        self._quest.advance_quest(quest_id, stage_id)
-                        logger.info(f"[EVENT] Quest advanced: {quest_id} -> {stage_id}")
+                        state = self._quest.get_state(quest_id)
+                        if getattr(state, "status", None) != QuestStatus.ACTIVE:
+                            logger.info(
+                                f"[EVENT] Quest {quest_id} not active, skipping advance to {stage_id}"
+                            )
+                        else:
+                            self._quest.advance_quest(quest_id, stage_id)
+                            logger.info(f"[EVENT] Quest advanced: {quest_id} -> {stage_id}")
                     except Exception as e:
                         logger.warning(f"[EVENT] Failed to advance quest {quest_id}: {e}")
 
@@ -477,8 +497,12 @@ class WorldSystem:
                 stage_id = action.get("stage_id")
                 if quest_id and self._quest:
                     try:
-                        self._quest.advance_quest(quest_id, stage_id)
-                        logger.info(f"[EVENT] Quest stage completed: {quest_id} {stage_id}")
+                        state = self._quest.get_state(quest_id)
+                        if getattr(state, "status", None) != QuestStatus.ACTIVE:
+                            logger.info(f"[EVENT] Quest {quest_id} not active, skipping complete")
+                        else:
+                            self._quest.advance_quest(quest_id, stage_id)
+                            logger.info(f"[EVENT] Quest stage completed: {quest_id} {stage_id}")
                     except Exception as e:
                         logger.warning(f"[EVENT] Failed to complete quest stage {quest_id}: {e}")
 
@@ -486,8 +510,12 @@ class WorldSystem:
                 quest_id = action.get("quest_id")
                 if quest_id and self._quest:
                     try:
-                        self._quest.complete_quest(quest_id)
-                        logger.info(f"[EVENT] Quest completed: {quest_id}")
+                        state = self._quest.get_state(quest_id)
+                        if getattr(state, "status", None) != QuestStatus.ACTIVE:
+                            logger.info(f"[EVENT] Quest {quest_id} not active, skipping complete")
+                        else:
+                            self._quest.complete_quest(quest_id)
+                            logger.info(f"[EVENT] Quest completed: {quest_id}")
                     except Exception as e:
                         logger.warning(f"[EVENT] Failed to complete quest {quest_id}: {e}")
 
@@ -538,7 +566,10 @@ class WorldSystem:
                         f"Portal transition: {self._current_zone_id} → {target_zone_id} "
                         f"(spawn: {target_spawn_id or 'default'})"
                     )
-                    self.load_zone(target_zone_id, target_spawn_id, from_portal=True)
+                    current_facing = self._player.facing if self._player else None
+                    self.load_zone(
+                        target_zone_id, target_spawn_id, from_portal=True, facing=current_facing
+                    )
                     return
 
     @property

@@ -272,18 +272,46 @@ def test_duplicate_enemy_ids_target_alive_enemy(combat_system: CombatSystem) -> 
     assert internal_state.enemies[1].is_alive() is True
 
     # Lookup moet de levende enemy teruggeven
-    target = combat_system._get_combatant_by_id("en_forest_sprout")
+    target = combat_system._get_combatant_by_id("en_forest_sprout#1")
     assert target is internal_state.enemies[1]
 
     # Actie op het target mag geen "no target" melding geven
     action = BattleAction(
-        actor_id=internal_state.party[0].actor_id,
+        actor_id=internal_state.party[0].battle_id,
         action_type=ActionType.ATTACK,
-        target_id="en_forest_sprout",
+        target_id="en_forest_sprout#1",
     )
     messages = combat_system.execute_action(action)
     joined = " ".join(messages)
     assert "no target" not in joined
+
+
+def test_duplicate_enemy_ids_target_specific_instance(combat_system: CombatSystem) -> None:
+    """Met target suffix (#index) moet de juiste instance geraakt worden."""
+    combat_system.start_battle(["en_corrupted_wisp", "en_corrupted_wisp"])
+    internal_state = combat_system.battle_state
+    assert internal_state is not None
+
+    # Force deterministic hit
+    import random
+
+    random.seed(0)
+
+    first = internal_state.enemies[0]
+    second = internal_state.enemies[1]
+    initial_first = first.current_hp
+    initial_second = second.current_hp
+
+    action = BattleAction(
+        actor_id=internal_state.party[0].battle_id,
+        action_type=ActionType.ATTACK,
+        target_id="en_corrupted_wisp#1",
+    )
+    combat_system.execute_action(action)
+
+    # Expect damage on the second, not on the first
+    assert first.current_hp == initial_first
+    assert second.current_hp < initial_second
 
 
 def test_battle_victory_xp_rewards(combat_system: CombatSystem) -> None:

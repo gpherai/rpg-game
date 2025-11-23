@@ -37,6 +37,7 @@ class CombatantView:
     is_alive is een property (geen method) voor consistente interface.
     """
 
+    battle_id: str  # Unieke ID binnen de battle (bijv. actor_id#n)
     actor_id: str
     name: str
     level: int

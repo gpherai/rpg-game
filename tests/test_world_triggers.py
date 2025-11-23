@@ -32,20 +32,33 @@ class DummyInventory:
         self.items[item_id] = self.items.get(item_id, 0) + quantity
 
 
+from tri_sarira_rpg.systems.quest import QuestStatus
+
+
 class DummyQuest:
     def __init__(self) -> None:
         self.started: list[str] = []
         self.advanced: list[tuple[str, str | None]] = []
         self.completed: list[str] = []
+        self.active: set[str] = set()
 
     def start_quest(self, quest_id: str) -> None:
         self.started.append(quest_id)
+        self.active.add(quest_id)
 
     def advance_quest(self, quest_id: str, next_stage_id: str | None = None) -> None:
         self.advanced.append((quest_id, next_stage_id))
 
     def complete_quest(self, quest_id: str) -> None:
         self.completed.append(quest_id)
+        self.active.discard(quest_id)
+
+    def get_state(self, quest_id: str) -> Any:
+        class S:
+            def __init__(self, active: bool) -> None:
+                self.status = QuestStatus.ACTIVE if active else QuestStatus.NOT_STARTED
+
+        return S(quest_id in self.active)
 
 
 class DummyCombat:
