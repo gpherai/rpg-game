@@ -152,20 +152,44 @@ class DataRepositoryProtocol(Protocol):
         """Haal actor definitie op."""
         ...
 
+    def get_all_actors(self) -> list[dict[str, Any]]:
+        """Haal alle actor definities op."""
+        ...
+
     def get_enemy(self, enemy_id: str) -> dict[str, Any] | None:
         """Haal enemy definitie op."""
+        ...
+
+    def get_all_enemies(self) -> list[dict[str, Any]]:
+        """Haal alle enemy definities op."""
+        ...
+
+    def get_enemy_group(self, group_id: str) -> dict[str, Any] | None:
+        """Haal enemy group op."""
         ...
 
     def get_skill(self, skill_id: str) -> dict[str, Any] | None:
         """Haal skill definitie op."""
         ...
 
+    def get_all_skills(self) -> list[dict[str, Any]]:
+        """Haal alle skill definities op."""
+        ...
+
     def get_item(self, item_id: str) -> dict[str, Any] | None:
         """Haal item definitie op."""
         ...
 
+    def get_all_items(self) -> list[dict[str, Any]]:
+        """Haal alle item definities op."""
+        ...
+
     def get_dialogue(self, dialogue_id: str) -> dict[str, Any] | None:
         """Haal dialogue graph op."""
+        ...
+
+    def get_all_dialogues(self) -> list[dict[str, Any]]:
+        """Haal alle dialogue graphs op."""
         ...
 
     def get_quest(self, quest_id: str) -> dict[str, Any] | None:
@@ -176,12 +200,48 @@ class DataRepositoryProtocol(Protocol):
         """Haal alle quest definities op."""
         ...
 
+    def get_zone(self, zone_id: str) -> dict[str, Any] | None:
+        """Haal zone definitie op."""
+        ...
+
+    def get_all_zones(self) -> list[dict[str, Any]]:
+        """Haal alle zones op."""
+        ...
+
     def get_shop(self, shop_id: str) -> dict[str, Any] | None:
         """Haal shop definitie op."""
         ...
 
+    def get_all_shops(self) -> list[dict[str, Any]]:
+        """Haal alle shops op."""
+        ...
+
     def get_npc_meta(self) -> dict[str, Any]:
         """Haal NPC metadata op."""
+        ...
+
+    def get_npc(self, npc_id: str) -> dict[str, Any] | None:
+        """Haal NPC definitie op."""
+        ...
+
+    def get_all_npcs(self) -> list[dict[str, Any]]:
+        """Haal alle NPC definities op."""
+        ...
+
+    def get_event(self, event_id: str) -> dict[str, Any] | None:
+        """Haal event definitie op."""
+        ...
+
+    def get_all_events(self) -> list[dict[str, Any]]:
+        """Haal alle events op."""
+        ...
+
+    def get_events_for_zone(self, zone_id: str) -> list[dict[str, Any]]:
+        """Haal events gefilterd per zone op."""
+        ...
+
+    def get_chest(self, chest_id: str) -> dict[str, Any] | None:
+        """Haal chest definitie op."""
         ...
 
 

@@ -6,6 +6,12 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from .exceptions import (
+    DataEncodingError,
+    DataFileNotFoundError,
+    DataParseError,
+    DataPermissionError,
+)
 from .loader import DataLoader
 
 logger = logging.getLogger(__name__)
@@ -27,6 +33,49 @@ class DataRepository:
     def __init__(self, data_dir: Path | None = None) -> None:
         self._loader = DataLoader(data_dir)
         self._validation_errors: list[str] = []
+        self._raw_data: dict[str, dict[str, Any]] = {}
+        self._reset_cache()
+
+    def _reset_cache(self) -> None:
+        """Reset in-memory caches."""
+        self._actors: list[dict[str, Any]] | None = None
+        self._actors_by_id: dict[str, dict[str, Any]] = {}
+
+        self._enemies: list[dict[str, Any]] | None = None
+        self._enemies_by_id: dict[str, dict[str, Any]] = {}
+
+        self._enemy_groups: list[dict[str, Any]] | None = None
+        self._enemy_groups_by_id: dict[str, dict[str, Any]] = {}
+
+        self._zones: list[dict[str, Any]] | None = None
+        self._zones_by_id: dict[str, dict[str, Any]] = {}
+
+        self._npcs: list[dict[str, Any]] | None = None
+        self._npcs_by_id: dict[str, dict[str, Any]] = {}
+        self._npc_schedules: list[dict[str, Any]] | None = None
+
+        self._skills: list[dict[str, Any]] | None = None
+        self._skills_by_id: dict[str, dict[str, Any]] = {}
+
+        self._items: list[dict[str, Any]] | None = None
+        self._items_by_id: dict[str, dict[str, Any]] = {}
+
+        self._quests: list[dict[str, Any]] | None = None
+        self._quests_by_id: dict[str, dict[str, Any]] = {}
+
+        self._dialogues: list[dict[str, Any]] | None = None
+        self._dialogues_by_id: dict[str, dict[str, Any]] = {}
+
+        self._events: list[dict[str, Any]] | None = None
+        self._events_by_id: dict[str, dict[str, Any]] = {}
+
+        self._chests: list[dict[str, Any]] | None = None
+        self._chests_by_id: dict[str, dict[str, Any]] = {}
+
+        self._shops: list[dict[str, Any]] | None = None
+        self._shops_by_id: dict[str, dict[str, Any]] = {}
+
+        self._loot_tables: list[dict[str, Any]] | None = None
 
     def load_and_validate_all(self) -> bool:
         """Laad en valideer alle data-bestanden.
@@ -37,6 +86,8 @@ class DataRepository:
             True als alles OK is, False bij fouten
         """
         self._validation_errors.clear()
+        self._raw_data.clear()
+        self._reset_cache()
         all_ok = True
 
         def add_error(message: str) -> None:
@@ -44,35 +95,25 @@ class DataRepository:
             self._validation_errors.append(message)
             all_ok = False
 
-        # Load core files
-        required_files = [
-            ("actors.json", "actors"),
-            ("enemies.json", "enemies"),
-            ("items.json", "items"),
-            ("skills.json", "skills"),
-            ("zones.json", "zones"),
-            ("npc_meta.json", "npcs"),
-            ("npc_schedules.json", "npc_schedules"),
-            ("quests.json", "quests"),
-            ("dialogue.json", "dialogues"),
-            ("chests.json", "chests"),
-            ("enemy_groups.json", "enemy_groups"),
-            ("loot_tables.json", "loot_tables"),
-            ("events.json", "events"),
-            ("shops.json", "shops"),
-        ]
+        # Load required data into caches (collect errors instead of raising)
+        self._ensure_actors(errors=self._validation_errors, required=True)
+        self._ensure_enemies(errors=self._validation_errors, required=True)
+        self._ensure_enemy_groups(errors=self._validation_errors, required=True)
+        self._ensure_items(errors=self._validation_errors, required=True)
+        self._ensure_skills(errors=self._validation_errors, required=True)
+        self._ensure_zones(errors=self._validation_errors, required=True)
+        self._ensure_npcs(errors=self._validation_errors, required=True)
+        self._ensure_npc_schedules(errors=self._validation_errors, required=True)
+        self._ensure_quests(errors=self._validation_errors, required=True)
+        self._ensure_dialogues(errors=self._validation_errors, required=True)
+        self._ensure_chests(errors=self._validation_errors, required=True)
+        self._ensure_loot_tables(errors=self._validation_errors, required=True)
+        self._ensure_events(errors=self._validation_errors, required=True)
+        self._ensure_shops(errors=self._validation_errors, required=True)
+        if self._validation_errors:
+            all_ok = False
 
-        loaded: dict[str, dict[str, Any]] = {}
-
-        for filename, _ in required_files:
-            try:
-                loaded[filename] = self._loader.load_json(filename)
-            except FileNotFoundError as e:
-                add_error(f"Required data file missing: {filename} ({e})")
-            except ValueError as e:
-                add_error(f"Invalid JSON in {filename}: {e}")
-
-        # Basic required-key validation for simple types
+        # Basic required-key validation for simple types using raw data
         for filename, data_type in [
             ("actors.json", "actors"),
             ("enemies.json", "enemies"),
@@ -80,7 +121,7 @@ class DataRepository:
             ("skills.json", "skills"),
             ("items.json", "items"),
         ]:
-            data = loaded.get(filename)
+            data = self._raw_data.get(filename)
             if not data:
                 continue
             required = self.REQUIRED_KEYS.get(data_type, ["id", "name"])
@@ -90,16 +131,23 @@ class DataRepository:
                     add_error(error)
 
         # Build lookup sets for cross-ref checks
-        actor_ids = {a["id"] for a in loaded.get("actors.json", {}).get("actors", [])}
-        enemy_ids = {e["id"] for e in loaded.get("enemies.json", {}).get("enemies", [])}
-        item_ids = {i["id"] for i in loaded.get("items.json", {}).get("items", [])}
-        skill_ids = {s["id"] for s in loaded.get("skills.json", {}).get("skills", [])}
-        zone_ids = {z["id"] for z in loaded.get("zones.json", {}).get("zones", [])}
-        npc_meta = loaded.get("npc_meta.json", {}).get("npcs", [])
+        actors = self._actors or []
+        enemies = self._enemies or []
+        items = self._items or []
+        skills = self._skills or []
+        zones = self._zones or []
+        npc_meta = self._npcs or []
+        npc_schedules = self._npc_schedules or []
+        quest_defs = self._quests or []
+        enemy_groups = self._enemy_groups or []
+
+        actor_ids = {a.get("id") for a in actors if a.get("id")}
+        enemy_ids = {e.get("id") for e in enemies if e.get("id")}
+        item_ids = {i.get("id") for i in items if i.get("id")}
+        skill_ids = {s.get("id") for s in skills if s.get("id")}
+        zone_ids = {z.get("id") for z in zones if z.get("id")}
         npc_ids = {n.get("npc_id") for n in npc_meta if n.get("npc_id")}
-        quest_defs = loaded.get("quests.json", {}).get("quests", [])
-        quest_ids = {q["quest_id"] for q in quest_defs if "quest_id" in q}
-        enemy_groups = loaded.get("enemy_groups.json", {}).get("enemy_groups", [])
+        quest_ids = {q.get("quest_id") for q in quest_defs if q.get("quest_id")}
 
         # npc_meta basic check (actor_id optional)
         for npc in npc_meta:
@@ -110,20 +158,20 @@ class DataRepository:
                 add_error(f"npc_meta.json: actor_id {actor_id} not found for npc {npc.get('npc_id')}")
 
         # Skills referenced by actors/enemies must exist
-        for actor in loaded.get("actors.json", {}).get("actors", []):
+        for actor in actors:
             actor_id = actor.get("id", "<unknown>")
             for skill_id in actor.get("starting_skills", []):
                 if skill_id not in skill_ids:
                     add_error(f"actors.json: actor {actor_id} references unknown skill_id {skill_id}")
 
-        for enemy in loaded.get("enemies.json", {}).get("enemies", []):
+        for enemy in enemies:
             enemy_id = enemy.get("id", "<unknown>")
             for skill_id in enemy.get("skills", []):
                 if skill_id not in skill_ids:
                     add_error(f"enemies.json: enemy {enemy_id} references unknown skill_id {skill_id}")
 
         # npc_schedules: npc_id and zone_id must exist
-        for sched in loaded.get("npc_schedules.json", {}).get("npc_schedules", []):
+        for sched in npc_schedules:
             npc_id = sched.get("npc_id")
             if npc_id and npc_id not in npc_ids:
                 add_error(f"npc_schedules.json: npc_id {npc_id} not found in npc_meta.json")
@@ -152,7 +200,7 @@ class DataRepository:
                     add_error(f"quests.json: reward item_id {iid} not found for quest {qid}")
 
         # Dialogue: speakers/items/quests in effects/conditions
-        dialogue_entries = loaded.get("dialogue.json", {}).get("dialogues", [])
+        dialogue_entries = self._dialogues or []
         for dlg in dialogue_entries:
             for node in dlg.get("nodes", []):
                 speaker = node.get("speaker_id")
@@ -181,7 +229,7 @@ class DataRepository:
                                 )
 
         # Chests: zone_id and item_ids
-        for chest in loaded.get("chests.json", {}).get("chests", []):
+        for chest in self._chests or []:
             cid = chest.get("chest_id")
             zone_id = chest.get("zone_id")
             if zone_id and zone_id not in zone_ids:
@@ -192,7 +240,7 @@ class DataRepository:
                     add_error(f"chests.json: chest {cid} references unknown item_id {iid}")
 
         # Loot tables: item_ids must exist
-        for table in loaded.get("loot_tables.json", {}).get("loot_tables", []):
+        for table in self._loot_tables or []:
             tid = table.get("loot_table_id")
             for entry in table.get("entries", []):
                 iid = entry.get("item_id")
@@ -207,7 +255,7 @@ class DataRepository:
                     add_error(f"enemy_groups.json: group {gid} references unknown enemy_id {enemy}")
 
         # Events: enemy_group_id, quest_id/stage_id, zone_id (if present)
-        for event in loaded.get("events.json", {}).get("events", []):
+        for event in self._events or []:
             eid = event.get("event_id")
             trig = event.get("trigger", {})
             z = trig.get("zone_id")
@@ -230,7 +278,7 @@ class DataRepository:
                         add_error(f"events.json: event {eid} references unknown stage_id {sid} for quest {qid}")
 
         # Shops: zone_id and item_ids
-        for shop in loaded.get("shops.json", {}).get("shops", []):
+        for shop in self._shops or []:
             sid = shop.get("shop_id")
             zone_id = shop.get("zone_id")
             if zone_id and zone_id not in zone_ids:
@@ -258,232 +306,266 @@ class DataRepository:
     # Actor methods
     def get_actor(self, actor_id: str) -> dict[str, Any] | None:
         """Haal een actordefinitie op."""
-        data = self._loader.load_json("actors.json")
-        actors = data.get("actors", [])
-        for actor in actors:
-            if actor.get("id") == actor_id:
-                return actor
-        return None
+        self._ensure_actors()
+        return self._actors_by_id.get(actor_id)
 
     def get_all_actors(self) -> list[dict[str, Any]]:
         """Haal alle actordefinities op."""
-        data = self._loader.load_json("actors.json")
-        return data.get("actors", [])
+        self._ensure_actors()
+        return list(self._actors or [])
 
     # Enemy methods
     def get_enemy(self, enemy_id: str) -> dict[str, Any] | None:
         """Haal een enemydefinitie op."""
-        data = self._loader.load_json("enemies.json")
-        enemies = data.get("enemies", [])
-        for enemy in enemies:
-            if enemy.get("id") == enemy_id:
-                return enemy
-        return None
+        self._ensure_enemies()
+        return self._enemies_by_id.get(enemy_id)
 
     def get_all_enemies(self) -> list[dict[str, Any]]:
         """Haal alle enemydefinities op."""
-        data = self._loader.load_json("enemies.json")
-        return data.get("enemies", [])
+        self._ensure_enemies()
+        return list(self._enemies or [])
 
     # Enemy groups
     def get_enemy_group(self, group_id: str) -> dict[str, Any] | None:
         """Haal een enemy group op uit enemy_groups.json."""
-        try:
-            data = self._loader.load_json("enemy_groups.json")
-            for group in data.get("enemy_groups", []):
-                if group.get("group_id") == group_id:
-                    return group
-        except FileNotFoundError:
-            logger.warning("enemy_groups.json not found, enemy group data not available")
-        return None
+        self._ensure_enemy_groups()
+        return self._enemy_groups_by_id.get(group_id)
 
     # Zone methods
     def get_zone(self, zone_id: str) -> dict[str, Any] | None:
         """Haal een zonedefinitie op."""
-        data = self._loader.load_json("zones.json")
-        zones = data.get("zones", [])
-        for zone in zones:
-            if zone.get("id") == zone_id:
-                return zone
-        return None
+        self._ensure_zones()
+        return self._zones_by_id.get(zone_id)
 
     def get_all_zones(self) -> list[dict[str, Any]]:
         """Haal alle zonedefinities op."""
-        data = self._loader.load_json("zones.json")
-        return data.get("zones", [])
+        self._ensure_zones()
+        return list(self._zones or [])
 
     # NPC metadata methods
     def get_npc(self, npc_id: str) -> dict[str, Any] | None:
         """Haal een NPC-definitie op uit npc_meta.json."""
-        try:
-            data = self._loader.load_json("npc_meta.json")
-            npcs = data.get("npcs", [])
-            for npc in npcs:
-                if npc.get("npc_id") == npc_id:
-                    return npc
-        except FileNotFoundError:
-            logger.warning("npc_meta.json not found, NPC metadata not available")
-        return None
+        self._ensure_npcs()
+        return self._npcs_by_id.get(npc_id)
 
     def get_all_npcs(self) -> list[dict[str, Any]]:
         """Haal alle NPC-definities op uit npc_meta.json."""
-        try:
-            data = self._loader.load_json("npc_meta.json")
-            return data.get("npcs", [])
-        except FileNotFoundError:
-            logger.warning("npc_meta.json not found, returning empty list")
-            return []
+        self._ensure_npcs()
+        return list(self._npcs or [])
 
     def get_npc_meta(self) -> dict[str, Any]:
         """Haal de volledige npc_meta.json op voor PartySystem initialisatie."""
-        try:
-            return self._loader.load_json("npc_meta.json")
-        except FileNotFoundError:
-            logger.warning("npc_meta.json not found, returning empty structure")
-            return {"npcs": []}
+        self._ensure_npcs()
+        return {"npcs": list(self._npcs or [])}
 
     # Skill methods (Step 5: Combat v0)
     def get_skill(self, skill_id: str) -> dict[str, Any] | None:
         """Haal een skill-definitie op uit skills.json."""
-        try:
-            data = self._loader.load_json("skills.json")
-            skills = data.get("skills", [])
-            for skill in skills:
-                if skill.get("id") == skill_id:
-                    return skill
-        except FileNotFoundError:
-            logger.warning("skills.json not found, skill data not available")
-        return None
+        self._ensure_skills()
+        return self._skills_by_id.get(skill_id)
 
     def get_all_skills(self) -> list[dict[str, Any]]:
         """Haal alle skill-definities op uit skills.json."""
-        try:
-            data = self._loader.load_json("skills.json")
-            return data.get("skills", [])
-        except FileNotFoundError:
-            logger.warning("skills.json not found, returning empty list")
-            return []
+        self._ensure_skills()
+        return list(self._skills or [])
 
     # Item methods (Step 5: Combat v0)
     def get_item(self, item_id: str) -> dict[str, Any] | None:
         """Haal een item-definitie op uit items.json."""
-        try:
-            data = self._loader.load_json("items.json")
-            items = data.get("items", [])
-            for item in items:
-                if item.get("id") == item_id:
-                    return item
-        except FileNotFoundError:
-            logger.warning("items.json not found, item data not available")
-        return None
+        self._ensure_items()
+        return self._items_by_id.get(item_id)
 
     def get_all_items(self) -> list[dict[str, Any]]:
         """Haal alle item-definities op uit items.json."""
-        try:
-            data = self._loader.load_json("items.json")
-            return data.get("items", [])
-        except FileNotFoundError:
-            logger.warning("items.json not found, returning empty list")
-            return []
+        self._ensure_items()
+        return list(self._items or [])
 
     def get_quest(self, quest_id: str) -> dict[str, Any] | None:
         """Haal questdata op voor questsystemen."""
-        try:
-            data = self._loader.load_json("quests.json")
-            quests = data.get("quests", [])
-            for quest in quests:
-                if quest.get("quest_id") == quest_id:
-                    return quest
-            return None
-        except FileNotFoundError:
-            logger.warning("quests.json not found")
-            return None
+        self._ensure_quests()
+        return self._quests_by_id.get(quest_id)
 
     def get_all_quests(self) -> list[dict[str, Any]]:
         """Haal alle quests op."""
-        try:
-            data = self._loader.load_json("quests.json")
-            return data.get("quests", [])
-        except FileNotFoundError:
-            logger.warning("quests.json not found")
-            return []
+        self._ensure_quests()
+        return list(self._quests or [])
 
     def get_dialogue(self, dialogue_id: str) -> dict[str, Any] | None:
         """Geef dialooggraph-definitie terug."""
-        try:
-            data = self._loader.load_json("dialogue.json")
-            dialogues = data.get("dialogues", [])
-            for dialogue in dialogues:
-                if dialogue.get("dialogue_id") == dialogue_id:
-                    return dialogue
-            return None
-        except FileNotFoundError:
-            logger.warning("dialogue.json not found")
-            return None
+        self._ensure_dialogues()
+        return self._dialogues_by_id.get(dialogue_id)
 
     def get_all_dialogues(self) -> list[dict[str, Any]]:
         """Haal alle dialooggraphs op."""
-        try:
-            data = self._loader.load_json("dialogue.json")
-            return data.get("dialogues", [])
-        except FileNotFoundError:
-            logger.warning("dialogue.json not found")
-            return []
+        self._ensure_dialogues()
+        return list(self._dialogues or [])
 
     def get_events_for_zone(self, zone_id: str) -> list[dict[str, Any]]:
         """Filter eventdefinities voor de opgegeven zone."""
-        events = self.get_all_events()
-        return [event for event in events if event.get("trigger", {}).get("zone_id") == zone_id]
+        self._ensure_events()
+        return [
+            event for event in (self._events or []) if event.get("trigger", {}).get("zone_id") == zone_id
+        ]
 
     def get_event(self, event_id: str) -> dict[str, Any] | None:
         """Haal een event op uit events.json."""
-        events = self.get_all_events()
-        for event in events:
-            if event.get("event_id") == event_id:
-                return event
-        return None
+        self._ensure_events()
+        return self._events_by_id.get(event_id)
 
     def get_all_events(self) -> list[dict[str, Any]]:
         """Haal alle events op uit events.json."""
-        try:
-            data = self._loader.load_json("events.json")
-            return data.get("events", [])
-        except FileNotFoundError:
-            logger.warning("events.json not found, returning empty list")
-            return []
+        self._ensure_events()
+        return list(self._events or [])
 
     def get_chest(self, chest_id: str) -> dict[str, Any] | None:
         """Haal een chestdefinitie op uit chests.json."""
-        try:
-            data = self._loader.load_json("chests.json")
-            for chest in data.get("chests", []):
-                if chest.get("chest_id") == chest_id:
-                    return chest
-        except FileNotFoundError:
-            logger.warning("chests.json not found")
-        return None
+        self._ensure_chests()
+        return self._chests_by_id.get(chest_id)
 
     # Shop methods (Step 8: Shop System v0)
     def get_shop(self, shop_id: str) -> dict[str, Any] | None:
         """Haal een shop-definitie op uit shops.json."""
-        try:
-            data = self._loader.load_json("shops.json")
-            shops = data.get("shops", [])
-            for shop in shops:
-                if shop.get("shop_id") == shop_id:
-                    return shop
-        except FileNotFoundError:
-            logger.warning("shops.json not found, shop data not available")
-        return None
+        self._ensure_shops()
+        return self._shops_by_id.get(shop_id)
 
     def get_all_shops(self) -> list[dict[str, Any]]:
         """Haal alle shop-definities op uit shops.json."""
+        self._ensure_shops()
+        return list(self._shops or [])
+
+    # ------------------------------------------------------------------
+    # Internal loaders with caching
+    # ------------------------------------------------------------------
+
+    def _load_entries(
+        self,
+        filename: str,
+        top_key: str,
+        *,
+        errors: list[str] | None = None,
+        required: bool = False,
+    ) -> list[dict[str, Any]]:
         try:
-            data = self._loader.load_json("shops.json")
-            return data.get("shops", [])
-        except FileNotFoundError:
-            logger.warning("shops.json not found, returning empty list")
+            data = self._loader.load_json(filename)
+            self._raw_data[filename] = data
+        except (DataFileNotFoundError, DataParseError, DataPermissionError, DataEncodingError) as exc:
+            message = f"{'Required ' if required else ''}data file missing: {filename} ({exc})"
+            if errors is not None:
+                errors.append(message)
+            else:
+                logger.warning(message)
             return []
+
+        entries = data.get(top_key, [])
+        if not isinstance(entries, list):
+            if errors is not None:
+                errors.append(f"Expected '{top_key}' to be a list in {filename}")
+            return []
+        return [entry for entry in entries if isinstance(entry, dict)]
+
+    def _ensure_actors(self, errors: list[str] | None = None, *, required: bool = False) -> None:
+        if self._actors is not None:
+            return
+        self._actors = self._load_entries("actors.json", "actors", errors=errors, required=required)
+        self._actors_by_id = {actor["id"]: actor for actor in self._actors if "id" in actor}
+
+    def _ensure_enemies(self, errors: list[str] | None = None, *, required: bool = False) -> None:
+        if self._enemies is not None:
+            return
+        self._enemies = self._load_entries("enemies.json", "enemies", errors=errors, required=required)
+        self._enemies_by_id = {enemy["id"]: enemy for enemy in self._enemies if "id" in enemy}
+
+    def _ensure_enemy_groups(
+        self, errors: list[str] | None = None, *, required: bool = False
+    ) -> None:
+        if self._enemy_groups is not None:
+            return
+        self._enemy_groups = self._load_entries(
+            "enemy_groups.json", "enemy_groups", errors=errors, required=required
+        )
+        self._enemy_groups_by_id = {
+            group["group_id"]: group for group in self._enemy_groups if "group_id" in group
+        }
+
+    def _ensure_zones(self, errors: list[str] | None = None, *, required: bool = False) -> None:
+        if self._zones is not None:
+            return
+        self._zones = self._load_entries("zones.json", "zones", errors=errors, required=required)
+        self._zones_by_id = {zone["id"]: zone for zone in self._zones if "id" in zone}
+
+    def _ensure_npcs(self, errors: list[str] | None = None, *, required: bool = False) -> None:
+        if self._npcs is not None:
+            return
+        self._npcs = self._load_entries("npc_meta.json", "npcs", errors=errors, required=required)
+        self._npcs_by_id = {npc["npc_id"]: npc for npc in self._npcs if "npc_id" in npc}
+
+    def _ensure_npc_schedules(
+        self, errors: list[str] | None = None, *, required: bool = False
+    ) -> None:
+        if self._npc_schedules is not None:
+            return
+        self._npc_schedules = self._load_entries(
+            "npc_schedules.json", "npc_schedules", errors=errors, required=required
+        )
+
+    def _ensure_skills(self, errors: list[str] | None = None, *, required: bool = False) -> None:
+        if self._skills is not None:
+            return
+        self._skills = self._load_entries("skills.json", "skills", errors=errors, required=required)
+        self._skills_by_id = {skill["id"]: skill for skill in self._skills if "id" in skill}
+
+    def _ensure_items(self, errors: list[str] | None = None, *, required: bool = False) -> None:
+        if self._items is not None:
+            return
+        self._items = self._load_entries("items.json", "items", errors=errors, required=required)
+        self._items_by_id = {item["id"]: item for item in self._items if "id" in item}
+
+    def _ensure_quests(self, errors: list[str] | None = None, *, required: bool = False) -> None:
+        if self._quests is not None:
+            return
+        self._quests = self._load_entries("quests.json", "quests", errors=errors, required=required)
+        self._quests_by_id = {
+            quest["quest_id"]: quest for quest in self._quests if "quest_id" in quest
+        }
+
+    def _ensure_dialogues(
+        self, errors: list[str] | None = None, *, required: bool = False
+    ) -> None:
+        if self._dialogues is not None:
+            return
+        self._dialogues = self._load_entries(
+            "dialogue.json", "dialogues", errors=errors, required=required
+        )
+        self._dialogues_by_id = {
+            dlg["dialogue_id"]: dlg for dlg in self._dialogues if "dialogue_id" in dlg
+        }
+
+    def _ensure_chests(self, errors: list[str] | None = None, *, required: bool = False) -> None:
+        if self._chests is not None:
+            return
+        self._chests = self._load_entries("chests.json", "chests", errors=errors, required=required)
+        self._chests_by_id = {chest["chest_id"]: chest for chest in self._chests if "chest_id" in chest}
+
+    def _ensure_loot_tables(
+        self, errors: list[str] | None = None, *, required: bool = False
+    ) -> None:
+        if self._loot_tables is not None:
+            return
+        self._loot_tables = self._load_entries(
+            "loot_tables.json", "loot_tables", errors=errors, required=required
+        )
+
+    def _ensure_events(self, errors: list[str] | None = None, *, required: bool = False) -> None:
+        if self._events is not None:
+            return
+        self._events = self._load_entries("events.json", "events", errors=errors, required=required)
+        self._events_by_id = {event["event_id"]: event for event in self._events if "event_id" in event}
+
+    def _ensure_shops(self, errors: list[str] | None = None, *, required: bool = False) -> None:
+        if self._shops is not None:
+            return
+        self._shops = self._load_entries("shops.json", "shops", errors=errors, required=required)
+        self._shops_by_id = {shop["shop_id"]: shop for shop in self._shops if "shop_id" in shop}
 
 
 __all__ = ["DataRepository"]
