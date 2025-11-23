@@ -848,19 +848,8 @@ class OverworldScene(Scene):
             return
 
         quest_log_entries = self._quest.build_quest_log_view()
-        # Convert QuestLogEntry objects to dicts for UI
-        entries_dict = [
-            {
-                "quest_id": entry.quest_id,
-                "title": entry.title,
-                "status": entry.status.value,
-                "current_stage_description": entry.current_stage_description,
-                "is_tracked": entry.is_tracked,
-            }
-            for entry in quest_log_entries
-        ]
-        self._quest_log_ui.set_quests(entries_dict)
-        logger.debug(f"Quest log refreshed with {len(entries_dict)} quests")
+        self._quest_log_ui.set_quests(quest_log_entries)
+        logger.debug(f"Quest log refreshed with {len(quest_log_entries)} quests")
 
     def _toggle_quest_log(self) -> None:
         """Toggle quest log visibility."""

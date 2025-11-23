@@ -7,7 +7,7 @@ wat tight coupling voorkomt en testing vereenvoudigt.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, TypedDict, runtime_checkable
 
 if TYPE_CHECKING:
     from tri_sarira_rpg.systems.combat_viewmodels import (
@@ -45,6 +45,23 @@ class SaveableSystem(Protocol):
     def restore_from_save(self, state: dict[str, Any] | list[Any]) -> None:
         """Herstel state vanuit save data."""
         ...
+
+
+# =============================================================================
+# Save slot metadata
+# =============================================================================
+
+
+class SaveSlotMeta(TypedDict, total=False):
+    """Kleine metadata voor save-slot previews."""
+
+    slot_id: int
+    saved_at: str
+    play_time: float
+    day_index: int
+    time_of_day: int
+    zone_id: str | None
+    zone_name: str | None
 
 
 # =============================================================================
@@ -472,6 +489,14 @@ class GameProtocol(Protocol):
         """Start een nieuw spel."""
         ...
 
+    def get_save_metadata(self, slot_id: int) -> SaveSlotMeta | None:
+        """Haal metadata op voor een specifiek save slot."""
+        ...
+
+    def get_all_save_metadata(self) -> dict[int, SaveSlotMeta]:
+        """Haal metadata op voor alle slots."""
+        ...
+
 
 __all__ = [
     "SaveableSystem",
@@ -489,4 +514,5 @@ __all__ = [
     "EconomySystemProtocol",
     "DialogueSystemProtocol",
     "GameProtocol",
+    "SaveSlotMeta",
 ]

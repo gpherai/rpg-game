@@ -13,6 +13,7 @@ from tri_sarira_rpg.core.scene import SceneStackManager
 from tri_sarira_rpg.data_access.repository import DataRepository
 from tri_sarira_rpg.presentation.main_menu import MainMenuScene
 from tri_sarira_rpg.presentation.overworld import OverworldScene
+from tri_sarira_rpg.core.protocols import SaveSlotMeta
 from tri_sarira_rpg.systems.combat import CombatSystem
 from tri_sarira_rpg.systems.dialogue import DialogueSystem
 from tri_sarira_rpg.systems.equipment import EquipmentSystem
@@ -251,6 +252,28 @@ class Game:
             logger.error(f"✗ Failed to load game (slot {slot_id})")
 
         return success
+
+    # ------------------------------------------------------------------
+    # Save metadata access (for UI previews)
+    # ------------------------------------------------------------------
+
+    def get_save_metadata(self, slot_id: int) -> SaveSlotMeta | None:
+        """Return metadata for a single slot."""
+        return self._save_system.load_metadata(slot_id) if self._save_system else None
+
+    def get_all_save_metadata(self) -> dict[int, SaveSlotMeta]:
+        """Return metadata for all configured slots (1..5)."""
+        metadata: dict[int, SaveSlotMeta] = {}
+        if not self._save_system:
+            return metadata
+
+        for slot_id in range(1, 6):
+            if self._save_system.slot_exists(slot_id):
+                meta = self._save_system.load_metadata(slot_id)
+                if meta:
+                    metadata[slot_id] = meta
+
+        return metadata
 
     def start_new_game(self) -> None:
         """Start a fresh new game with default state.

@@ -19,9 +19,9 @@ from tri_sarira_rpg.presentation.theme import (
 from .widgets import Widget
 
 if TYPE_CHECKING:
+    from tri_sarira_rpg.core.protocols import InventorySystemProtocol, ShopSystemProtocol
     from tri_sarira_rpg.services.game_data import GameDataService
-    from tri_sarira_rpg.systems.inventory import InventorySystem
-    from tri_sarira_rpg.systems.shop import ShopSystem
+    from tri_sarira_rpg.systems.shop import ShopInventoryEntry
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +32,8 @@ class ShopMenuUI(Widget):
     def __init__(
         self,
         rect: pygame.Rect,
-        shop_system: ShopSystem,
-        inventory_system: InventorySystem,
+        shop_system: "ShopSystemProtocol",
+        inventory_system: "InventorySystemProtocol",
         data_service: GameDataService,
         shop_id: str,
         chapter_id: int = 1,
@@ -69,7 +69,7 @@ class ShopMenuUI(Widget):
 
         # Load shop data
         self._shop_def = self._shop.get_shop_definition(shop_id)
-        self._available_items = []
+        self._available_items: list["ShopInventoryEntry"] = []
         if self._shop_def:
             self._available_items = self._shop.get_available_items(shop_id, chapter_id=chapter_id)
 
