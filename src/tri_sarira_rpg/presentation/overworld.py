@@ -82,6 +82,9 @@ class OverworldScene(Scene):
         self._shop = shop_system
         self._equipment = equipment_system
         self._game = game_instance
+        self._static_map_surface: pygame.Surface | None = None
+        self._static_map_zone_id: str | None = None
+        self._static_map_shape: tuple[int, int, int] | None = None  # (width, height, tile_size)
 
         # Dialogue system and UI (injected via constructor)
         self._dialogue_system = dialogue_system
@@ -433,69 +436,57 @@ class OverworldScene(Scene):
             surface.blit(text, (400, 300))
             return
 
+        self._ensure_static_map_surface(tiled_map)
+
+        if self._static_map_surface:
+            surface.blit(self._static_map_surface, (-self._camera_x, -self._camera_y))
+
+    def _ensure_static_map_surface(self, tiled_map) -> None:
+        """Bouw of reuse een prerendered surface voor statische tilelagen."""
+        zone_id = self._world.current_zone_id
         tile_size = tiled_map.tile_width
+        shape = (tiled_map.width, tiled_map.height, tile_size)
 
-        # Calculate visible tile range
-        start_tile_x = max(0, self._camera_x // tile_size)
-        start_tile_y = max(0, self._camera_y // tile_size)
-        end_tile_x = min(tiled_map.width, (self._camera_x + self._screen_width) // tile_size + 1)
-        end_tile_y = min(tiled_map.height, (self._camera_y + self._screen_height) // tile_size + 1)
+        needs_rebuild = (
+            self._static_map_surface is None
+            or self._static_map_zone_id != zone_id
+            or self._static_map_shape != shape
+        )
 
-        # Render tile layers (simplified placeholder rendering)
-        # In a real implementation, we'd load tilesets and render actual tiles
-        # For Step 3, we'll render colored rectangles based on collision
+        if not needs_rebuild:
+            return
 
-        for y in range(start_tile_y, end_tile_y):
-            for x in range(start_tile_x, end_tile_x):
-                screen_x = (x * tile_size) - self._camera_x
-                screen_y = (y * tile_size) - self._camera_y
+        width_px = tiled_map.width * tile_size
+        height_px = tiled_map.height * tile_size
+        surface = pygame.Surface((width_px, height_px))
+        surface.fill(Colors.BG_DARK)
 
-                # Check collision for color
+        for y in range(tiled_map.height):
+            for x in range(tiled_map.width):
+                rect = (x * tile_size, y * tile_size, tile_size, tile_size)
                 is_blocked = tiled_map.get_collision_at(x, y)
+                color = Colors.TILE_BLOCKED if is_blocked else Colors.TILE_WALKABLE
+                pygame.draw.rect(surface, color, rect)
+                pygame.draw.rect(surface, Colors.TILE_GRID, rect, 1)
 
-                if is_blocked:
-                    # Blocked tile: dark gray
-                    color = Colors.TILE_BLOCKED
-                else:
-                    # Walkable tile: light green
-                    color = Colors.TILE_WALKABLE
-
-                pygame.draw.rect(surface, color, (screen_x, screen_y, tile_size, tile_size))
-
-                # Draw grid lines
-                pygame.draw.rect(
-                    surface,
-                    Colors.TILE_GRID,
-                    (screen_x, screen_y, tile_size, tile_size),
-                    1,
-                )
-
-        # Render portals (for debugging)
         for portal in tiled_map.get_portals():
             portal_x, portal_y = portal.get_tile_coords(tile_size)
-            screen_x = (portal_x * tile_size) - self._camera_x
-            screen_y = (portal_y * tile_size) - self._camera_y
+            rect = (portal_x * tile_size, portal_y * tile_size, tile_size, tile_size)
+            pygame.draw.rect(surface, Colors.PORTAL, rect, 3)
 
-            # Draw portal as yellow rectangle
-            pygame.draw.rect(
-                surface,
-                Colors.PORTAL,
-                (screen_x, screen_y, tile_size, tile_size),
-                3,
-            )
-
-        # Render chests (for debugging)
         for chest in tiled_map.get_chests():
             chest_x, chest_y = chest.get_tile_coords(tile_size)
-            screen_x = (chest_x * tile_size) - self._camera_x
-            screen_y = (chest_y * tile_size) - self._camera_y
+            rect = (chest_x * tile_size + 4, chest_y * tile_size + 4, tile_size - 8, tile_size - 8)
+            pygame.draw.rect(surface, Colors.CHEST, rect)
 
-            # Draw chest as brown rectangle
-            pygame.draw.rect(
-                surface,
-                Colors.CHEST,
-                (screen_x + 4, screen_y + 4, tile_size - 8, tile_size - 8),
-            )
+        # Convert for faster blits if display is available
+        display_surface = pygame.display.get_surface()
+        if display_surface:
+            surface = surface.convert()
+
+        self._static_map_surface = surface
+        self._static_map_zone_id = zone_id
+        self._static_map_shape = shape
 
     def _render_followers(self, surface: pygame.Surface) -> None:
         """Render party followers (Step 4 v0)."""
