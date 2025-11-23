@@ -57,6 +57,9 @@ class Game:
             data_dir = Path("data")
 
         self._data_repository = DataRepository(data_dir=data_dir)
+        if not self._data_repository.load_and_validate_all():
+            errors = "\n  - ".join(self._data_repository.get_validation_errors())
+            raise RuntimeError(f"Data validation failed:\n  - {errors}")
         self._world_system = WorldSystem(data_repository=self._data_repository, maps_dir=maps_dir)
         self._time_system = TimeSystem()
 

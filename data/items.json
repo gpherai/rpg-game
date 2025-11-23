@@ -168,6 +168,21 @@
       "rarity": "unique",
       "price": 0,
       "sellable": false
+    },
+    {
+      "id": "item_meditation_token",
+      "name": "Meditation Token",
+      "description": "Een eenvoudig token dat je na een korte meditatie bewaart. Niet verkoopbaar.",
+      "type": "quest",
+      "category": "quest",
+      "effect": {
+        "type": "none",
+        "amount": 0
+      },
+      "usable_in_battle": false,
+      "usable_in_overworld": false,
+      "price": 0,
+      "sellable": false
     }
   ]
 }
