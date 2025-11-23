@@ -198,6 +198,38 @@ def test_slot_exists(save_system: SaveSystem) -> None:
     assert save_system.slot_exists(2) is False
 
 
+def test_save_metadata_written_and_loaded(save_system: SaveSystem, test_save_dir: Path) -> None:
+    """Test dat metadata wordt weggeschreven en geladen."""
+    save_data = save_system.build_save()
+    save_system.save_to_file(1, save_data)
+
+    meta_path = test_save_dir / "save_slot_1_meta.json"
+    assert meta_path.exists()
+
+    metadata = save_system.load_metadata(1)
+    assert metadata is not None
+    assert metadata["slot_id"] == 1
+    assert metadata["zone_id"] == save_data["world_state"]["current_zone_id"]
+    assert metadata["day_index"] == save_data["time_state"]["day_index"]
+    assert "saved_at" in metadata
+
+
+def test_load_metadata_fallback_when_missing_file(save_system: SaveSystem, test_save_dir: Path) -> None:
+    """Als metadata ontbreekt maar de save bestaat, wordt er fallback-metadata opgebouwd."""
+    save_data = save_system.build_save()
+    save_system.save_to_file(1, save_data)
+
+    # Verwijder meta-bestand om fallback te forceren
+    meta_path = test_save_dir / "save_slot_1_meta.json"
+    if meta_path.exists():
+        meta_path.unlink()
+
+    metadata = save_system.load_metadata(1)
+    assert metadata is not None
+    assert metadata["zone_id"] == save_data["world_state"]["current_zone_id"]
+    assert metadata["day_index"] == save_data["time_state"]["day_index"]
+
+
 def test_party_state_roundtrip(save_system: SaveSystem, party_system: PartySystem) -> None:
     """Test dat party state correct wordt gesaved en restored."""
     # Get initial state
