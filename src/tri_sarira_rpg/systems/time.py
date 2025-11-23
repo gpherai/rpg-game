@@ -59,18 +59,11 @@ class TimeSystem:
 
         # Configuratie
         self._minutes_per_step: int = 1  # Hoeveel minuten per player movement
-        self._minutes_per_tick: float = 0.5  # Hoeveel minuten per game tick (dt)
+        self._minutes_per_tick: float = 0.0  # Niet meer gebruikt (tijd tikt niet mee op dt)
 
     def update(self, dt: float) -> None:
-        """Update tijd met delta time.
-
-        Voor Step 3 gebruiken we een simpele tick-based tijd.
-        Later kan dit gekoppeld worden aan overworld movement.
-        """
-        # Voor nu: tijd loopt automatisch (zoals een echte klok)
-        # In een echte implementatie zou dit alleen bij movement gebeuren
-        minutes_to_add = self._minutes_per_tick * (dt * 60)  # Snelheid: dt * 60
-        self.advance_time(int(minutes_to_add))
+        """No-op: tijd tikt niet meer op basis van dt."""
+        return
 
     def advance_time(self, minutes: int) -> None:
         """Verhoog de tijd met een aantal minuten."""

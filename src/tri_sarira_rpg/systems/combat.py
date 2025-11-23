@@ -191,17 +191,21 @@ class CombatSystem:
         data_repository: Any,
         items_system: Any | None = None,
         equipment_system: Any | None = None,
+        time_system: Any | None = None,
     ) -> None:
         self._party = party_system
         self._data_repository = data_repository
         self._items = items_system
         self._equipment = equipment_system
+        self._time = time_system
         self._battle_state: BattleState | None = None
         self._progression = ProgressionSystem(data_repository=data_repository)
+        self._time_applied_after_battle = False
 
     def start_battle(self, enemy_ids: list[str]) -> BattleState:
         """Initialiseer een battlecontext voor de gegeven enemies."""
         logger.info(f"Starting battle with enemies: {enemy_ids}")
+        self._time_applied_after_battle = False
 
         # Create party combatants from PartySystem
         party_combatants = []
@@ -688,6 +692,10 @@ class CombatSystem:
         """Genereer battle result met XP rewards en level-ups."""
         if not self._battle_state:
             return BattleResult(outcome=outcome)
+
+        if outcome != BattleOutcome.ONGOING and self._time and not self._time_applied_after_battle:
+            self._time.advance_time(1)
+            self._time_applied_after_battle = True
 
         # Calculate XP rewards (if WIN)
         earned_xp = {}

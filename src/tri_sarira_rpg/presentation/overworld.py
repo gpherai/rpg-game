@@ -354,8 +354,6 @@ class OverworldScene(Scene):
                 moved = self._world.move_player(dx, dy)
                 if moved:
                     self._move_cooldown = self._move_delay
-                    # Advance time on movement
-                    self._time.on_player_step()
 
         # Update camera to follow player
         self._update_camera()

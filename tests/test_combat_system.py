@@ -12,6 +12,7 @@ from tri_sarira_rpg.systems.combat import (
     CombatSystem,
 )
 from tri_sarira_rpg.systems.party import PartySystem
+from tri_sarira_rpg.systems.time import TimeSystem
 
 
 @pytest.fixture
@@ -312,6 +313,31 @@ def test_duplicate_enemy_ids_target_specific_instance(combat_system: CombatSyste
     # Expect damage on the second, not on the first
     assert first.current_hp == initial_first
     assert second.current_hp < initial_second
+
+
+def test_time_advances_after_battle() -> None:
+    """Na een gewonnen gevecht moet de tijd 1 minuut vooruit."""
+    data_repo = DataRepository()
+    time_system = TimeSystem()
+    party_system = PartySystem(data_repo, data_repo.get_npc_meta())
+    combat_system = CombatSystem(party_system, data_repo, time_system=time_system)
+
+    # Start battle en maak enemies dood
+    combat_system.start_battle(["en_forest_sprout"])
+    state = combat_system.battle_state
+    assert state is not None
+    for enemy in state.enemies:
+        enemy.current_hp = 0
+
+    start_time = time_system.state.time_of_day
+    outcome = combat_system.check_battle_end()
+    result = combat_system.get_battle_result(outcome)
+    assert result.outcome == BattleOutcome.WIN
+    assert time_system.state.time_of_day == start_time + 1
+
+    # Tweede call mag tijd niet nog eens verhogen
+    _ = combat_system.get_battle_result(outcome)
+    assert time_system.state.time_of_day == start_time + 1
 
 
 def test_battle_victory_xp_rewards(combat_system: CombatSystem) -> None:
