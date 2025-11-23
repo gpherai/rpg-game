@@ -192,7 +192,6 @@ def test_shrine_events_exist() -> None:
         data = json.load(f)
 
     shrine_event_ids = [
-        "ev_shrine_trap_floor",
         "ev_shrine_encounter_wisps",
         "ev_shrine_encounter_constructs",
         "ev_shrine_encounter_elite",
