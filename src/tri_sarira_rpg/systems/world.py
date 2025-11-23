@@ -406,8 +406,19 @@ class WorldSystem:
 
         # Feedback message
         if self._on_show_message:
-            loot_text = ", ".join(f"{entry.get('quantity',1)}x {entry.get('item_id')}" for entry in contents)
-            self._on_show_message(f"Chest opened: {loot_text}")
+            if not contents:
+                loot_text = "It was empty."
+            else:
+                loot_items = []
+                for entry in contents:
+                    item_id = entry.get("item_id")
+                    qty = entry.get("quantity", 1)
+                    if item_id and self._data_repository:
+                        item_def = self._data_repository.get_item(item_id)
+                        item_name = item_def.get("name", item_id) if item_def else item_id
+                        loot_items.append(f"{item_name} (x{qty})")
+                loot_text = f"You found: {', '.join(loot_items)}"
+            self._on_show_message(loot_text)
 
     def _execute_event_actions(self, actions: list[dict[str, Any]]) -> None:
         """Voer event acties uit."""
@@ -419,6 +430,8 @@ class WorldSystem:
 
             if action_type == "SHOW_MESSAGE":
                 message = action.get("message", "")
+                if self._on_show_message:
+                    self._on_show_message(message)
                 logger.info(f"[EVENT] {message}")
 
             elif action_type == "SET_FLAG":
@@ -434,7 +447,6 @@ class WorldSystem:
                     logger.info(f"[EVENT] Flag cleared: {flag_id}")
 
             elif action_type in ("GIVE_ITEM", "GRANT_REWARDS"):
-                # GRANT_REWARDS may include XP/money; for now handle items subset
                 item_id = action.get("item_id")
                 qty = action.get("quantity", 1)
                 if item_id and self._inventory:
@@ -466,28 +478,23 @@ class WorldSystem:
                 else:
                     logger.warning("[EVENT] Cannot start battle; missing combat system or group_id")
 
-            elif action_type == "DAMAGE_PARTY":
-                damage_amount = action.get("damage_amount", 0)
-                damage_type = action.get("damage_type", "generic")
-                logger.info(f"[EVENT] Party takes {damage_amount} {damage_type} damage (stub)")
-                # Overworld heeft geen HP-tracking; toon alleen message indien mogelijk
-                msg = action.get("message")
-                if self._on_show_message and msg:
-                    self._on_show_message(msg)
-
             elif action_type == "QUEST_START":
                 quest_id = action.get("quest_id")
-                if quest_id and self._quest:
+                if quest_id and self._quest and self._data_repository:
                     try:
                         self._quest.start_quest(quest_id)
                         logger.info(f"[EVENT] Quest started: {quest_id}")
+                        if self._on_show_message:
+                            q_def = self._data_repository.get_quest(quest_id)
+                            q_title = q_def.get("title", quest_id) if q_def else quest_id
+                            self._on_show_message(f"Quest Started: {q_title}")
                     except Exception as e:
                         logger.warning(f"[EVENT] Failed to start quest {quest_id}: {e}")
 
             elif action_type == "QUEST_ADVANCE":
                 quest_id = action.get("quest_id")
                 stage_id = action.get("stage_id") or action.get("next_stage_id")
-                if quest_id and self._quest:
+                if quest_id and self._quest and self._data_repository:
                     try:
                         state = self._quest.get_state(quest_id)
                         if getattr(state, "status", None) != QuestStatus.ACTIVE:
@@ -497,6 +504,10 @@ class WorldSystem:
                         else:
                             self._quest.advance_quest(quest_id, stage_id)
                             logger.info(f"[EVENT] Quest advanced: {quest_id} -> {stage_id}")
+                            if self._on_show_message:
+                                q_def = self._data_repository.get_quest(quest_id)
+                                q_title = q_def.get("title", quest_id) if q_def else quest_id
+                                self._on_show_message(f"Quest Updated: {q_title}")
                     except Exception as e:
                         logger.warning(f"[EVENT] Failed to advance quest {quest_id}: {e}")
 
@@ -516,7 +527,7 @@ class WorldSystem:
 
             elif action_type == "QUEST_COMPLETE":
                 quest_id = action.get("quest_id")
-                if quest_id and self._quest:
+                if quest_id and self._quest and self._data_repository:
                     try:
                         state = self._quest.get_state(quest_id)
                         if getattr(state, "status", None) != QuestStatus.ACTIVE:
@@ -524,6 +535,10 @@ class WorldSystem:
                         else:
                             self._quest.complete_quest(quest_id)
                             logger.info(f"[EVENT] Quest completed: {quest_id}")
+                            if self._on_show_message:
+                                q_def = self._data_repository.get_quest(quest_id)
+                                q_title = q_def.get("title", quest_id) if q_def else quest_id
+                                self._on_show_message(f"Quest Completed: {q_title}")
                     except Exception as e:
                         logger.warning(f"[EVENT] Failed to complete quest {quest_id}: {e}")
 

@@ -84,6 +84,8 @@ def make_world(data_dir: Path | None = None) -> WorldSystem:
 
 def test_chest_grants_items_and_sets_flag(tmp_path: Path) -> None:
     world = make_world()
+    messages = []
+    world.attach_systems(on_show_message=messages.append)
 
     trigger = Trigger(
         trigger_id="ch_r1_shrine_inner_01",
@@ -98,10 +100,13 @@ def test_chest_grants_items_and_sets_flag(tmp_path: Path) -> None:
     # Inventory should contain chest loot and flag should be set
     assert world._inventory.items.get("item_gear_simple_staff") == 1
     assert "chest_opened_ch_r1_shrine_inner_01" in world._flags.flags
+    assert messages == ["You found: Simple Staff (x1)"]
 
-    # Second trigger should not duplicate loot
+    # Second trigger should not duplicate loot or message
+    messages.clear()
     world._trigger_event(trigger)
     assert world._inventory.items.get("item_gear_simple_staff") == 1
+    assert not messages, "Message should not be shown for already opened chest"
 
 
 def test_start_battle_uses_enemy_group() -> None:
@@ -121,27 +126,6 @@ def test_start_battle_uses_enemy_group() -> None:
     assert world._combat.started
     group = world._combat.started[-1]
     assert group == ["en_shrine_construct", "en_corrupted_wisp", "en_corrupted_wisp"]
-
-
-def test_damage_party_action_is_handled() -> None:
-    messages: list[str] = []
-
-    def show_message(msg: str) -> None:
-        messages.append(msg)
-
-    world = make_world()
-    world.attach_systems(on_show_message=show_message)
-
-    action = {
-        "action_type": "DAMAGE_PARTY",
-        "damage_amount": 10,
-        "damage_type": "physical",
-        "message": "A hidden trap hits you!",
-    }
-
-    world._execute_event_actions([action])
-
-    assert messages == ["A hidden trap hits you!"]
 
 
 def test_play_cutscene_action_stub() -> None:
@@ -262,29 +246,47 @@ def test_restore_from_save_deactivates_once_per_save_triggers() -> None:
     assert "ch_test" in world._triggered_ids
 
 
-def test_quest_actions_dispatch() -> None:
+def test_quest_actions_dispatch_and_show_messages() -> None:
     world = make_world()
+    messages = []
+    world.attach_systems(on_show_message=messages.append)
 
-    # Build a custom event definition to avoid relying on JSON structure
-    world._data_repository.get_event = lambda eid: {
+    # Mock the repository to return quest titles
+    def get_quest_mock(quest_id: str) -> dict[str, Any] | None:
+        if quest_id == "q_r1_shrine_purification":
+            return {"title": "Purification Quest"}
+        return None
+
+    world._data_repository.get_quest = get_quest_mock
+
+    # Build a custom event definition
+    event_def = {
         "event_id": "ev_custom_quest",
         "actions": [
-            {"action_type": "QUEST_START", "quest_id": "q_r1_shrine_intro"},
-            {"action_type": "QUEST_ADVANCE", "quest_id": "q_r1_shrine_intro", "stage_id": "reach_shrine_clearing"},
-            {"action_type": "QUEST_COMPLETE", "quest_id": "q_r1_shrine_intro"},
+            {"action_type": "QUEST_START", "quest_id": "q_r1_shrine_purification"},
+            {"action_type": "QUEST_ADVANCE", "quest_id": "q_r1_shrine_purification", "stage_id": "cleanse_shrine"},
+            {"action_type": "QUEST_COMPLETE", "quest_id": "q_r1_shrine_purification"},
         ],
     }
+    world._data_repository.get_event = lambda eid: event_def
 
     trigger = Trigger(
         trigger_id="ev_custom_quest",
         trigger_type="ON_INTERACT",
         position=Position(x=0, y=0),
         event_id="ev_custom_quest",
-        once_per_save=True,
     )
 
     world._trigger_event(trigger)
 
-    assert world._quest.started == ["q_r1_shrine_intro"]
-    assert world._quest.advanced == [("q_r1_shrine_intro", "reach_shrine_clearing")]
-    assert world._quest.completed == ["q_r1_shrine_intro"]
+    # Check system calls
+    assert world._quest.started == ["q_r1_shrine_purification"]
+    assert world._quest.advanced == [("q_r1_shrine_purification", "cleanse_shrine")]
+    assert world._quest.completed == ["q_r1_shrine_purification"]
+
+    # Check UI messages
+    assert messages == [
+        "Quest Started: Purification Quest",
+        "Quest Updated: Purification Quest",
+        "Quest Completed: Purification Quest",
+    ]

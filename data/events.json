@@ -49,25 +49,6 @@
       ]
     },
     {
-      "event_id": "ev_shrine_trap_floor",
-      "name": "Shrine Floor Trap",
-      "trigger": {
-        "type": "ON_ENTER"
-      },
-      "conditions": [],
-      "actions": [
-        {
-          "action_type": "DAMAGE_PARTY",
-          "damage_amount": 10,
-          "damage_type": "physical"
-        },
-        {
-          "action_type": "SHOW_MESSAGE",
-          "message": "A hidden floor trap activates! The party takes damage."
-        }
-      ]
-    },
-    {
       "event_id": "ev_shrine_encounter_wisps",
       "name": "Corrupted Wisps Encounter",
       "trigger": {

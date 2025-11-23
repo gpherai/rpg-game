@@ -97,20 +97,6 @@
   </object>
  </objectgroup>
  <objectgroup id="6" name="Events">
-  <object id="7" name="ev_shrine_trap_01" type="EventTrigger" x="224" y="160" width="32" height="32">
-   <properties>
-    <property name="event_id" value="ev_shrine_trap_floor"/>
-    <property name="trigger_type" value="ON_ENTER"/>
-    <property name="once_per_save" type="bool" value="false"/>
-   </properties>
-  </object>
-  <object id="8" name="ev_shrine_trap_02" type="EventTrigger" x="512" y="288" width="32" height="32">
-   <properties>
-    <property name="event_id" value="ev_shrine_trap_floor"/>
-    <property name="trigger_type" value="ON_ENTER"/>
-    <property name="once_per_save" type="bool" value="false"/>
-   </properties>
-  </object>
   <object id="9" name="ev_shrine_encounter_01" type="EventTrigger" x="352" y="160" width="32" height="32">
    <properties>
     <property name="event_id" value="ev_shrine_encounter_wisps"/>
