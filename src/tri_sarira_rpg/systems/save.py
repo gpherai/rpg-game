@@ -65,6 +65,50 @@ class SaveSystem:
         # Save directory
         self._save_dir = Path("saves")
 
+    # ------------------------------------------------------------------
+    # Metadata helpers
+    # ------------------------------------------------------------------
+    def _metadata_path(self, slot_id: int) -> Path:
+        """Pad naar metadata-bestand voor een slot."""
+        return self._save_dir / f"save_slot_{slot_id}_meta.json"
+
+    def _build_metadata(self, slot_id: int, save_data: dict[str, Any]) -> dict[str, Any]:
+        """Maak compacte metadata voor load-previews."""
+        meta = save_data.get("meta", {})
+        time_state = save_data.get("time_state", {})
+        world_state = save_data.get("world_state", {})
+
+        zone_id = world_state.get("current_zone_id")
+        zone_name: str | None = None
+
+        # Probeer de user-facing zonenaam via WorldSystem (optioneel)
+        if self._world and self._world.current_zone_id == zone_id:
+            try:
+                zone_name = self._world.get_zone_name()
+            except Exception:
+                zone_name = None
+
+        return {
+            "slot_id": slot_id,
+            "saved_at": datetime.now().isoformat(),
+            "play_time": meta.get("play_time", 0.0),
+            "day_index": time_state.get("day_index"),
+            "time_of_day": time_state.get("time_of_day"),
+            "zone_id": zone_id,
+            "zone_name": zone_name or zone_id,
+        }
+
+    def _write_metadata(self, slot_id: int, save_data: dict[str, Any]) -> None:
+        """Schrijf metadata naar schijf (best effort)."""
+        try:
+            metadata = self._build_metadata(slot_id, save_data)
+            meta_path = self._metadata_path(slot_id)
+            with open(meta_path, "w", encoding="utf-8") as f:
+                json.dump(metadata, f, indent=2, ensure_ascii=False)
+        except Exception as exc:
+            # Metadata is nice-to-have; log en ga verder
+            logger.warning(f"Kon metadata voor slot {slot_id} niet schrijven: {exc}")
+
     def build_save(self, play_time: float = 0.0) -> dict[str, Any]:
         """Verzamel data uit systemen en maak een SaveData-dict.
 
@@ -142,6 +186,9 @@ class SaveSystem:
             with open(save_file, "w", encoding="utf-8") as f:
                 json.dump(save_data, f, indent=2, ensure_ascii=False)
 
+            # Schrijf compacte metadata (best effort, geen invloed op hoofdresultaat)
+            self._write_metadata(slot_id, save_data)
+
             logger.info(f"Game saved to {save_file}")
             return True
 
@@ -178,6 +225,27 @@ class SaveSystem:
         except Exception as e:
             logger.error(f"Failed to load save: {e}")
             return None
+
+    def load_metadata(self, slot_id: int) -> dict[str, Any] | None:
+        """Laad compacte metadata voor een save slot.
+
+        Als het metadata-bestand ontbreekt maar de save wel bestaat,
+        wordt een fallback-meta opgebouwd uit het hoofd-savebestand.
+        """
+        meta_path = self._metadata_path(slot_id)
+        try:
+            if meta_path.exists():
+                with open(meta_path, encoding="utf-8") as f:
+                    return json.load(f)
+
+            # Fallback: probeer metadata te reconstrueren uit het save-bestand
+            save_data = self.load_from_file(slot_id)
+            if save_data:
+                return self._build_metadata(slot_id, save_data)
+        except Exception as exc:
+            logger.warning(f"Kon metadata voor slot {slot_id} niet laden: {exc}")
+
+        return None
 
     def load_save(self, payload: dict[str, Any]) -> bool:
         """Herstel systemen vanuit een SaveData-dict.

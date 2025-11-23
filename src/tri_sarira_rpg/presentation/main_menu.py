@@ -385,30 +385,12 @@ class MainMenuScene(Scene):
             return self._slot_info_cache[slot_id]
 
         # Load slot info
-        if not self._game:
-            info = "[Leeg]"
-        else:
-            # Check if slot exists via SaveSystem
+        info = "[Leeg]"
+        if self._game:
             save_system: SaveSystem | None = getattr(self._game, "_save_system", None)
-            if not save_system:
-                info = "[Leeg]"
-            elif save_system.slot_exists(slot_id):
-                # Try to load slot data for preview
-                save_data = save_system.load_from_file(slot_id)
-                if save_data:
-                    # Extract some info
-                    world_state = save_data.get("world_state", {})
-                    time_state = save_data.get("time_state", {})
-                    zone_id = world_state.get("current_zone_id", "Unknown")
-                    dag = time_state.get("dag", 0)
-
-                    # Simplify zone name
-                    zone_name = zone_id.split("_")[-1] if zone_id else "Unknown"
-                    info = f"Dag {dag} - {zone_name}"
-                else:
-                    info = "[Leeg]"
-            else:
-                info = "[Leeg]"
+            if save_system and save_system.slot_exists(slot_id):
+                metadata = save_system.load_metadata(slot_id)
+                info = self._format_slot_preview(metadata)
 
         # Cache the result
         self._slot_info_cache[slot_id] = info
@@ -420,6 +402,29 @@ class MainMenuScene(Scene):
         for slot_id in range(1, 6):
             self._get_slot_info(slot_id)
         self._cache_valid = True
+
+    def _format_slot_preview(self, metadata: dict | None) -> str:
+        """Bouw een preview string uit save metadata."""
+        if not metadata:
+            return "Onbekende save"
+
+        zone = metadata.get("zone_name") or metadata.get("zone_id") or "Onbekende locatie"
+
+        day_index = metadata.get("day_index")
+        if isinstance(day_index, int):
+            day_text = f"Dag {day_index + 1}"
+        else:
+            day_text = "Dag ?"
+
+        time_of_day = metadata.get("time_of_day")
+        if isinstance(time_of_day, int):
+            hours = (time_of_day // 60) % 24
+            minutes = time_of_day % 60
+            time_text = f"{hours:02d}:{minutes:02d}"
+        else:
+            time_text = "??:??"
+
+        return f"{day_text} – {zone} ({time_text})"
 
     def _render_options(self, surface: pygame.Surface) -> None:
         """Render options menu (stub for v0).
