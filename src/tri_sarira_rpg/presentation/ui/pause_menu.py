@@ -21,7 +21,7 @@ from tri_sarira_rpg.presentation.theme import (
 from .widgets import Widget
 
 if TYPE_CHECKING:
-    from tri_sarira_rpg.core.protocols import GameProtocol
+    from tri_sarira_rpg.core.protocols import GameProtocol, SaveSlotMeta
 
 logger = logging.getLogger(__name__)
 
@@ -514,16 +514,18 @@ class PauseMenu(Widget):
         # Load slot info
         info = "[Empty]"
         if self._game:
-            save_system = getattr(self._game, "_save_system", None)
-            if save_system and save_system.slot_exists(slot_id):
-                metadata = save_system.load_metadata(slot_id)
-                info = self._format_slot_preview(metadata)
+            try:
+                metadata = self._game.get_save_metadata(slot_id)
+                if metadata:
+                    info = self._format_slot_preview(metadata)
+            except Exception:
+                info = "[Empty]"
 
         # Cache the result
         self._slot_info_cache[slot_id] = info
         return info
 
-    def _format_slot_preview(self, metadata: dict | None) -> str:
+    def _format_slot_preview(self, metadata: "SaveSlotMeta | None") -> str:
         """Build preview text from metadata."""
         if not metadata:
             return "Unknown save"

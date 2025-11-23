@@ -5,10 +5,19 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, TYPE_CHECKING
 
 from tri_sarira_rpg.core.entities import Position
 from tri_sarira_rpg.data_access.repository import DataRepository
+
+if TYPE_CHECKING:
+    from tri_sarira_rpg.core.protocols import (
+        CombatSystemProtocol,
+        FlagsSystemProtocol,
+        InventorySystemProtocol,
+        QuestSystemProtocol,
+        TimeSystemProtocol,
+    )
 from tri_sarira_rpg.systems.quest import QuestStatus
 from tri_sarira_rpg.utils.tiled_loader import TiledLoader, TiledMap
 
@@ -324,14 +333,14 @@ class WorldSystem:
     def attach_systems(
         self,
         *,
-        flags_system: Any | None = None,
-        quest_system: Any | None = None,
-        inventory_system: Any | None = None,
-        combat_system: Any | None = None,
-        on_show_message: Any | None = None,
-        on_start_battle: Any | None = None,
-        on_start_dialogue: Any | None = None,
-        time_system: Any | None = None,
+        flags_system: FlagsSystemProtocol | None = None,
+        quest_system: QuestSystemProtocol | None = None,
+        inventory_system: InventorySystemProtocol | None = None,
+        combat_system: CombatSystemProtocol | None = None,
+        time_system: TimeSystemProtocol | None = None,
+        on_show_message: Callable[[str], None] | None = None,
+        on_start_battle: Callable[[list[str]], None] | None = None,
+        on_start_dialogue: Callable[[str], None] | None = None,
     ) -> None:
         """Koppel optionele systems voor triggers/collectables."""
         if flags_system:

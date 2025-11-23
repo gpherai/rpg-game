@@ -20,8 +20,7 @@ from tri_sarira_rpg.presentation.theme import (
 )
 
 if TYPE_CHECKING:
-    from tri_sarira_rpg.core.protocols import GameProtocol
-    from tri_sarira_rpg.systems.save import SaveSystem
+    from tri_sarira_rpg.core.protocols import GameProtocol, SaveSlotMeta
 
 logger = logging.getLogger(__name__)
 
@@ -413,22 +412,29 @@ class MainMenuScene(Scene):
         self._latest_save_slot = None
         latest_dt: datetime | None = None
 
-        save_system: SaveSystem | None = getattr(self._game, "_save_system", None) if self._game else None
+        metadata_map: dict[int, SaveSlotMeta] = {}
+        if self._game:
+            try:
+                metadata_map = self._game.get_all_save_metadata()
+            except Exception:
+                metadata_map = {}
 
         for slot_id in range(1, 6):
-            info = "[Empty]"
-            if save_system and save_system.slot_exists(slot_id):
-                metadata = save_system.load_metadata(slot_id)
+            metadata = metadata_map.get(slot_id)
+            if metadata:
                 info = self._format_slot_preview(metadata)
 
-                ts_raw = metadata.get("saved_at") if metadata else None
+                ts_raw = metadata.get("saved_at")
                 try:
                     ts = datetime.fromisoformat(ts_raw) if ts_raw else None
                 except Exception:
                     ts = None
+
                 if ts and (latest_dt is None or ts > latest_dt):
                     latest_dt = ts
                     self._latest_save_slot = slot_id
+            else:
+                info = "[Empty]"
 
             self._slot_info_cache[slot_id] = info
 
@@ -441,7 +447,7 @@ class MainMenuScene(Scene):
 
         self._cache_valid = True
 
-    def _format_slot_preview(self, metadata: dict | None) -> str:
+    def _format_slot_preview(self, metadata: SaveSlotMeta | None) -> str:
         """Build preview string from save metadata."""
         if not metadata:
             return "Unknown save"

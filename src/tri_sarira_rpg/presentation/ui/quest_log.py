@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pygame
 
 from tri_sarira_rpg.presentation.theme import Colors, FontCache, FontSizes, MenuColors, Spacing
 
 from .widgets import Widget
+
+if TYPE_CHECKING:
+    from tri_sarira_rpg.systems.quest import QuestLogEntry
 
 
 class QuestLogUI(Widget):
@@ -30,18 +35,13 @@ class QuestLogUI(Widget):
         self._quest_selected_color = Colors.QUEST_SELECTED
         self._stage_color = Colors.STAGE
 
-    def set_quests(self, quest_entries: list[dict]) -> None:
+    def set_quests(self, quest_entries: list["QuestLogEntry"]) -> None:
         """Update quest lijst.
 
         Parameters
         ----------
-        quest_entries : list[dict]
-            List van QuestLogEntry dictionaries met keys:
-            - quest_id: str
-            - title: str
-            - status: str (QuestStatus value)
-            - current_stage_description: str
-            - is_tracked: bool
+        quest_entries : list[QuestLogEntry]
+            List van QuestLogEntry view models.
         """
         self._quest_entries = quest_entries
         self._selected_index = 0  # Reset selection
@@ -96,8 +96,8 @@ class QuestLogUI(Widget):
                 is_selected = i == self._selected_index
 
                 # Quest status color
-                status = entry.get("status", "ACTIVE")
-                if status == "COMPLETED":
+                status_value = entry.status.value
+                if status_value == "COMPLETED":
                     quest_color = self._quest_completed_color
                 else:
                     quest_color = (
@@ -105,7 +105,7 @@ class QuestLogUI(Widget):
                     )
 
                 # Draw quest title
-                title = entry.get("title", "Unknown Quest")
+                title = entry.title or "Unknown Quest"
                 prefix = "> " if is_selected else "  "
                 title_text = f"{prefix}{title}"
                 title_surf = self._font_quest.render(title_text, True, quest_color)
@@ -114,7 +114,7 @@ class QuestLogUI(Widget):
                 surface.blit(title_surf, (title_x, title_y))
 
                 # Draw strikethrough for completed quests
-                if status == "COMPLETED":
+                if status_value == "COMPLETED":
                     line_y = title_y + title_surf.get_height() // 2
                     line_start_x = title_x
                     line_end_x = title_x + title_surf.get_width()
@@ -130,7 +130,7 @@ class QuestLogUI(Widget):
 
                 # Draw current stage description (only for selected quest)
                 if is_selected:
-                    stage_desc = entry.get("current_stage_description", "")
+                    stage_desc = entry.current_stage_description or ""
                     if stage_desc:
                         # Wrap text if needed (simple wrap at word boundaries)
                         max_width = self.rect.width - 60
