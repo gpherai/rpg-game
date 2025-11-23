@@ -128,6 +128,7 @@ class WorldSystem:
 
         # Load triggers
         self._load_triggers()
+        self._deactivate_triggered_triggers()
 
         logger.info(f"✓ Zone loaded: {zone_id}")
 
@@ -180,6 +181,13 @@ class WorldSystem:
             self._triggers[trigger.trigger_id] = trigger
 
         logger.info(f"Loaded {len(self._triggers)} triggers")
+
+    def _deactivate_triggered_triggers(self) -> None:
+        """Zet eerder getriggerde once_per_save triggers direct uit na load."""
+        for trigger_id in self._triggered_ids:
+            trigger = self._triggers.get(trigger_id)
+            if trigger and trigger.once_per_save:
+                trigger.active = False
 
     def can_move_to(self, tile_x: int, tile_y: int) -> bool:
         """Check of de speler naar een tile kan bewegen."""
@@ -582,6 +590,7 @@ class WorldSystem:
         if zone_id:
             # Load the zone (this will load the map and triggers)
             self.load_zone(zone_id)
+            self._deactivate_triggered_triggers()
 
             # Override player position with saved position
             if player_state and self._player:

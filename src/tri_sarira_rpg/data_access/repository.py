@@ -272,6 +272,18 @@ class DataRepository:
         data = self._loader.load_json("enemies.json")
         return data.get("enemies", [])
 
+    # Enemy groups
+    def get_enemy_group(self, group_id: str) -> dict[str, Any] | None:
+        """Haal een enemy group op uit enemy_groups.json."""
+        try:
+            data = self._loader.load_json("enemy_groups.json")
+            for group in data.get("enemy_groups", []):
+                if group.get("group_id") == group_id:
+                    return group
+        except FileNotFoundError:
+            logger.warning("enemy_groups.json not found, enemy group data not available")
+        return None
+
     # Zone methods
     def get_zone(self, zone_id: str) -> dict[str, Any] | None:
         """Haal een zonedefinitie op."""
