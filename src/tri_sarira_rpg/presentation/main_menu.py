@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from enum import Enum
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 import pygame
@@ -65,6 +66,7 @@ class MainMenuScene(Scene):
         self._state = MainMenuState.MAIN
         self._selected_index = 0
         self._selected_slot = 0
+        self._latest_save_slot: int | None = None
 
         # Feedback message
         self._feedback_message: str = ""
@@ -94,11 +96,11 @@ class MainMenuScene(Scene):
 
         # Main menu options
         self._main_options = [
-            ("Nieuw spel", MainMenuOption.NEW_GAME),
-            ("Doorgaan", MainMenuOption.CONTINUE),
-            ("Load spel", MainMenuOption.LOAD_GAME),
-            ("Opties", MainMenuOption.OPTIONS),
-            ("Afsluiten", MainMenuOption.QUIT),
+            ("Continue", MainMenuOption.CONTINUE),
+            ("New Game", MainMenuOption.NEW_GAME),
+            ("Load Game", MainMenuOption.LOAD_GAME),
+            ("Options", MainMenuOption.OPTIONS),
+            ("Quit", MainMenuOption.QUIT),
         ]
 
         logger.info("MainMenuScene initialized")
@@ -161,7 +163,7 @@ class MainMenuScene(Scene):
 
         if not self._game:
             logger.error("No game instance available")
-            self._show_feedback("Error: Game niet beschikbaar", Timing.FEEDBACK_LONG)
+            self._show_feedback("Error: Game not available", Timing.FEEDBACK_LONG)
             return
 
         # Initialize fresh game state via game instance
@@ -175,25 +177,31 @@ class MainMenuScene(Scene):
             self._show_feedback(f"Error: {e}", 3.0)
 
     def _continue_game(self) -> None:
-        """Continue from last save (slot 1 default)."""
+        """Continue from most recent save slot (metadata-based)."""
         logger.info("Continuing game...")
 
         if not self._game:
             logger.error("No game instance available")
-            self._show_feedback("Error: Game niet beschikbaar", Timing.FEEDBACK_LONG)
+            self._show_feedback("Error: Game not available", Timing.FEEDBACK_LONG)
             return
 
-        # Try to load slot 1
-        slot_id = 1
+        if not self._cache_valid:
+            self._refresh_slot_cache()
+
+        slot_id = self._latest_save_slot
+        if slot_id is None:
+            logger.warning("No saves found for Continue")
+            self._show_feedback("No saves found", Timing.FEEDBACK_DURATION)
+            return
+
         success = self._game.load_game(slot_id)
 
         if success:
             logger.info(f"✓ Game loaded from slot {slot_id}")
-            # Switch to overworld
             self._game.start_overworld()
         else:
-            logger.warning(f"No save found in slot {slot_id}")
-            self._show_feedback("Geen save gevonden", Timing.FEEDBACK_DURATION)
+            logger.warning(f"Failed to load from slot {slot_id}")
+            self._show_feedback("Load failed", Timing.FEEDBACK_DURATION)
 
     def _handle_load_select_input(self, key: int) -> None:
         """Handle load slot selection.
@@ -227,7 +235,7 @@ class MainMenuScene(Scene):
         """
         if not self._game:
             logger.error("No game instance available")
-            self._show_feedback("Error: Game niet beschikbaar", Timing.FEEDBACK_LONG)
+            self._show_feedback("Error: Game not available", Timing.FEEDBACK_LONG)
             return
 
         logger.info(f"Loading from slot {slot_id}...")
@@ -239,7 +247,7 @@ class MainMenuScene(Scene):
             self._game.start_overworld()
         else:
             logger.warning(f"Failed to load from slot {slot_id}")
-            self._show_feedback(f"Slot {slot_id}: Load mislukt", Timing.FEEDBACK_DURATION)
+            self._show_feedback(f"Slot {slot_id}: Load failed", Timing.FEEDBACK_DURATION)
 
     def _handle_options_input(self, key: int) -> None:
         """Handle options menu input.
@@ -280,8 +288,8 @@ class MainMenuScene(Scene):
         dt : float
             Delta time in seconds
         """
-        # Refresh slot cache when entering load menu (only once)
-        if self._state == MainMenuState.LOAD_SELECT and not self._cache_valid:
+        # Refresh slot cache once when needed (for Continue + load previews)
+        if not self._cache_valid:
             self._refresh_slot_cache()
 
         # Update feedback timer
@@ -325,10 +333,21 @@ class MainMenuScene(Scene):
 
         # Menu options
         start_y = 300
-        for i, (text, _) in enumerate(self._main_options):
-            color = self._highlight_color if i == self._selected_index else self._text_color
+        for i, (text, option) in enumerate(self._main_options):
+            is_continue = option == MainMenuOption.CONTINUE
+            continue_available = self._latest_save_slot is not None
+
+            label = text
+            if is_continue and not continue_available:
+                label = "Continue (no saves)"
+
+            if is_continue and not continue_available:
+                color = Colors.TEXT_MUTED
+            else:
+                color = self._highlight_color if i == self._selected_index else self._text_color
+
             prefix = "► " if i == self._selected_index else "  "
-            option_text = self._font_menu.render(f"{prefix}{text}", True, color)
+            option_text = self._font_menu.render(f"{prefix}{label}", True, color)
             option_rect = option_text.get_rect(center=(self._screen_width // 2, start_y + i * 50))
             surface.blit(option_text, option_rect)
 
@@ -341,13 +360,13 @@ class MainMenuScene(Scene):
             Surface to render on
         """
         # Title
-        title_text = self._font_title.render("Load Spel", True, self._title_color)
+        title_text = self._font_title.render("Load Game", True, self._title_color)
         title_rect = title_text.get_rect(center=(self._screen_width // 2, 100))
         surface.blit(title_text, title_rect)
 
         # Instructions
         info_text = self._font_info.render(
-            "Selecteer een save slot (Esc om terug te gaan)", True, self._text_color
+            "Select a save slot (Esc to return)", True, self._text_color
         )
         info_rect = info_text.get_rect(center=(self._screen_width // 2, 150))
         surface.blit(info_text, info_rect)
@@ -384,37 +403,56 @@ class MainMenuScene(Scene):
         if self._cache_valid and slot_id in self._slot_info_cache:
             return self._slot_info_cache[slot_id]
 
-        # Load slot info
-        info = "[Leeg]"
-        if self._game:
-            save_system: SaveSystem | None = getattr(self._game, "_save_system", None)
-            if save_system and save_system.slot_exists(slot_id):
-                metadata = save_system.load_metadata(slot_id)
-                info = self._format_slot_preview(metadata)
-
-        # Cache the result
-        self._slot_info_cache[slot_id] = info
-        return info
+        # Refresh cache and return
+        self._refresh_slot_cache()
+        return self._slot_info_cache.get(slot_id, "[Empty]")
 
     def _refresh_slot_cache(self) -> None:
         """Refresh slot info cache for all 5 slots."""
         self._slot_info_cache.clear()
+        self._latest_save_slot = None
+        latest_dt: datetime | None = None
+
+        save_system: SaveSystem | None = getattr(self._game, "_save_system", None) if self._game else None
+
         for slot_id in range(1, 6):
-            self._get_slot_info(slot_id)
+            info = "[Empty]"
+            if save_system and save_system.slot_exists(slot_id):
+                metadata = save_system.load_metadata(slot_id)
+                info = self._format_slot_preview(metadata)
+
+                ts_raw = metadata.get("saved_at") if metadata else None
+                try:
+                    ts = datetime.fromisoformat(ts_raw) if ts_raw else None
+                except Exception:
+                    ts = None
+                if ts and (latest_dt is None or ts > latest_dt):
+                    latest_dt = ts
+                    self._latest_save_slot = slot_id
+
+            self._slot_info_cache[slot_id] = info
+
+        # If no saves, move selection to New Game for convenience
+        if self._latest_save_slot is None and self._main_options[self._selected_index][1] == MainMenuOption.CONTINUE:
+            for idx, (_, opt) in enumerate(self._main_options):
+                if opt == MainMenuOption.NEW_GAME:
+                    self._selected_index = idx
+                    break
+
         self._cache_valid = True
 
     def _format_slot_preview(self, metadata: dict | None) -> str:
-        """Bouw een preview string uit save metadata."""
+        """Build preview string from save metadata."""
         if not metadata:
-            return "Onbekende save"
+            return "Unknown save"
 
-        zone = metadata.get("zone_name") or metadata.get("zone_id") or "Onbekende locatie"
+        zone = metadata.get("zone_name") or metadata.get("zone_id") or "Unknown area"
 
         day_index = metadata.get("day_index")
         if isinstance(day_index, int):
-            day_text = f"Dag {day_index + 1}"
+            day_text = f"Day {day_index + 1}"
         else:
-            day_text = "Dag ?"
+            day_text = "Day ?"
 
         time_of_day = metadata.get("time_of_day")
         if isinstance(time_of_day, int):
@@ -435,20 +473,18 @@ class MainMenuScene(Scene):
             Surface to render on
         """
         # Title
-        title_text = self._font_title.render("Opties", True, self._title_color)
+        title_text = self._font_title.render("Options", True, self._title_color)
         title_rect = title_text.get_rect(center=(self._screen_width // 2, 200))
         surface.blit(title_text, title_rect)
 
         # Stub message
-        stub_text = self._font_menu.render(
-            "Opties zijn nog niet beschikbaar", True, self._text_color
-        )
+        stub_text = self._font_menu.render("Options are not available yet", True, self._text_color)
         stub_rect = stub_text.get_rect(center=(self._screen_width // 2, 300))
         surface.blit(stub_text, stub_rect)
 
         # Instructions
         info_text = self._font_info.render(
-            "Druk op Esc of Enter om terug te gaan", True, self._text_color
+            "Press Esc or Enter to return", True, self._text_color
         )
         info_rect = info_text.get_rect(center=(self._screen_width // 2, 350))
         surface.blit(info_text, info_rect)

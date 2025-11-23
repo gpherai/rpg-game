@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class PauseMenuOption(Enum):
-    """Pause menu opties."""
+    """Pause menu options."""
 
     RESUME = 0
     SAVE = 1
@@ -37,7 +37,7 @@ class PauseMenuOption(Enum):
 
 
 class PauseMenuState(Enum):
-    """States voor het pause menu."""
+    """States for the pause menu."""
 
     MAIN = "main"
     LOAD_SELECT = "load_select"
@@ -46,7 +46,7 @@ class PauseMenuState(Enum):
 
 
 class PauseMenu(Widget):
-    """Pause menu overlay voor gameplay scenes."""
+    """Pause menu overlay for gameplay scenes."""
 
     def __init__(
         self,
@@ -93,11 +93,11 @@ class PauseMenu(Widget):
 
         # Main menu options
         self._main_options = [
-            ("Doorgaan", PauseMenuOption.RESUME),
-            ("Save spel", PauseMenuOption.SAVE),
-            ("Load spel", PauseMenuOption.LOAD),
-            ("Terug naar hoofdmenu", PauseMenuOption.MAIN_MENU),
-            ("Afsluiten", PauseMenuOption.QUIT),
+            ("Resume", PauseMenuOption.RESUME),
+            ("Save Game", PauseMenuOption.SAVE),
+            ("Load Game", PauseMenuOption.LOAD),
+            ("Main Menu", PauseMenuOption.MAIN_MENU),
+            ("Quit Game", PauseMenuOption.QUIT),
         ]
 
         logger.debug("PauseMenu initialized")
@@ -195,7 +195,7 @@ class PauseMenu(Widget):
                 # Invalidate cache when entering load menu
                 self._cache_valid = False
             else:
-                self._show_feedback("Laden niet beschikbaar tijdens gevecht", 2.0)
+                self._show_feedback("Loading not available during battle", 2.0)
             return False
 
         elif option == PauseMenuOption.MAIN_MENU:
@@ -209,10 +209,10 @@ class PauseMenu(Widget):
         return False
 
     def _save_game(self) -> None:
-        """Directe save helper (niet meer gebruikt in UI)."""
+        """Direct save helper (not used directly in UI)."""
         if not self._game:
             logger.error("No game instance available for save")
-            self._show_feedback("Error: Kan niet opslaan", 2.0)
+            self._show_feedback("Error: Cannot save", 2.0)
             return
 
         logger.info("Saving game from pause menu...")
@@ -220,9 +220,9 @@ class PauseMenu(Widget):
         success = self._game.save_game(slot_id)
 
         if success:
-            self._show_feedback(f"Spel opgeslagen (slot {slot_id})", 2.0)
+            self._show_feedback(f"Saved to slot {slot_id}", 2.0)
         else:
-            self._show_feedback("Opslaan mislukt", 2.0)
+            self._show_feedback("Save failed", 2.0)
 
     def _handle_load_select_input(self, key: int) -> bool:
         """Handle load slot selection.
@@ -276,23 +276,23 @@ class PauseMenu(Widget):
         return False
 
     def _save_to_slot(self, slot_id: int) -> bool:
-        """Opslaan naar gekozen slot."""
+        """Save to the chosen slot."""
         if not self._game:
             logger.error("No game instance available for save")
-            self._show_feedback("Error: Kan niet opslaan", 2.0)
+            self._show_feedback("Error: Cannot save", 2.0)
             return False
 
         logger.info(f"Saving to slot {slot_id}...")
         success = self._game.save_game(slot_id)
 
         if success:
-            self._show_feedback(f"Spel opgeslagen (slot {slot_id})", 2.0)
+            self._show_feedback(f"Saved to slot {slot_id}", 2.0)
             self._state = PauseMenuState.MAIN
             # Cache verversen zodat previews up-to-date zijn
             self._cache_valid = False
             return True
 
-        self._show_feedback("Opslaan mislukt", 2.0)
+        self._show_feedback("Save failed", 2.0)
         return False
 
     def _load_from_slot(self, slot_id: int) -> bool:
@@ -310,19 +310,19 @@ class PauseMenu(Widget):
         """
         if not self._game:
             logger.error("No game instance available for load")
-            self._show_feedback("Error: Kan niet laden", 2.0)
+            self._show_feedback("Error: Cannot load", 2.0)
             return False
 
         logger.info(f"Loading from slot {slot_id}...")
         success = self._game.load_game(slot_id)
 
         if success:
-            self._show_feedback(f"Geladen van slot {slot_id}", 1.5)
+            self._show_feedback(f"Loaded from slot {slot_id}", 1.5)
             # Return to main state and close menu
             self._state = PauseMenuState.MAIN
             return True
         else:
-            self._show_feedback(f"Slot {slot_id}: Laden mislukt", 2.0)
+            self._show_feedback(f"Slot {slot_id}: Load failed", 2.0)
             return False
 
     def _return_to_main_menu(self) -> None:
@@ -411,7 +411,7 @@ class PauseMenu(Widget):
             Surface to render on
         """
         # Title
-        title_text = self._font_title.render("GEPAUZEERD", True, self._colors.title)
+        title_text = self._font_title.render("PAUSED", True, self._colors.title)
         title_rect = title_text.get_rect(center=(self.rect.width // 2, 60))
         surface.blit(title_text, title_rect)
 
@@ -432,9 +432,7 @@ class PauseMenu(Widget):
             surface.blit(option_text, option_rect)
 
         # Instructions
-        info_text = self._font_info.render(
-            "Gebruik Esc om direct door te gaan", True, self._colors.text
-        )
+        info_text = self._font_info.render("Press Esc to resume", True, self._colors.text)
         info_rect = info_text.get_rect(center=(self.rect.width // 2, self.rect.height - Spacing.XXL))
         surface.blit(info_text, info_rect)
 
@@ -447,13 +445,13 @@ class PauseMenu(Widget):
             Surface to render on
         """
         # Title
-        title_text = self._font_title.render("Load Spel", True, self._colors.title)
+        title_text = self._font_title.render("Load Game", True, self._colors.title)
         title_rect = title_text.get_rect(center=(self.rect.width // 2, Spacing.XXXL))
         surface.blit(title_text, title_rect)
 
         # Instructions
         info_text = self._font_info.render(
-            "Selecteer een save slot (Esc om terug)", True, self._colors.text
+            "Select a save slot (Esc to return)", True, self._colors.text
         )
         info_rect = info_text.get_rect(center=(self.rect.width // 2, 80))
         surface.blit(info_text, info_rect)
@@ -475,12 +473,12 @@ class PauseMenu(Widget):
 
     def _render_save_select(self, surface: pygame.Surface) -> None:
         """Render save slot selection."""
-        title_text = self._font_title.render("Save Spel", True, self._colors.title)
+        title_text = self._font_title.render("Save Game", True, self._colors.title)
         title_rect = title_text.get_rect(center=(self.rect.width // 2, Spacing.XXXL))
         surface.blit(title_text, title_rect)
 
         info_text = self._font_info.render(
-            "Kies een slot om op te slaan (Esc om terug)", True, self._colors.text
+            "Choose a slot to save (Esc to return)", True, self._colors.text
         )
         info_rect = info_text.get_rect(center=(self.rect.width // 2, 80))
         surface.blit(info_text, info_rect)
@@ -514,7 +512,7 @@ class PauseMenu(Widget):
             return self._slot_info_cache[slot_id]
 
         # Load slot info
-        info = "[Leeg]"
+        info = "[Empty]"
         if self._game:
             save_system = getattr(self._game, "_save_system", None)
             if save_system and save_system.slot_exists(slot_id):
@@ -526,16 +524,16 @@ class PauseMenu(Widget):
         return info
 
     def _format_slot_preview(self, metadata: dict | None) -> str:
-        """Bouw preview tekst uit metadata."""
+        """Build preview text from metadata."""
         if not metadata:
-            return "Onbekende save"
+            return "Unknown save"
 
-        zone = metadata.get("zone_name") or metadata.get("zone_id") or "Onbekende locatie"
+        zone = metadata.get("zone_name") or metadata.get("zone_id") or "Unknown area"
         day_index = metadata.get("day_index")
         if isinstance(day_index, int):
-            day_text = f"Dag {day_index + 1}"
+            day_text = f"Day {day_index + 1}"
         else:
-            day_text = "Dag ?"
+            day_text = "Day ?"
 
         time_of_day = metadata.get("time_of_day")
         if isinstance(time_of_day, int):
